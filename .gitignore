@@ -1,0 +1,18 @@
+# 白名單版控：忽略根目錄所有項目，再逐一放行「系統套件」內容。
+# 任何一本書資料夾（如 奇幻冒險/、驗證範例/）都會被自動忽略，不污染系統 repo。
+/*
+
+# 系統套件（版控）
+!/.gitignore
+!/README.md
+!/novel-writing-system-plan.md
+!/結構定義/
+!/技巧知識庫/
+!/書本模板/
+!/Data/
+!/docs/
+
+# skill 版控，但 .claude 其餘（本地設定）不版控
+!/.claude/
+/.claude/*
+!/.claude/skills/
