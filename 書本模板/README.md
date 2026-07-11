@@ -10,6 +10,7 @@
 2. 把你的瑣碎筆記、靈感、半成品（任意格式）丟進 `raw/`。
 3. 對 Claude 說：**「幫我把 raw/ 整理成符合結構的大綱和幕綱」** → 觸發 `organize`，產出/更新 `story/` 並回報缺口診斷。
 4. 反覆用 `beat-sheet` 共創幕綱、用 `beat-test` 審稿，直到幕綱通過測試。
+5. 幕綱就緒後，對 Claude 說「幫我把這幾幕寫成正文」→ 觸發 `write`（子專案 B）：AI 先提議分章方案供你拍板，再依幕綱展開成 `chapters/` 下的散文草稿。對應的審稿 skill（`write-test`）尚未建置，草稿仍需作者親自把關。
 
 ## 結構
 
@@ -25,7 +26,9 @@
 │   └── 參照/
 │       ├── 角色需求.md
 │       └── 結構.md
-└── chapters/   # 依幕綱寫的章節（子專案 B，本階段不做）
+└── chapters/   # 依幕綱寫的章節草稿（子專案 B，由 write 產生）
+    ├── ch01.md
+    └── _index.md
 ```
 
-`story/` 下各檔的權威格式定義見系統套件的 `結構定義/*.schema.md`。本模板的 `story/` 檔只是空骨架，實際內容由 `organize` / `beat-sheet` 依 schema 填寫。
+`story/` 與 `chapters/` 下各檔的權威格式定義見系統套件的 `結構定義/*.schema.md`（含 `章節.schema.md`）。本模板的檔案只是空骨架，實際內容由 `organize` / `beat-sheet` / `write` 依 schema 填寫。
