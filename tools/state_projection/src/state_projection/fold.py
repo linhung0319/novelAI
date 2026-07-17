@@ -58,3 +58,58 @@ def parse_events(text: str) -> list[Event]:
             )
         )
     return events
+
+
+_SPINE_RE = re.compile(r"全書順序：(.+)$")
+_ARC_TOKEN_RE = re.compile(r"arc[0-9A-Za-z]+")
+
+
+def parse_spine(text: str) -> dict[str, int]:
+    for raw in text.splitlines():
+        m = _SPINE_RE.search(raw)
+        if not m:
+            continue
+        arcs: list[str] = []
+        for tok in _ARC_TOKEN_RE.findall(m.group(1)):
+            if tok not in arcs:
+                arcs.append(tok)
+        if arcs:
+            return {arc: rank for rank, arc in enumerate(arcs)}
+    raise FoldError("幕綱 _index 找不到可解析的『全書順序：』arc 序列")
+
+
+@dataclass(frozen=True)
+class Slot:
+    entity: str
+    dimension: str
+    content: str
+    source_beat: int
+    source_arc: str
+
+
+def _pos(spine: dict[str, int], arc: str, beat: int) -> tuple[int, int]:
+    if arc not in spine:
+        raise FoldError(f"arc {arc!r} 不在 spine（全書順序）中，無法定位")
+    return (spine[arc], beat)
+
+
+def project(
+    events: list[Event], spine: dict[str, int], target_beat: int, target_arc: str
+) -> list[Slot]:
+    target = _pos(spine, target_arc, target_beat)
+    # 對每個事件都定位（含被過濾的），arc 無法定位即報錯、不靜默丟。
+    positioned = [(_pos(spine, e.arc, e.beat), e) for e in events]
+    kept = sorted(
+        ((p, e) for p, e in positioned if p <= target),
+        key=lambda pe: (pe[0], pe[1].lineno),  # 同位置以檔序後者勝
+    )
+    slots: dict[tuple[str, str], Slot] = {}
+    for _p, e in kept:
+        slots[(e.entity, e.dimension)] = Slot(
+            entity=e.entity,
+            dimension=e.dimension,
+            content=e.content,
+            source_beat=e.beat,
+            source_arc=e.arc,
+        )
+    return list(slots.values())
