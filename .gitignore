@@ -18,3 +18,10 @@
 !/.claude/
 /.claude/*
 !/.claude/skills/
+
+# Python（子專案 C：tools/state_projection）——不版控環境與快取產物
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+uv.lock
