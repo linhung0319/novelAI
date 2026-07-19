@@ -19,7 +19,7 @@
 | [視角與敘事人稱](視角與敘事人稱.md) | 跨階段 | 決定／沿用 POV、判第一人稱或有限視角的知識邊界洩漏（概念層：選視角） | `develop`、`beat-test`、`write`、`write-test`、`revise` |
 | [敘事距離與DeepPOV](敘事距離與DeepPOV.md) | 正文執行 | 正文執行層（執行視角）：Deep POV 句子技巧（去過濾詞／感官落在角色／內心獨白引語）、敘事心理距離拉遠拉近 | `write`、`write-test`、`revise` |
 | [氛圍與筆調](氛圍與筆調.md) | 跨階段 | 確立本書基調／氛圍（含文体である／です・ます選型）、或檢查各段筆調前後是否一致、有無不自覺轉調 | `develop`、`organize`、`write`、`write-test`、`revise` |
-| [因果法則](因果法則.md) | 結構排幕 | 排幕時處理幕的五要素、前果＝後因；抓「有因無果／有果無因」的斷鏈與未連主線的幕 | `organize`、`beat-sheet`、`beat-test`、`write`、`expand` |
+| [因果法則](因果法則.md) | 結構排幕 | 排幕時處理幕的五要素、前果＝後因；抓「有因無果／有果無因」的斷鏈與未連主線的幕；**升起的重大賭注是否兌現、角色反應是否合乎知識＋慾望＋能力（§七，含降溫偏誤與正當黑暗抉擇）** | `organize`、`beat-sheet`、`beat-test`、`write`、`write-test`、`expand` |
 | [結構公式](結構公式.md) | 結構排幕 | 選一套結構公式排幕（三幕劇／起承轉合／七問題／編劇九階段／Save the Cat!／雪花法／MICE 四線索／起承転結・序破急），或檢查必要階段是否齊全 | `organize`、`beat-sheet`、`beat-test`、`outline-test`、`expand` |
 | [伏筆與意外](伏筆與意外.md) | 結構排幕 | 埋設與回收伏筆、讓意外合理（源於主角努力、非機器神）、設計謎三角雙重誤導；配置距離／四詞辨析／反轉速度 | `beat-sheet`、`beat-test`、`write`、`worldbuild`、`expand` |
 | [結局類型](結局類型.md) | 結構排幕 | 選結局類型（喜/悲/悲喜/暗示/開放/諷刺）、對照好結局六要素、檢查結局與題旨一致、防機器神 | `develop`、`organize`、`beat-sheet`、`outline-test`、`beat-test` |
