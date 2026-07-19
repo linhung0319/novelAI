@@ -3,288 +3,3538 @@
   "author": "愛潛水的烏賊",
   "source": "hjwzw",
   "id": "35150",
-  "range": "ch1–40",
-  "fetched": "2026-07-19",
-  "chapters": [
+  "fetched": "2026-07-20",
+  "volumes": [
     {
-      "number": 1,
-      "title": "第一章 機心",
-      "cid": "8242074",
-      "file": "第001章_機心.txt",
-      "url": "https://tw.hjwzw.com/Book/Read/35150,8242074"
+      "volume": 1,
+      "dir": "卷一",
+      "first": "第一章 機心",
+      "last": "第八十三章 處罰",
+      "chapters": [
+        {
+          "number": 1,
+          "title": "第一章 機心",
+          "cid": "8242074",
+          "file": "第001章_機心.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242074"
+        },
+        {
+          "number": 2,
+          "title": "第二章 空門",
+          "cid": "8242075",
+          "file": "第002章_空門.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242075"
+        },
+        {
+          "number": 3,
+          "title": "第三章 舉頭望明月",
+          "cid": "8242076",
+          "file": "第003章_舉頭望明月.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242076"
+        },
+        {
+          "number": 4,
+          "title": "第四章 百日筑基",
+          "cid": "8242077",
+          "file": "第004章_百日筑基.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242077"
+        },
+        {
+          "number": 5,
+          "title": "第五章 小玉佛",
+          "cid": "8242078",
+          "file": "第005章_小玉佛.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242078"
+        },
+        {
+          "number": 6,
+          "title": "第六章 羅漢拳",
+          "cid": "8242079",
+          "file": "第006章_羅漢拳.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242079"
+        },
+        {
+          "number": 7,
+          "title": "第七章 天之驕子",
+          "cid": "8242080",
+          "file": "第007章_天之驕子.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242080"
+        },
+        {
+          "number": 8,
+          "title": "第八章 奇詭的再聚",
+          "cid": "8242081",
+          "file": "第008章_奇詭的再聚.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242081"
+        },
+        {
+          "number": 9,
+          "title": "第九章 隱皇堡",
+          "cid": "8242082",
+          "file": "第009章_隱皇堡.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242082"
+        },
+        {
+          "number": 10,
+          "title": "第十章 第一個",
+          "cid": "8242083",
+          "file": "第010章_第一個.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242083"
+        },
+        {
+          "number": 11,
+          "title": "第十一章 刀",
+          "cid": "8242084",
+          "file": "第011章_刀.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242084"
+        },
+        {
+          "number": 12,
+          "title": "第十二章 第一戰",
+          "cid": "8242085",
+          "file": "第012章_第一戰.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242085"
+        },
+        {
+          "number": 13,
+          "title": "第十三章 援手",
+          "cid": "8242086",
+          "file": "第013章_援手.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242086"
+        },
+        {
+          "number": 14,
+          "title": "第十四章 自殺",
+          "cid": "8242087",
+          "file": "第014章_自殺.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242087"
+        },
+        {
+          "number": 15,
+          "title": "第十五章 堡主",
+          "cid": "8242088",
+          "file": "第015章_堡主.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242088"
+        },
+        {
+          "number": 16,
+          "title": "第十六章 孟奇的“理想”",
+          "cid": "8242089",
+          "file": "第016章_孟奇的“理想”.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242089"
+        },
+        {
+          "number": 17,
+          "title": "第十七章 兌換",
+          "cid": "8242090",
+          "file": "第017章_兌換.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242090"
+        },
+        {
+          "number": 18,
+          "title": "第十八章 回歸",
+          "cid": "8242091",
+          "file": "第018章_回歸.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242091"
+        },
+        {
+          "number": 19,
+          "title": "第十九章 勇氣",
+          "cid": "8242092",
+          "file": "第019章_勇氣.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242092"
+        },
+        {
+          "number": 20,
+          "title": "第二十章 秘聞",
+          "cid": "8242093",
+          "file": "第020章_秘聞.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242093"
+        },
+        {
+          "number": 21,
+          "title": "第二十一章 禍福相依",
+          "cid": "8242094",
+          "file": "第021章_禍福相依.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242094"
+        },
+        {
+          "number": 22,
+          "title": "第二十二章 反應",
+          "cid": "8242095",
+          "file": "第022章_反應.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242095"
+        },
+        {
+          "number": 23,
+          "title": "第二十三章 “善心”",
+          "cid": "8242096",
+          "file": "第023章_“善心”.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242096"
+        },
+        {
+          "number": 24,
+          "title": "第二十四章 對練",
+          "cid": "8242097",
+          "file": "第024章_對練.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242097"
+        },
+        {
+          "number": 25,
+          "title": "第二十五章 演武殿一霸",
+          "cid": "8242098",
+          "file": "第025章_演武殿一霸.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242098"
+        },
+        {
+          "number": 26,
+          "title": "第二十六章 惡人小孟",
+          "cid": "8242099",
+          "file": "第026章_惡人小孟.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242099"
+        },
+        {
+          "number": 27,
+          "title": "第二十七章 獎勵與“處罰”",
+          "cid": "8242100",
+          "file": "第027章_獎勵與“處罰”.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242100"
+        },
+        {
+          "number": 28,
+          "title": "第二十八章 新的任務",
+          "cid": "8242101",
+          "file": "第028章_新的任務.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242101"
+        },
+        {
+          "number": 29,
+          "title": "第二十九章 圍殺",
+          "cid": "8242102",
+          "file": "第029章_圍殺.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242102"
+        },
+        {
+          "number": 30,
+          "title": "第三十章 “化緣”",
+          "cid": "8242103",
+          "file": "第030章_“化緣”.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242103"
+        },
+        {
+          "number": 31,
+          "title": "第三十一章 血戰",
+          "cid": "8242104",
+          "file": "第031章_血戰.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242104"
+        },
+        {
+          "number": 32,
+          "title": "第三十二章 重逢",
+          "cid": "8242105",
+          "file": "第032章_重逢.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242105"
+        },
+        {
+          "number": 33,
+          "title": "第三十三章 心寂大師",
+          "cid": "8242106",
+          "file": "第033章_心寂大師.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242106"
+        },
+        {
+          "number": 34,
+          "title": "第三十四章 支線",
+          "cid": "8242107",
+          "file": "第034章_支線.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242107"
+        },
+        {
+          "number": 35,
+          "title": "第三十五章 風聲雨聲",
+          "cid": "8242108",
+          "file": "第035章_風聲雨聲.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242108"
+        },
+        {
+          "number": 36,
+          "title": "第三十六章 朵兒察",
+          "cid": "8242109",
+          "file": "第036章_朵兒察.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242109"
+        },
+        {
+          "number": 37,
+          "title": "第三十七章 義薄云天屬小孟",
+          "cid": "8242110",
+          "file": "第037章_義薄云天屬小孟.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242110"
+        },
+        {
+          "number": 38,
+          "title": "第三十八章 掌上乾坤",
+          "cid": "8242111",
+          "file": "第038章_掌上乾坤.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242111"
+        },
+        {
+          "number": 39,
+          "title": "第三十九章 意外之財",
+          "cid": "8242112",
+          "file": "第039章_意外之財.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242112"
+        },
+        {
+          "number": 40,
+          "title": "第四十章 石室",
+          "cid": "8242113",
+          "file": "第040章_石室.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242113"
+        },
+        {
+          "number": 41,
+          "title": "第四十一章 黃雀在后",
+          "cid": "8242114",
+          "file": "第041章_黃雀在后.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242114"
+        },
+        {
+          "number": 42,
+          "title": "第四十二章 無生指",
+          "cid": "8242115",
+          "file": "第042章_無生指.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242115"
+        },
+        {
+          "number": 43,
+          "title": "第四十三章 簽筒",
+          "cid": "8242116",
+          "file": "第043章_簽筒.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242116"
+        },
+        {
+          "number": 44,
+          "title": "第四十四章 各自選擇",
+          "cid": "8242117",
+          "file": "第044章_各自選擇.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242117"
+        },
+        {
+          "number": 45,
+          "title": "第四十五章 刀法的挑選",
+          "cid": "8242118",
+          "file": "第045章_刀法的挑選.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242118"
+        },
+        {
+          "number": 46,
+          "title": "第四十六章 離開少林的辦法",
+          "cid": "8242119",
+          "file": "第046章_離開少林的辦法.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242119"
+        },
+        {
+          "number": 47,
+          "title": "第四十七章 意外之“喜”",
+          "cid": "8242120",
+          "file": "第047章_意外之“喜”.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242120"
+        },
+        {
+          "number": 48,
+          "title": "第四十八章 玄悲的理由",
+          "cid": "8242121",
+          "file": "第048章_玄悲的理由.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242121"
+        },
+        {
+          "number": 49,
+          "title": "第四十九章 特殊的修煉之地",
+          "cid": "8242122",
+          "file": "第049章_特殊的修煉之地.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242122"
+        },
+        {
+          "number": 50,
+          "title": "第五十章 艱苦的修煉",
+          "cid": "8242123",
+          "file": "第050章_艱苦的修煉.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242123"
+        },
+        {
+          "number": 51,
+          "title": "第五十一章 三重折磨",
+          "cid": "8242124",
+          "file": "第051章_三重折磨.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242124"
+        },
+        {
+          "number": 52,
+          "title": "第五十二章 牢房來人",
+          "cid": "8242125",
+          "file": "第052章_牢房來人.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242125"
+        },
+        {
+          "number": 53,
+          "title": "第五十三章 眼力",
+          "cid": "8242126",
+          "file": "第053章_眼力.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242126"
+        },
+        {
+          "number": 54,
+          "title": "第五十四章 真慧的煩惱",
+          "cid": "8242127",
+          "file": "第054章_真慧的煩惱.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242127"
+        },
+        {
+          "number": 55,
+          "title": "第五十五章 撞破",
+          "cid": "8242128",
+          "file": "第055章_撞破.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242128"
+        },
+        {
+          "number": 56,
+          "title": "第五十六章 兇手",
+          "cid": "8242129",
+          "file": "第056章_兇手.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242129"
+        },
+        {
+          "number": 57,
+          "title": "第五十七章 真常之死",
+          "cid": "8242130",
+          "file": "第057章_真常之死.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242130"
+        },
+        {
+          "number": 58,
+          "title": "第五十八章 十二相神",
+          "cid": "8242131",
+          "file": "第058章_十二相神.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242131"
+        },
+        {
+          "number": 59,
+          "title": "第五十九章 報酬",
+          "cid": "8242132",
+          "file": "第059章_報酬.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242132"
+        },
+        {
+          "number": 60,
+          "title": "第六十章 所謂畫風不對",
+          "cid": "8242133",
+          "file": "第060章_所謂畫風不對.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242133"
+        },
+        {
+          "number": 61,
+          "title": "第六十一章 知彼",
+          "cid": "8242134",
+          "file": "第061章_知彼.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242134"
+        },
+        {
+          "number": 62,
+          "title": "第六十二章 壞名聲與金字招牌",
+          "cid": "8242135",
+          "file": "第062章_壞名聲與金字招牌.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242135"
+        },
+        {
+          "number": 63,
+          "title": "第六十三章 我只知道一點",
+          "cid": "8242136",
+          "file": "第063章_我只知道一點.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242136"
+        },
+        {
+          "number": 64,
+          "title": "第六十四章 詭異的武功",
+          "cid": "8242137",
+          "file": "第064章_詭異的武功.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242137"
+        },
+        {
+          "number": 65,
+          "title": "第六十五章 市井消息",
+          "cid": "8242138",
+          "file": "第065章_市井消息.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242138"
+        },
+        {
+          "number": 66,
+          "title": "第六十六章 白衣劍神",
+          "cid": "8242139",
+          "file": "第066章_白衣劍神.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242139"
+        },
+        {
+          "number": 67,
+          "title": "第六十七章 幻形大法",
+          "cid": "8242140",
+          "file": "第067章_幻形大法.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242140"
+        },
+        {
+          "number": 68,
+          "title": "第六十八章 沸沸揚揚",
+          "cid": "8242141",
+          "file": "第068章_沸沸揚揚.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242141"
+        },
+        {
+          "number": 69,
+          "title": "第六十九章 江湖紛爭",
+          "cid": "8242142",
+          "file": "第069章_江湖紛爭.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242142"
+        },
+        {
+          "number": 70,
+          "title": "第七十章 人的名樹的影",
+          "cid": "8242143",
+          "file": "第070章_人的名樹的影.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242143"
+        },
+        {
+          "number": 71,
+          "title": "第七十一章 可憐的尤三爺",
+          "cid": "8242144",
+          "file": "第071章_可憐的尤三爺.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242144"
+        },
+        {
+          "number": 72,
+          "title": "第七十二章 圍觀的力量",
+          "cid": "8242145",
+          "file": "第072章_圍觀的力量.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242145"
+        },
+        {
+          "number": 73,
+          "title": "第七十三章 爾虞我詐",
+          "cid": "8242146",
+          "file": "第073章_爾虞我詐.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242146"
+        },
+        {
+          "number": 73,
+          "title": "第七十三章 爾虞我詐",
+          "cid": "8242147",
+          "file": "第073章_爾虞我詐_2.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242147"
+        },
+        {
+          "number": 74,
+          "title": "第七十四章 地牢",
+          "cid": "8242148",
+          "file": "第074章_地牢.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242148"
+        },
+        {
+          "number": 75,
+          "title": "第七十五章 兩只老狐貍",
+          "cid": "8242149",
+          "file": "第075章_兩只老狐貍.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242149"
+        },
+        {
+          "number": 76,
+          "title": "第七十六章 崔栩的軟肋",
+          "cid": "8242150",
+          "file": "第076章_崔栩的軟肋.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242150"
+        },
+        {
+          "number": 77,
+          "title": "第七十七章 神秘禮物",
+          "cid": "8242151",
+          "file": "第077章_神秘禮物.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242151"
+        },
+        {
+          "number": 78,
+          "title": "第七十八章 玄關",
+          "cid": "8242152",
+          "file": "第078章_玄關.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242152"
+        },
+        {
+          "number": 79,
+          "title": "第七十九章 符真真",
+          "cid": "8242153",
+          "file": "第079章_符真真.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242153"
+        },
+        {
+          "number": 80,
+          "title": "第八十章 孟奇的選擇",
+          "cid": "8242154",
+          "file": "第080章_孟奇的選擇.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242154"
+        },
+        {
+          "number": 81,
+          "title": "第八十一章 刀",
+          "cid": "8242155",
+          "file": "第081章_刀.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242155"
+        },
+        {
+          "number": 82,
+          "title": "第八十二章 質詢",
+          "cid": "8242156",
+          "file": "第082章_質詢.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242156"
+        },
+        {
+          "number": 83,
+          "title": "第八十三章 處罰",
+          "cid": "8242157",
+          "file": "第083章_處罰.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242157"
+        }
+      ]
     },
     {
-      "number": 2,
-      "title": "第二章 空門",
-      "cid": "8242075",
-      "file": "第002章_空門.txt",
-      "url": "https://tw.hjwzw.com/Book/Read/35150,8242075"
+      "volume": 2,
+      "dir": "卷二",
+      "first": "第一章 瀚海邊緣",
+      "last": "第六十五章 人榜",
+      "chapters": [
+        {
+          "number": 1,
+          "title": "第一章 瀚海邊緣",
+          "cid": "8242158",
+          "file": "第001章_瀚海邊緣.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242158"
+        },
+        {
+          "number": 2,
+          "title": "第二章 哭老人",
+          "cid": "8242159",
+          "file": "第002章_哭老人.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242159"
+        },
+        {
+          "number": 3,
+          "title": "第三章 “天災”",
+          "cid": "8242160",
+          "file": "第003章_“天災”.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242160"
+        },
+        {
+          "number": 4,
+          "title": "第四章 惡戰",
+          "cid": "8242161",
+          "file": "第004章_惡戰.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242161"
+        },
+        {
+          "number": 5,
+          "title": "第五章 戈壁茫茫",
+          "cid": "8242162",
+          "file": "第005章_戈壁茫茫.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242162"
+        },
+        {
+          "number": 6,
+          "title": "第六章 反擊",
+          "cid": "8242163",
+          "file": "第006章_反擊.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242163"
+        },
+        {
+          "number": 7,
+          "title": "第七章 沖穴",
+          "cid": "8242164",
+          "file": "第007章_沖穴.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242164"
+        },
+        {
+          "number": 8,
+          "title": "第八章 真正的機會",
+          "cid": "8242165",
+          "file": "第008章_真正的機會.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242165"
+        },
+        {
+          "number": 9,
+          "title": "第九章 小伙伴們的主意",
+          "cid": "8242166",
+          "file": "第009章_小伙伴們的主意.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242166"
+        },
+        {
+          "number": 10,
+          "title": "第十章 新“隊友”",
+          "cid": "8242167",
+          "file": "第010章_新“隊友”.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242167"
+        },
+        {
+          "number": 11,
+          "title": "第十一章 風云莊",
+          "cid": "8242168",
+          "file": "第011章_風云莊.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242168"
+        },
+        {
+          "number": 12,
+          "title": "第十二章 夜來",
+          "cid": "8242169",
+          "file": "第012章_夜來.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242169"
+        },
+        {
+          "number": 13,
+          "title": "第十三章 “眼光出眾”",
+          "cid": "8242170",
+          "file": "第013章_“眼光出眾”.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242170"
+        },
+        {
+          "number": 14,
+          "title": "第十四章 通幽",
+          "cid": "8242171",
+          "file": "第014章_通幽.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242171"
+        },
+        {
+          "number": 15,
+          "title": "第十五章 獵殺者和被獵殺者",
+          "cid": "8242173",
+          "file": "第015章_獵殺者和被獵殺者.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242173"
+        },
+        {
+          "number": 16,
+          "title": "第十六章 簡單粗暴",
+          "cid": "8242174",
+          "file": "第016章_簡單粗暴.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242174"
+        },
+        {
+          "number": 17,
+          "title": "第十七章 擊殺",
+          "cid": "8242175",
+          "file": "第017章_擊殺.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242175"
+        },
+        {
+          "number": 18,
+          "title": "第十八章 閻羅帖",
+          "cid": "8242176",
+          "file": "第018章_閻羅帖.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242176"
+        },
+        {
+          "number": 19,
+          "title": "第十九章 四大封印之兵",
+          "cid": "8242177",
+          "file": "第019章_四大封印之兵.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242177"
+        },
+        {
+          "number": 20,
+          "title": "第二十章 提醒",
+          "cid": "8242178",
+          "file": "第020章_提醒.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242178"
+        },
+        {
+          "number": 21,
+          "title": "第二十一章 分頭追趕",
+          "cid": "8242179",
+          "file": "第021章_分頭追趕.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242179"
+        },
+        {
+          "number": 22,
+          "title": "第二十二章 魔主之像",
+          "cid": "8242180",
+          "file": "第022章_魔主之像.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242180"
+        },
+        {
+          "number": 23,
+          "title": "第二十三章  有緣之人",
+          "cid": "8242181",
+          "file": "第023章_有緣之人.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242181"
+        },
+        {
+          "number": 24,
+          "title": "第二十四章 顧小桑的目的",
+          "cid": "8242182",
+          "file": "第024章_顧小桑的目的.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242182"
+        },
+        {
+          "number": 25,
+          "title": "第二十五章 入山",
+          "cid": "8242183",
+          "file": "第025章_入山.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242183"
+        },
+        {
+          "number": 25,
+          "title": "第二十五章 門后",
+          "cid": "8242184",
+          "file": "第025章_門后.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242184"
+        },
+        {
+          "number": 26,
+          "title": "第二十六章 魔墳崩",
+          "cid": "8242185",
+          "file": "第026章_魔墳崩.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242185"
+        },
+        {
+          "number": 28,
+          "title": "第二十八章 評價",
+          "cid": "8242186",
+          "file": "第028章_評價.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242186"
+        },
+        {
+          "number": 29,
+          "title": "第二十九章 孟奇的準備",
+          "cid": "8242187",
+          "file": "第029章_孟奇的準備.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242187"
+        },
+        {
+          "number": 30,
+          "title": "第三十章 輪回符",
+          "cid": "8242188",
+          "file": "第030章_輪回符.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242188"
+        },
+        {
+          "number": 31,
+          "title": "第三十一章 雪神掌",
+          "cid": "8242189",
+          "file": "第031章_雪神掌.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242189"
+        },
+        {
+          "number": 32,
+          "title": "第三十二章 法號真定",
+          "cid": "8242190",
+          "file": "第032章_法號真定.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242190"
+        },
+        {
+          "number": 33,
+          "title": "第三十三章 落雪刀",
+          "cid": "8242191",
+          "file": "第033章_落雪刀.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242191"
+        },
+        {
+          "number": 34,
+          "title": "第三十四章 圓蒙遺信",
+          "cid": "8242192",
+          "file": "第034章_圓蒙遺信.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242192"
+        },
+        {
+          "number": 35,
+          "title": "第三十五章 有進無退",
+          "cid": "8242193",
+          "file": "第035章_有進無退.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242193"
+        },
+        {
+          "number": 36,
+          "title": "第三十六章 “熱身”",
+          "cid": "8242194",
+          "file": "第036章_“熱身”.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242194"
+        },
+        {
+          "number": 37,
+          "title": "第三十七章 準備",
+          "cid": "8242195",
+          "file": "第037章_準備.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242195"
+        },
+        {
+          "number": 38,
+          "title": "第三十八章 仇不過夜",
+          "cid": "8242196",
+          "file": "第038章_仇不過夜.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242196"
+        },
+        {
+          "number": 39,
+          "title": "第三十九章 顧長青",
+          "cid": "8242197",
+          "file": "第039章_顧長青.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242197"
+        },
+        {
+          "number": 40,
+          "title": "第四十章 重回流沙集",
+          "cid": "8242198",
+          "file": "第040章_重回流沙集.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242198"
+        },
+        {
+          "number": 41,
+          "title": "第四十一章 年少豪氣",
+          "cid": "8242199",
+          "file": "第041章_年少豪氣.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242199"
+        },
+        {
+          "number": 42,
+          "title": "第四十二章 “跟蹤”",
+          "cid": "8242201",
+          "file": "第042章_“跟蹤”.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242201"
+        },
+        {
+          "number": 43,
+          "title": "第四十三章 所以我自己來了",
+          "cid": "8242203",
+          "file": "第043章_所以我自己來了.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242203"
+        },
+        {
+          "number": 44,
+          "title": "第四十四章 實力的衡量",
+          "cid": "8242205",
+          "file": "第044章_實力的衡量.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242205"
+        },
+        {
+          "number": 45,
+          "title": "第四十五章 沈醉的遺產",
+          "cid": "8242207",
+          "file": "第045章_沈醉的遺產.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242207"
+        },
+        {
+          "number": 46,
+          "title": "第四十六章 囂張的“馬匪”",
+          "cid": "8242209",
+          "file": "第046章_囂張的“馬匪”.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242209"
+        },
+        {
+          "number": 47,
+          "title": "第四十七章 入伙",
+          "cid": "8242211",
+          "file": "第047章_入伙.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242211"
+        },
+        {
+          "number": 48,
+          "title": "第四十八章 元孟支的打算",
+          "cid": "8242213",
+          "file": "第048章_元孟支的打算.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242213"
+        },
+        {
+          "number": 49,
+          "title": "第四十九章 謝酒鬼",
+          "cid": "8242215",
+          "file": "第049章_謝酒鬼.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8242215"
+        },
+        {
+          "number": 50,
+          "title": "第五十章 起風了",
+          "cid": "8246533",
+          "file": "第050章_起風了.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8246533"
+        },
+        {
+          "number": 51,
+          "title": "第五十一章 天誅",
+          "cid": "8257494",
+          "file": "第051章_天誅.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8257494"
+        },
+        {
+          "number": 52,
+          "title": "第五十二章 按劍而去",
+          "cid": "8268321",
+          "file": "第052章_按劍而去.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8268321"
+        },
+        {
+          "number": 53,
+          "title": "第五十三章 他鄉遇“故知”",
+          "cid": "8268737",
+          "file": "第053章_他鄉遇“故知”.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8268737"
+        },
+        {
+          "number": 54,
+          "title": "第五十四章 妖圣遺令",
+          "cid": "8269568",
+          "file": "第054章_妖圣遺令.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8269568"
+        },
+        {
+          "number": 55,
+          "title": "第五十五章 “世外桃源”",
+          "cid": "8279985",
+          "file": "第055章_“世外桃源”.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8279985"
+        },
+        {
+          "number": 56,
+          "title": "第五十六章 重重阻難",
+          "cid": "8280830",
+          "file": "第056章_重重阻難.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8280830"
+        },
+        {
+          "number": 57,
+          "title": "第五十七章 第五關圓滿",
+          "cid": "8281271",
+          "file": "第057章_第五關圓滿.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8281271"
+        },
+        {
+          "number": 58,
+          "title": "第五十八章 不共戴天",
+          "cid": "8282090",
+          "file": "第058章_不共戴天.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8282090"
+        },
+        {
+          "number": 59,
+          "title": "第五十九章 走水",
+          "cid": "8282517",
+          "file": "第059章_走水.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8282517"
+        },
+        {
+          "number": 60,
+          "title": "第六十章 兇神",
+          "cid": "8283351",
+          "file": "第060章_兇神.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8283351"
+        },
+        {
+          "number": 61,
+          "title": "第六十一章 殺人與救人",
+          "cid": "8283478",
+          "file": "第061章_殺人與救人.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8283478"
+        },
+        {
+          "number": 62,
+          "title": "第六十二章 前景“光明”",
+          "cid": "8283769",
+          "file": "第062章_前景“光明”.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8283769"
+        },
+        {
+          "number": 63,
+          "title": "第六十三章  無錯",
+          "cid": "8284595",
+          "file": "第063章_無錯.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8284595"
+        },
+        {
+          "number": 64,
+          "title": "第六十四章 截殺",
+          "cid": "8284768",
+          "file": "第064章_截殺.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8284768"
+        },
+        {
+          "number": 65,
+          "title": "第六十五章 人榜",
+          "cid": "8285020",
+          "file": "第065章_人榜.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8285020"
+        }
+      ]
     },
     {
-      "number": 3,
-      "title": "第三章 舉頭望明月",
-      "cid": "8242076",
-      "file": "第003章_舉頭望明月.txt",
-      "url": "https://tw.hjwzw.com/Book/Read/35150,8242076"
-    },
-    {
-      "number": 4,
-      "title": "第四章 百日筑基",
-      "cid": "8242077",
-      "file": "第004章_百日筑基.txt",
-      "url": "https://tw.hjwzw.com/Book/Read/35150,8242077"
-    },
-    {
-      "number": 5,
-      "title": "第五章 小玉佛",
-      "cid": "8242078",
-      "file": "第005章_小玉佛.txt",
-      "url": "https://tw.hjwzw.com/Book/Read/35150,8242078"
-    },
-    {
-      "number": 6,
-      "title": "第六章 羅漢拳",
-      "cid": "8242079",
-      "file": "第006章_羅漢拳.txt",
-      "url": "https://tw.hjwzw.com/Book/Read/35150,8242079"
-    },
-    {
-      "number": 7,
-      "title": "第七章 天之驕子",
-      "cid": "8242080",
-      "file": "第007章_天之驕子.txt",
-      "url": "https://tw.hjwzw.com/Book/Read/35150,8242080"
-    },
-    {
-      "number": 8,
-      "title": "第八章 奇詭的再聚",
-      "cid": "8242081",
-      "file": "第008章_奇詭的再聚.txt",
-      "url": "https://tw.hjwzw.com/Book/Read/35150,8242081"
-    },
-    {
-      "number": 9,
-      "title": "第九章 隱皇堡",
-      "cid": "8242082",
-      "file": "第009章_隱皇堡.txt",
-      "url": "https://tw.hjwzw.com/Book/Read/35150,8242082"
-    },
-    {
-      "number": 10,
-      "title": "第十章 第一個",
-      "cid": "8242083",
-      "file": "第010章_第一個.txt",
-      "url": "https://tw.hjwzw.com/Book/Read/35150,8242083"
-    },
-    {
-      "number": 11,
-      "title": "第十一章 刀",
-      "cid": "8242084",
-      "file": "第011章_刀.txt",
-      "url": "https://tw.hjwzw.com/Book/Read/35150,8242084"
-    },
-    {
-      "number": 12,
-      "title": "第十二章 第一戰",
-      "cid": "8242085",
-      "file": "第012章_第一戰.txt",
-      "url": "https://tw.hjwzw.com/Book/Read/35150,8242085"
-    },
-    {
-      "number": 13,
-      "title": "第十三章 援手",
-      "cid": "8242086",
-      "file": "第013章_援手.txt",
-      "url": "https://tw.hjwzw.com/Book/Read/35150,8242086"
-    },
-    {
-      "number": 14,
-      "title": "第十四章 自殺",
-      "cid": "8242087",
-      "file": "第014章_自殺.txt",
-      "url": "https://tw.hjwzw.com/Book/Read/35150,8242087"
-    },
-    {
-      "number": 15,
-      "title": "第十五章 堡主",
-      "cid": "8242088",
-      "file": "第015章_堡主.txt",
-      "url": "https://tw.hjwzw.com/Book/Read/35150,8242088"
-    },
-    {
-      "number": 16,
-      "title": "第十六章 孟奇的“理想”",
-      "cid": "8242089",
-      "file": "第016章_孟奇的“理想”.txt",
-      "url": "https://tw.hjwzw.com/Book/Read/35150,8242089"
-    },
-    {
-      "number": 17,
-      "title": "第十七章 兌換",
-      "cid": "8242090",
-      "file": "第017章_兌換.txt",
-      "url": "https://tw.hjwzw.com/Book/Read/35150,8242090"
-    },
-    {
-      "number": 18,
-      "title": "第十八章 回歸",
-      "cid": "8242091",
-      "file": "第018章_回歸.txt",
-      "url": "https://tw.hjwzw.com/Book/Read/35150,8242091"
-    },
-    {
-      "number": 19,
-      "title": "第十九章 勇氣",
-      "cid": "8242092",
-      "file": "第019章_勇氣.txt",
-      "url": "https://tw.hjwzw.com/Book/Read/35150,8242092"
-    },
-    {
-      "number": 20,
-      "title": "第二十章 秘聞",
-      "cid": "8242093",
-      "file": "第020章_秘聞.txt",
-      "url": "https://tw.hjwzw.com/Book/Read/35150,8242093"
-    },
-    {
-      "number": 21,
-      "title": "第二十一章 禍福相依",
-      "cid": "8242094",
-      "file": "第021章_禍福相依.txt",
-      "url": "https://tw.hjwzw.com/Book/Read/35150,8242094"
-    },
-    {
-      "number": 22,
-      "title": "第二十二章 反應",
-      "cid": "8242095",
-      "file": "第022章_反應.txt",
-      "url": "https://tw.hjwzw.com/Book/Read/35150,8242095"
-    },
-    {
-      "number": 23,
-      "title": "第二十三章 “善心”",
-      "cid": "8242096",
-      "file": "第023章_“善心”.txt",
-      "url": "https://tw.hjwzw.com/Book/Read/35150,8242096"
-    },
-    {
-      "number": 24,
-      "title": "第二十四章 對練",
-      "cid": "8242097",
-      "file": "第024章_對練.txt",
-      "url": "https://tw.hjwzw.com/Book/Read/35150,8242097"
-    },
-    {
-      "number": 25,
-      "title": "第二十五章 演武殿一霸",
-      "cid": "8242098",
-      "file": "第025章_演武殿一霸.txt",
-      "url": "https://tw.hjwzw.com/Book/Read/35150,8242098"
-    },
-    {
-      "number": 26,
-      "title": "第二十六章 惡人小孟",
-      "cid": "8242099",
-      "file": "第026章_惡人小孟.txt",
-      "url": "https://tw.hjwzw.com/Book/Read/35150,8242099"
-    },
-    {
-      "number": 27,
-      "title": "第二十七章 獎勵與“處罰”",
-      "cid": "8242100",
-      "file": "第027章_獎勵與“處罰”.txt",
-      "url": "https://tw.hjwzw.com/Book/Read/35150,8242100"
-    },
-    {
-      "number": 28,
-      "title": "第二十八章 新的任務",
-      "cid": "8242101",
-      "file": "第028章_新的任務.txt",
-      "url": "https://tw.hjwzw.com/Book/Read/35150,8242101"
-    },
-    {
-      "number": 29,
-      "title": "第二十九章 圍殺",
-      "cid": "8242102",
-      "file": "第029章_圍殺.txt",
-      "url": "https://tw.hjwzw.com/Book/Read/35150,8242102"
-    },
-    {
-      "number": 30,
-      "title": "第三十章 “化緣”",
-      "cid": "8242103",
-      "file": "第030章_“化緣”.txt",
-      "url": "https://tw.hjwzw.com/Book/Read/35150,8242103"
-    },
-    {
-      "number": 31,
-      "title": "第三十一章 血戰",
-      "cid": "8242104",
-      "file": "第031章_血戰.txt",
-      "url": "https://tw.hjwzw.com/Book/Read/35150,8242104"
-    },
-    {
-      "number": 32,
-      "title": "第三十二章 重逢",
-      "cid": "8242105",
-      "file": "第032章_重逢.txt",
-      "url": "https://tw.hjwzw.com/Book/Read/35150,8242105"
-    },
-    {
-      "number": 33,
-      "title": "第三十三章 心寂大師",
-      "cid": "8242106",
-      "file": "第033章_心寂大師.txt",
-      "url": "https://tw.hjwzw.com/Book/Read/35150,8242106"
-    },
-    {
-      "number": 34,
-      "title": "第三十四章 支線",
-      "cid": "8242107",
-      "file": "第034章_支線.txt",
-      "url": "https://tw.hjwzw.com/Book/Read/35150,8242107"
-    },
-    {
-      "number": 35,
-      "title": "第三十五章 風聲雨聲",
-      "cid": "8242108",
-      "file": "第035章_風聲雨聲.txt",
-      "url": "https://tw.hjwzw.com/Book/Read/35150,8242108"
-    },
-    {
-      "number": 36,
-      "title": "第三十六章 朵兒察",
-      "cid": "8242109",
-      "file": "第036章_朵兒察.txt",
-      "url": "https://tw.hjwzw.com/Book/Read/35150,8242109"
-    },
-    {
-      "number": 37,
-      "title": "第三十七章 義薄云天屬小孟",
-      "cid": "8242110",
-      "file": "第037章_義薄云天屬小孟.txt",
-      "url": "https://tw.hjwzw.com/Book/Read/35150,8242110"
-    },
-    {
-      "number": 38,
-      "title": "第三十八章 掌上乾坤",
-      "cid": "8242111",
-      "file": "第038章_掌上乾坤.txt",
-      "url": "https://tw.hjwzw.com/Book/Read/35150,8242111"
-    },
-    {
-      "number": 39,
-      "title": "第三十九章 意外之財",
-      "cid": "8242112",
-      "file": "第039章_意外之財.txt",
-      "url": "https://tw.hjwzw.com/Book/Read/35150,8242112"
-    },
-    {
-      "number": 40,
-      "title": "第四十章 石室",
-      "cid": "8242113",
-      "file": "第040章_石室.txt",
-      "url": "https://tw.hjwzw.com/Book/Read/35150,8242113"
+      "volume": 3,
+      "dir": "卷三",
+      "first": "第一章 仗劍江湖閑散意",
+      "last": "第三百五十二章 仰天大笑出門去",
+      "chapters": [
+        {
+          "number": 1,
+          "title": "第一章 仗劍江湖閑散意",
+          "cid": "8297038",
+          "file": "第001章_仗劍江湖閑散意.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8297038"
+        },
+        {
+          "number": 2,
+          "title": "第二章 天外奇石",
+          "cid": "8297179",
+          "file": "第002章_天外奇石.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8297179"
+        },
+        {
+          "number": 3,
+          "title": "第三章 “切磋”",
+          "cid": "8297616",
+          "file": "第003章_“切磋”.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8297616"
+        },
+        {
+          "number": 4,
+          "title": "第四章 劍法揚威",
+          "cid": "8298232",
+          "file": "第004章_劍法揚威.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8298232"
+        },
+        {
+          "number": 5,
+          "title": "第五章  王氏",
+          "cid": "8298660",
+          "file": "第005章_王氏.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8298660"
+        },
+        {
+          "number": 6,
+          "title": "第六章 病急亂投醫",
+          "cid": "8299443",
+          "file": "第006章_病急亂投醫.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8299443"
+        },
+        {
+          "number": 7,
+          "title": "第七章 夜行",
+          "cid": "8299877",
+          "file": "第007章_夜行.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8299877"
+        },
+        {
+          "number": 8,
+          "title": "第八章 氣勢",
+          "cid": "8300664",
+          "file": "第008章_氣勢.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8300664"
+        },
+        {
+          "number": 9,
+          "title": "第九章 壓制",
+          "cid": "8301091",
+          "file": "第009章_壓制.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8301091"
+        },
+        {
+          "number": 10,
+          "title": "第十章 霸王絕刀",
+          "cid": "8301687",
+          "file": "第010章_霸王絕刀.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8301687"
+        },
+        {
+          "number": 11,
+          "title": "第十一章 臨真武",
+          "cid": "8302325",
+          "file": "第011章_臨真武.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8302325"
+        },
+        {
+          "number": 12,
+          "title": "第十二章 小孟的“兼職”",
+          "cid": "8303119",
+          "file": "第012章_小孟的“兼職”.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8303119"
+        },
+        {
+          "number": 13,
+          "title": "第十三章 真武內況",
+          "cid": "8303530",
+          "file": "第013章_真武內況.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8303530"
+        },
+        {
+          "number": 14,
+          "title": "第十四章 姚家小鬼",
+          "cid": "8304320",
+          "file": "第014章_姚家小鬼.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8304320"
+        },
+        {
+          "number": 15,
+          "title": "第十五章 邪劫",
+          "cid": "8304720",
+          "file": "第015章_邪劫.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8304720"
+        },
+        {
+          "number": 16,
+          "title": "第十六章 協作任務",
+          "cid": "8305542",
+          "file": "第016章_協作任務.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8305542"
+        },
+        {
+          "number": 17,
+          "title": "第十七章 瑯琊阮氏",
+          "cid": "8305928",
+          "file": "第017章_瑯琊阮氏.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8305928"
+        },
+        {
+          "number": 18,
+          "title": "第十八章 來襲",
+          "cid": "8306707",
+          "file": "第018章_來襲.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8306707"
+        },
+        {
+          "number": 19,
+          "title": "第十九章 毒無常",
+          "cid": "8307124",
+          "file": "第019章_毒無常.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8307124"
+        },
+        {
+          "number": 20,
+          "title": "第二十章 四招",
+          "cid": "8307930",
+          "file": "第020章_四招.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8307930"
+        },
+        {
+          "number": 21,
+          "title": "第二十一章 夜鎮山神廟",
+          "cid": "8308306",
+          "file": "第021章_夜鎮山神廟.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8308306"
+        },
+        {
+          "number": 22,
+          "title": "第二十二章 劍入京師風云動",
+          "cid": "8309065",
+          "file": "第022章_劍入京師風云動.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8309065"
+        },
+        {
+          "number": 23,
+          "title": "第二十三章 攔路者",
+          "cid": "8309484",
+          "file": "第023章_攔路者.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8309484"
+        },
+        {
+          "number": 24,
+          "title": "第二十四章 劍道之說",
+          "cid": "8310147",
+          "file": "第024章_劍道之說.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8310147"
+        },
+        {
+          "number": 25,
+          "title": "第二十五章 群英匯聚",
+          "cid": "8310710",
+          "file": "第025章_群英匯聚.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8310710"
+        },
+        {
+          "number": 26,
+          "title": "第二十六章 配合",
+          "cid": "8311691",
+          "file": "第026章_配合.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8311691"
+        },
+        {
+          "number": 27,
+          "title": "第二十七章 三個消息",
+          "cid": "8311939",
+          "file": "第027章_三個消息.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8311939"
+        },
+        {
+          "number": 28,
+          "title": "第二十八章 縱論",
+          "cid": "8312732",
+          "file": "第028章_縱論.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8312732"
+        },
+        {
+          "number": 29,
+          "title": "第二十九章 不同的態度",
+          "cid": "8312872",
+          "file": "第029章_不同的態度.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8312872"
+        },
+        {
+          "number": 30,
+          "title": "第三十章 再“會”",
+          "cid": "8313173",
+          "file": "第030章_再“會”.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8313173"
+        },
+        {
+          "number": 31,
+          "title": "第三十一章 硬擒",
+          "cid": "8313946",
+          "file": "第031章_硬擒.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8313946"
+        },
+        {
+          "number": 32,
+          "title": "第三十二章 天羅功",
+          "cid": "8314099",
+          "file": "第032章_天羅功.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8314099"
+        },
+        {
+          "number": 33,
+          "title": "第三十三章 破氣",
+          "cid": "8314382",
+          "file": "第033章_破氣.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8314382"
+        },
+        {
+          "number": 34,
+          "title": "第三十四章 天人交感",
+          "cid": "8315197",
+          "file": "第034章_天人交感.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8315197"
+        },
+        {
+          "number": 35,
+          "title": "第三十五章 潛入",
+          "cid": "8315348",
+          "file": "第035章_潛入.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8315348"
+        },
+        {
+          "number": 36,
+          "title": "第三十六章 弄巧成拙",
+          "cid": "8315681",
+          "file": "第036章_弄巧成拙.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8315681"
+        },
+        {
+          "number": 38,
+          "title": "第三十八章 老狐貍與小狐貍",
+          "cid": "8316326",
+          "file": "第038章_老狐貍與小狐貍.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8316326"
+        },
+        {
+          "number": 38,
+          "title": "第三十八章 皇圖霸業談笑間",
+          "cid": "8320192",
+          "file": "第038章_皇圖霸業談笑間.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8320192"
+        },
+        {
+          "number": 39,
+          "title": "第三十九章 黑夜已至",
+          "cid": "8326626",
+          "file": "第039章_黑夜已至.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8326626"
+        },
+        {
+          "number": 40,
+          "title": "第四十章 兩把“劍”",
+          "cid": "8327280",
+          "file": "第040章_兩把“劍”.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8327280"
+        },
+        {
+          "number": 41,
+          "title": "第四十一章 咫尺之內,人盡敵國",
+          "cid": "8337593",
+          "file": "第041章_咫尺之內,人盡敵國.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8337593"
+        },
+        {
+          "number": 42,
+          "title": "第四十二章 飄然而“去”",
+          "cid": "8338095",
+          "file": "第042章_飄然而“去”.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8338095"
+        },
+        {
+          "number": 43,
+          "title": "第四十三章 死亡任務的壓力",
+          "cid": "8338681",
+          "file": "第043章_死亡任務的壓力.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8338681"
+        },
+        {
+          "number": 44,
+          "title": "第四十四章 王氏易書",
+          "cid": "8338957",
+          "file": "第044章_王氏易書.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8338957"
+        },
+        {
+          "number": 45,
+          "title": "第四十五章 江芷微的發現",
+          "cid": "8339820",
+          "file": "第045章_江芷微的發現.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8339820"
+        },
+        {
+          "number": 46,
+          "title": "第四十六章 初夏雪",
+          "cid": "8340288",
+          "file": "第046章_初夏雪.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8340288"
+        },
+        {
+          "number": 47,
+          "title": "第四十七章 圍觀群眾路人孟",
+          "cid": "8351124",
+          "file": "第047章_圍觀群眾路人孟.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8351124"
+        },
+        {
+          "number": 48,
+          "title": "第四十八章 君子之風",
+          "cid": "8351572",
+          "file": "第048章_君子之風.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8351572"
+        },
+        {
+          "number": 49,
+          "title": "第四十九章 邑城世家",
+          "cid": "8352423",
+          "file": "第049章_邑城世家.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8352423"
+        },
+        {
+          "number": 50,
+          "title": "第五十章 順路取劍,酒尚未開",
+          "cid": "8352832",
+          "file": "第050章_順路取劍,酒尚未開.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8352832"
+        },
+        {
+          "number": 51,
+          "title": "第五十一章 以彼之道",
+          "cid": "8353709",
+          "file": "第051章_以彼之道.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8353709"
+        },
+        {
+          "number": 52,
+          "title": "第五十二章 獨孤天刀戰渾天",
+          "cid": "8354155",
+          "file": "第052章_獨孤天刀戰渾天.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8354155"
+        },
+        {
+          "number": 53,
+          "title": "第五十三章 唐明月",
+          "cid": "8355005",
+          "file": "第053章_唐明月.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8355005"
+        },
+        {
+          "number": 54,
+          "title": "第五十四章 花月之戰",
+          "cid": "8355445",
+          "file": "第054章_花月之戰.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8355445"
+        },
+        {
+          "number": 55,
+          "title": "第五十五章 余波",
+          "cid": "8356265",
+          "file": "第055章_余波.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8356265"
+        },
+        {
+          "number": 56,
+          "title": "第五十六章 破銅爛鐵",
+          "cid": "8356700",
+          "file": "第056章_破銅爛鐵.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8356700"
+        },
+        {
+          "number": 57,
+          "title": "第五十七章 刀震四家",
+          "cid": "8357224",
+          "file": "第057章_刀震四家.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8357224"
+        },
+        {
+          "number": 58,
+          "title": "第五十八章 因果",
+          "cid": "8357957",
+          "file": "第058章_因果.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8357957"
+        },
+        {
+          "number": 59,
+          "title": "第五十九章 翻手為云覆手為雨",
+          "cid": "8358822",
+          "file": "第059章_翻手為云覆手為雨.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8358822"
+        },
+        {
+          "number": 60,
+          "title": "第六十章 破浪一斬",
+          "cid": "8359244",
+          "file": "第060章_破浪一斬.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8359244"
+        },
+        {
+          "number": 61,
+          "title": "第六十一章 圖窮",
+          "cid": "8360052",
+          "file": "第061章_圖窮.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8360052"
+        },
+        {
+          "number": 62,
+          "title": "第六十二章 匕現",
+          "cid": "8370469",
+          "file": "第062章_匕現.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8370469"
+        },
+        {
+          "number": 63,
+          "title": "第六十三章 小院血戰",
+          "cid": "8371292",
+          "file": "第063章_小院血戰.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8371292"
+        },
+        {
+          "number": 64,
+          "title": "第六十四章 蠻不講理的打法",
+          "cid": "8371706",
+          "file": "第064章_蠻不講理的打法.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8371706"
+        },
+        {
+          "number": 65,
+          "title": "第六十五章 千面",
+          "cid": "8382508",
+          "file": "第065章_千面.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8382508"
+        },
+        {
+          "number": 66,
+          "title": "第六十六章 “神靈不死”",
+          "cid": "8382940",
+          "file": "第066章_“神靈不死”.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8382940"
+        },
+        {
+          "number": 67,
+          "title": "第六十七章 邪神",
+          "cid": "8383737",
+          "file": "第067章_邪神.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8383737"
+        },
+        {
+          "number": 68,
+          "title": "第六十八章 事了",
+          "cid": "8384163",
+          "file": "第068章_事了.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8384163"
+        },
+        {
+          "number": 69,
+          "title": "第六十九章 鄴都初聞",
+          "cid": "8384921",
+          "file": "第069章_鄴都初聞.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8384921"
+        },
+        {
+          "number": 70,
+          "title": "第七十章 周郡人杰譜",
+          "cid": "8384922",
+          "file": "第070章_周郡人杰譜.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8384922"
+        },
+        {
+          "number": 71,
+          "title": "第七十一章 講故事",
+          "cid": "8385866",
+          "file": "第071章_講故事.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8385866"
+        },
+        {
+          "number": 72,
+          "title": "第七十二章 陰陽三合",
+          "cid": "8386568",
+          "file": "第072章_陰陽三合.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8386568"
+        },
+        {
+          "number": 73,
+          "title": "第七十三章 玉橋燈如晝",
+          "cid": "8387492",
+          "file": "第073章_玉橋燈如晝.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8387492"
+        },
+        {
+          "number": 74,
+          "title": "第七十四章 試探",
+          "cid": "8387762",
+          "file": "第074章_試探.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8387762"
+        },
+        {
+          "number": 75,
+          "title": "第七十五章 “招攬”",
+          "cid": "8408703",
+          "file": "第075章_“招攬”.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8408703"
+        },
+        {
+          "number": 76,
+          "title": "第七十六章 玄女傳人的秘密",
+          "cid": "8408999",
+          "file": "第076章_玄女傳人的秘密.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8408999"
+        },
+        {
+          "number": 77,
+          "title": "第七十七章  爾虞我詐",
+          "cid": "8409397",
+          "file": "第077章_爾虞我詐.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8409397"
+        },
+        {
+          "number": 78,
+          "title": "第七十八章 煥然一新的孟奇",
+          "cid": "8409947",
+          "file": "第078章_煥然一新的孟奇.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8409947"
+        },
+        {
+          "number": 79,
+          "title": "第七十九章 鄴都第一戰",
+          "cid": "8410209",
+          "file": "第079章_鄴都第一戰.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8410209"
+        },
+        {
+          "number": 80,
+          "title": "第八十章 江湖名局",
+          "cid": "8410620",
+          "file": "第080章_江湖名局.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8410620"
+        },
+        {
+          "number": 81,
+          "title": "第八十一章 照面",
+          "cid": "8411147",
+          "file": "第081章_照面.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8411147"
+        },
+        {
+          "number": 82,
+          "title": "第八十二章 萬花酒",
+          "cid": "8411411",
+          "file": "第082章_萬花酒.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8411411"
+        },
+        {
+          "number": 83,
+          "title": "第八十三章 素衣白裙招魂使",
+          "cid": "8411823",
+          "file": "第083章_素衣白裙招魂使.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8411823"
+        },
+        {
+          "number": 84,
+          "title": "第八十四章 巍峨之門",
+          "cid": "8412299",
+          "file": "第084章_巍峨之門.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8412299"
+        },
+        {
+          "number": 85,
+          "title": "第八十五章 善后",
+          "cid": "8412559",
+          "file": "第085章_善后.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8412559"
+        },
+        {
+          "number": 86,
+          "title": "第八十六章 六扇門中好修行",
+          "cid": "8413504",
+          "file": "第086章_六扇門中好修行.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8413504"
+        },
+        {
+          "number": 87,
+          "title": "第八十七章 人榜之爭",
+          "cid": "8413763",
+          "file": "第087章_人榜之爭.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8413763"
+        },
+        {
+          "number": 88,
+          "title": "第八十八章  狂猛無儔",
+          "cid": "8414384",
+          "file": "第088章_狂猛無儔.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8414384"
+        },
+        {
+          "number": 89,
+          "title": "第八十九章 人榜更新",
+          "cid": "8425072",
+          "file": "第089章_人榜更新.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8425072"
+        },
+        {
+          "number": 90,
+          "title": "第九十章 狂雷震九霄",
+          "cid": "8435811",
+          "file": "第090章_狂雷震九霄.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8435811"
+        },
+        {
+          "number": 91,
+          "title": "第九十一章 起始",
+          "cid": "8436247",
+          "file": "第091章_起始.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8436247"
+        },
+        {
+          "number": 92,
+          "title": "第九十二章 大兇",
+          "cid": "8437004",
+          "file": "第092章_大兇.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8437004"
+        },
+        {
+          "number": 93,
+          "title": "第九十三章 第一日",
+          "cid": "8437416",
+          "file": "第093章_第一日.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8437416"
+        },
+        {
+          "number": 94,
+          "title": "第九十四章 活口",
+          "cid": "8438185",
+          "file": "第094章_活口.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8438185"
+        },
+        {
+          "number": 95,
+          "title": "第九十五章 熟妖",
+          "cid": "8438608",
+          "file": "第095章_熟妖.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8438608"
+        },
+        {
+          "number": 96,
+          "title": "第九十六章 第二日",
+          "cid": "8439583",
+          "file": "第096章_第二日.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8439583"
+        },
+        {
+          "number": 97,
+          "title": "第九十七章 包圍",
+          "cid": "8439884",
+          "file": "第097章_包圍.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8439884"
+        },
+        {
+          "number": 98,
+          "title": "第九十八章 山窮水盡",
+          "cid": "8440623",
+          "file": "第098章_山窮水盡.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8440623"
+        },
+        {
+          "number": 99,
+          "title": "第九十九章 只差一點",
+          "cid": "8441042",
+          "file": "第099章_只差一點.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8441042"
+        },
+        {
+          "number": 100,
+          "title": "第一百章 勝人易勝己難",
+          "cid": "8441818",
+          "file": "第100章_勝人易勝己難.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8441818"
+        },
+        {
+          "number": 101,
+          "title": "第一百零一章 心",
+          "cid": "8442284",
+          "file": "第101章_心.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8442284"
+        },
+        {
+          "number": 102,
+          "title": "第一百零二章 肉體凡胎",
+          "cid": "8442907",
+          "file": "第102章_肉體凡胎.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8442907"
+        },
+        {
+          "number": 103,
+          "title": "第一百零三章 瑯嬛神音",
+          "cid": "8443342",
+          "file": "第103章_瑯嬛神音.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8443342"
+        },
+        {
+          "number": 104,
+          "title": "第一百零四章 慘烈",
+          "cid": "8443655",
+          "file": "第104章_慘烈.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8443655"
+        },
+        {
+          "number": 105,
+          "title": "第一百零五章 絕境生機",
+          "cid": "8444486",
+          "file": "第105章_絕境生機.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8444486"
+        },
+        {
+          "number": 106,
+          "title": "第一百零六章 不甘心",
+          "cid": "8444626",
+          "file": "第106章_不甘心.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8444626"
+        },
+        {
+          "number": 107,
+          "title": "第一百零七章 往生",
+          "cid": "8445252",
+          "file": "第107章_往生.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8445252"
+        },
+        {
+          "number": 108,
+          "title": "第一百零八章 青燈",
+          "cid": "8445709",
+          "file": "第108章_青燈.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8445709"
+        },
+        {
+          "number": 109,
+          "title": "第一百零九章 回首向來蕭瑟處",
+          "cid": "8445855",
+          "file": "第109章_回首向來蕭瑟處.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8445855"
+        },
+        {
+          "number": 110,
+          "title": "第一百一十章 收獲",
+          "cid": "8446111",
+          "file": "第110章_收獲.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8446111"
+        },
+        {
+          "number": 111,
+          "title": "第一百一十一章 天之傷",
+          "cid": "8446877",
+          "file": "第111章_天之傷.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8446877"
+        },
+        {
+          "number": 112,
+          "title": "第一百一十二章 千里冰封",
+          "cid": "8447309",
+          "file": "第112章_千里冰封.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8447309"
+        },
+        {
+          "number": 113,
+          "title": "第一百一十三章 神都蘇氏",
+          "cid": "8448163",
+          "file": "第113章_神都蘇氏.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8448163"
+        },
+        {
+          "number": 114,
+          "title": "第一百一十四章 小蘇捕頭",
+          "cid": "8448430",
+          "file": "第114章_小蘇捕頭.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8448430"
+        },
+        {
+          "number": 115,
+          "title": "第一百一十五章 噩夢人生",
+          "cid": "8449129",
+          "file": "第115章_噩夢人生.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8449129"
+        },
+        {
+          "number": 116,
+          "title": "第一百一十六章 老鐘頭",
+          "cid": "8449515",
+          "file": "第116章_老鐘頭.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8449515"
+        },
+        {
+          "number": 117,
+          "title": "第一百一十七章 詭異的尸體",
+          "cid": "8450254",
+          "file": "第117章_詭異的尸體.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8450254"
+        },
+        {
+          "number": 118,
+          "title": "第一百一十八章 夜深人不靜",
+          "cid": "8450610",
+          "file": "第118章_夜深人不靜.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8450610"
+        },
+        {
+          "number": 119,
+          "title": "第一百一十九章 此乃公門之地",
+          "cid": "8451223",
+          "file": "第119章_此乃公門之地.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8451223"
+        },
+        {
+          "number": 120,
+          "title": "第一百二十章 趕尸之人",
+          "cid": "8451722",
+          "file": "第120章_趕尸之人.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8451722"
+        },
+        {
+          "number": 121,
+          "title": "第一百二十一章 山岳天降",
+          "cid": "8452447",
+          "file": "第121章_山岳天降.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8452447"
+        },
+        {
+          "number": 121,
+          "title": "第一百二十一章 瘋子",
+          "cid": "8452799",
+          "file": "第121章_瘋子.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8452799"
+        },
+        {
+          "number": 123,
+          "title": "第一百二十三章 東陽神君",
+          "cid": "8453640",
+          "file": "第123章_東陽神君.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8453640"
+        },
+        {
+          "number": 124,
+          "title": "第一百二十四章 江東",
+          "cid": "8464606",
+          "file": "第124章_江東.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8464606"
+        },
+        {
+          "number": 125,
+          "title": "第一百二十五章 英雄樓",
+          "cid": "8464984",
+          "file": "第125章_英雄樓.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8464984"
+        },
+        {
+          "number": 126,
+          "title": "第一百二十六章 劍快近音",
+          "cid": "8465282",
+          "file": "第126章_劍快近音.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8465282"
+        },
+        {
+          "number": 127,
+          "title": "第一百二十七章 殺意",
+          "cid": "8465676",
+          "file": "第127章_殺意.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8465676"
+        },
+        {
+          "number": 128,
+          "title": "第一百二十八章 撞見",
+          "cid": "8466036",
+          "file": "第128章_撞見.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8466036"
+        },
+        {
+          "number": 129,
+          "title": "第一百二十九章 境界壓人",
+          "cid": "8466360",
+          "file": "第129章_境界壓人.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8466360"
+        },
+        {
+          "number": 130,
+          "title": "第一百三十章 歸一",
+          "cid": "8466748",
+          "file": "第130章_歸一.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8466748"
+        },
+        {
+          "number": 131,
+          "title": "第一百三十一章 真實不虛",
+          "cid": "8467117",
+          "file": "第131章_真實不虛.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8467117"
+        },
+        {
+          "number": 132,
+          "title": "第一百三十二章 不瘋癲不成活",
+          "cid": "8467457",
+          "file": "第132章_不瘋癲不成活.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8467457"
+        },
+        {
+          "number": 133,
+          "title": "第一百三十三章 不破繭不成蝶",
+          "cid": "8467824",
+          "file": "第133章_不破繭不成蝶.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8467824"
+        },
+        {
+          "number": 133,
+          "title": "第一百三十三章 分頭行動",
+          "cid": "8468187",
+          "file": "第133章_分頭行動.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8468187"
+        },
+        {
+          "number": 135,
+          "title": "第一百三十五章 青帝滅長生",
+          "cid": "8468699",
+          "file": "第135章_青帝滅長生.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8468699"
+        },
+        {
+          "number": 136,
+          "title": "第一百三十六章 出乎意料的線索",
+          "cid": "8469296",
+          "file": "第136章_出乎意料的線索.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8469296"
+        },
+        {
+          "number": 137,
+          "title": "第一百三十七章 思維層次",
+          "cid": "8469992",
+          "file": "第137章_思維層次.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8469992"
+        },
+        {
+          "number": 138,
+          "title": "第一百三十八章 生死無常",
+          "cid": "8470352",
+          "file": "第138章_生死無常.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8470352"
+        },
+        {
+          "number": 139,
+          "title": "第一百三十九章 真武疑冢",
+          "cid": "8481040",
+          "file": "第139章_真武疑冢.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8481040"
+        },
+        {
+          "number": 140,
+          "title": "第一百四十章 生死轉換",
+          "cid": "8481388",
+          "file": "第140章_生死轉換.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8481388"
+        },
+        {
+          "number": 141,
+          "title": "第一百四十一章 太陰蕩魔真訣",
+          "cid": "8482192",
+          "file": "第141章_太陰蕩魔真訣.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8482192"
+        },
+        {
+          "number": 142,
+          "title": "第一百四十二章 鎮龍臺",
+          "cid": "8482408",
+          "file": "第142章_鎮龍臺.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8482408"
+        },
+        {
+          "number": 143,
+          "title": "第一百四十三章 生平九憾",
+          "cid": "8483077",
+          "file": "第143章_生平九憾.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8483077"
+        },
+        {
+          "number": 144,
+          "title": "第一百四十四章 喂招",
+          "cid": "8483402",
+          "file": "第144章_喂招.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8483402"
+        },
+        {
+          "number": 145,
+          "title": "第一百四十五章 第二步",
+          "cid": "8484076",
+          "file": "第145章_第二步.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8484076"
+        },
+        {
+          "number": 146,
+          "title": "第一百四十六章 收獲",
+          "cid": "8484402",
+          "file": "第146章_收獲.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8484402"
+        },
+        {
+          "number": 147,
+          "title": "第一百四十七章 別來無恙",
+          "cid": "8485054",
+          "file": "第147章_別來無恙.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8485054"
+        },
+        {
+          "number": 148,
+          "title": "第一百四十八章 都在演戲",
+          "cid": "8485393",
+          "file": "第148章_都在演戲.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8485393"
+        },
+        {
+          "number": 149,
+          "title": "第一百四十九章 試探",
+          "cid": "8485851",
+          "file": "第149章_試探.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8485851"
+        },
+        {
+          "number": 150,
+          "title": "第一百五十章 獵殺",
+          "cid": "8486225",
+          "file": "第150章_獵殺.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8486225"
+        },
+        {
+          "number": 151,
+          "title": "第一百五十一章 狼王下落的線索",
+          "cid": "8486430",
+          "file": "第151章_狼王下落的線索.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8486430"
+        },
+        {
+          "number": 152,
+          "title": "第一百五十二章 北街",
+          "cid": "8486890",
+          "file": "第152章_北街.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8486890"
+        },
+        {
+          "number": 153,
+          "title": "第一百五十三章 兩名護法",
+          "cid": "8487208",
+          "file": "第153章_兩名護法.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8487208"
+        },
+        {
+          "number": 154,
+          "title": "第一百五十四章 驚醒的蛇王",
+          "cid": "8487445",
+          "file": "第154章_驚醒的蛇王.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8487445"
+        },
+        {
+          "number": 155,
+          "title": "第一百五十五章 屈服",
+          "cid": "8488093",
+          "file": "第155章_屈服.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8488093"
+        },
+        {
+          "number": 156,
+          "title": "第一百五十六章 “誤”中副車",
+          "cid": "8488450",
+          "file": "第156章_“誤”中副車.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8488450"
+        },
+        {
+          "number": 157,
+          "title": "第一百五十七章 正戲將至",
+          "cid": "8489106",
+          "file": "第157章_正戲將至.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8489106"
+        },
+        {
+          "number": 158,
+          "title": "第一百五十八章 月正明",
+          "cid": "8489464",
+          "file": "第158章_月正明.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8489464"
+        },
+        {
+          "number": 159,
+          "title": "第一百五十九章 蔣橫川的邀請",
+          "cid": "8490209",
+          "file": "第159章_蔣橫川的邀請.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8490209"
+        },
+        {
+          "number": 160,
+          "title": "第一百六十章 各殺一人",
+          "cid": "8490523",
+          "file": "第160章_各殺一人.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8490523"
+        },
+        {
+          "number": 161,
+          "title": "第一百六十一章 布局的核心",
+          "cid": "8491153",
+          "file": "第161章_布局的核心.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8491153"
+        },
+        {
+          "number": 162,
+          "title": "第一百六十二章 誰是黃雀",
+          "cid": "8491501",
+          "file": "第162章_誰是黃雀.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8491501"
+        },
+        {
+          "number": 163,
+          "title": "第一百六十三章 江湖險惡",
+          "cid": "8492130",
+          "file": "第163章_江湖險惡.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8492130"
+        },
+        {
+          "number": 164,
+          "title": "第一百六十四章 一朝斬斷九幽路",
+          "cid": "8492482",
+          "file": "第164章_一朝斬斷九幽路.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8492482"
+        },
+        {
+          "number": 165,
+          "title": "第一百六十五章 東華青書",
+          "cid": "8493333",
+          "file": "第165章_東華青書.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8493333"
+        },
+        {
+          "number": 166,
+          "title": "第一百六十六章 十刀之約",
+          "cid": "8493588",
+          "file": "第166章_十刀之約.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8493588"
+        },
+        {
+          "number": 167,
+          "title": "第一百六十七章 恭候",
+          "cid": "8494014",
+          "file": "第167章_恭候.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8494014"
+        },
+        {
+          "number": 168,
+          "title": "第一百六十八章 錦水一戰",
+          "cid": "8494426",
+          "file": "第168章_錦水一戰.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8494426"
+        },
+        {
+          "number": 169,
+          "title": "第一百六十九章 泛舟湖上",
+          "cid": "8494664",
+          "file": "第169章_泛舟湖上.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8494664"
+        },
+        {
+          "number": 170,
+          "title": "第一百七十章 行俠仗義有小孟",
+          "cid": "8495214",
+          "file": "第170章_行俠仗義有小孟.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8495214"
+        },
+        {
+          "number": 171,
+          "title": "第一百七十一章 名“宿”小孟",
+          "cid": "8495531",
+          "file": "第171章_名“宿”小孟.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8495531"
+        },
+        {
+          "number": 172,
+          "title": "第一百七十二章 詭異的段瑞",
+          "cid": "8495793",
+          "file": "第172章_詭異的段瑞.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8495793"
+        },
+        {
+          "number": 173,
+          "title": "第一百七十三章 離魂癥",
+          "cid": "8496263",
+          "file": "第173章_離魂癥.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8496263"
+        },
+        {
+          "number": 174,
+          "title": "第一百七十四章 九個姿勢",
+          "cid": "8496735",
+          "file": "第174章_九個姿勢.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8496735"
+        },
+        {
+          "number": 175,
+          "title": "第一百七十五章 偏激“邪魔”",
+          "cid": "8496988",
+          "file": "第175章_偏激“邪魔”.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8496988"
+        },
+        {
+          "number": 176,
+          "title": "第一百七十六章 九不神醫",
+          "cid": "8497329",
+          "file": "第176章_九不神醫.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8497329"
+        },
+        {
+          "number": 177,
+          "title": "第一百七十七章 過明路",
+          "cid": "8497814",
+          "file": "第177章_過明路.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8497814"
+        },
+        {
+          "number": 178,
+          "title": "第一百七十八章 略施身手",
+          "cid": "8498064",
+          "file": "第178章_略施身手.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8498064"
+        },
+        {
+          "number": 179,
+          "title": "第一百七十九章 以刀闡理",
+          "cid": "8498835",
+          "file": "第179章_以刀闡理.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8498835"
+        },
+        {
+          "number": 180,
+          "title": "第一百八十章 火皇焚乾坤",
+          "cid": "8499132",
+          "file": "第180章_火皇焚乾坤.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8499132"
+        },
+        {
+          "number": 181,
+          "title": "第一百八十一章 長街一戰的真實“結果”",
+          "cid": "8499440",
+          "file": "第181章_長街一戰的真實“結果”.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8499440"
+        },
+        {
+          "number": 182,
+          "title": "第一百八十二章 不得不做",
+          "cid": "8499922",
+          "file": "第182章_不得不做.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8499922"
+        },
+        {
+          "number": 183,
+          "title": "第一百八十三章 新排名",
+          "cid": "8500161",
+          "file": "第183章_新排名.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8500161"
+        },
+        {
+          "number": 184,
+          "title": "第一百八十四章 須臾破殺局",
+          "cid": "8510580",
+          "file": "第184章_須臾破殺局.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8510580"
+        },
+        {
+          "number": 185,
+          "title": "第一百八十五章 將計就計",
+          "cid": "8510964",
+          "file": "第185章_將計就計.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8510964"
+        },
+        {
+          "number": 186,
+          "title": "第一百八十六章 左道邪魔",
+          "cid": "8521219",
+          "file": "第186章_左道邪魔.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8521219"
+        },
+        {
+          "number": 187,
+          "title": "第一百八十七章 誰來?",
+          "cid": "8521562",
+          "file": "第187章_誰來.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8521562"
+        },
+        {
+          "number": 188,
+          "title": "第一百八十八章 十息",
+          "cid": "8521973",
+          "file": "第188章_十息.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8521973"
+        },
+        {
+          "number": 189,
+          "title": "第一百八十九章 心靈之斗",
+          "cid": "8522188",
+          "file": "第189章_心靈之斗.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8522188"
+        },
+        {
+          "number": 190,
+          "title": "第一百九十章 水藏大海",
+          "cid": "8522524",
+          "file": "第190章_水藏大海.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8522524"
+        },
+        {
+          "number": 191,
+          "title": "第一百九十一章 故地重游",
+          "cid": "8523001",
+          "file": "第191章_故地重游.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8523001"
+        },
+        {
+          "number": 192,
+          "title": "第一百九十二章 摩柯指",
+          "cid": "8523213",
+          "file": "第192章_摩柯指.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8523213"
+        },
+        {
+          "number": 193,
+          "title": "第一百九十三章 師徒秘話",
+          "cid": "8523624",
+          "file": "第193章_師徒秘話.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8523624"
+        },
+        {
+          "number": 194,
+          "title": "第一百九十四章 武癡真本",
+          "cid": "8523981",
+          "file": "第194章_武癡真本.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8523981"
+        },
+        {
+          "number": 195,
+          "title": "第一百九十五章 八魔亂世",
+          "cid": "8524197",
+          "file": "第195章_八魔亂世.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8524197"
+        },
+        {
+          "number": 196,
+          "title": "第一百九十六章 鑒定",
+          "cid": "8524926",
+          "file": "第196章_鑒定.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8524926"
+        },
+        {
+          "number": 197,
+          "title": "第一百九十七章  “絕世”高手",
+          "cid": "8525137",
+          "file": "第197章_“絕世”高手.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8525137"
+        },
+        {
+          "number": 198,
+          "title": "第一百九十八章 夜守殘垣",
+          "cid": "8525723",
+          "file": "第198章_夜守殘垣.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8525723"
+        },
+        {
+          "number": 199,
+          "title": "第一百九十九章 眾魔來襲",
+          "cid": "8526049",
+          "file": "第199章_眾魔來襲.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8526049"
+        },
+        {
+          "number": 200,
+          "title": "第二百章 一刀兩斷",
+          "cid": "8526662",
+          "file": "第200章_一刀兩斷.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8526662"
+        },
+        {
+          "number": 201,
+          "title": "第二百零一章 信任",
+          "cid": "8526961",
+          "file": "第201章_信任.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8526961"
+        },
+        {
+          "number": 202,
+          "title": "第二百零二章 忘心廬",
+          "cid": "8527434",
+          "file": "第202章_忘心廬.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8527434"
+        },
+        {
+          "number": 203,
+          "title": "第二百零三章 資深者",
+          "cid": "8527750",
+          "file": "第203章_資深者.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8527750"
+        },
+        {
+          "number": 204,
+          "title": "第二百零四章 所圖",
+          "cid": "8527972",
+          "file": "第204章_所圖.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8527972"
+        },
+        {
+          "number": 205,
+          "title": "第二百零五章 碧霞元君的計劃",
+          "cid": "8528699",
+          "file": "第205章_碧霞元君的計劃.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8528699"
+        },
+        {
+          "number": 206,
+          "title": "第二百零六章 翻天印",
+          "cid": "8528887",
+          "file": "第206章_翻天印.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8528887"
+        },
+        {
+          "number": 207,
+          "title": "第二百零七章 金皇",
+          "cid": "8529293",
+          "file": "第207章_金皇.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8529293"
+        },
+        {
+          "number": 208,
+          "title": "第二百零八章 假能亂真",
+          "cid": "8529661",
+          "file": "第208章_假能亂真.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8529661"
+        },
+        {
+          "number": 209,
+          "title": "第二百零九章 鎮魔",
+          "cid": "8529853",
+          "file": "第209章_鎮魔.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8529853"
+        },
+        {
+          "number": 210,
+          "title": "第二百一十章 意識爭奪",
+          "cid": "8530181",
+          "file": "第210章_意識爭奪.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8530181"
+        },
+        {
+          "number": 211,
+          "title": "第二百一十一章 掙扎",
+          "cid": "8530575",
+          "file": "第211章_掙扎.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8530575"
+        },
+        {
+          "number": 212,
+          "title": "第二百一十二章 碧霞元君的疑惑",
+          "cid": "8530779",
+          "file": "第212章_碧霞元君的疑惑.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8530779"
+        },
+        {
+          "number": 213,
+          "title": "第二百一十三章 遭遇",
+          "cid": "8531403",
+          "file": "第213章_遭遇.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8531403"
+        },
+        {
+          "number": 214,
+          "title": "第二百一十四章 魂之劍",
+          "cid": "8531720",
+          "file": "第214章_魂之劍.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8531720"
+        },
+        {
+          "number": 215,
+          "title": "第二百一十五章 九真",
+          "cid": "8532133",
+          "file": "第215章_九真.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8532133"
+        },
+        {
+          "number": 216,
+          "title": "第二百一十六章 搖簽",
+          "cid": "8532438",
+          "file": "第216章_搖簽.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8532438"
+        },
+        {
+          "number": 217,
+          "title": "第二百一十七章  補齊易筋經",
+          "cid": "8532666",
+          "file": "第217章_補齊易筋經.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8532666"
+        },
+        {
+          "number": 218,
+          "title": "第二百一十八章 任務情報",
+          "cid": "8533236",
+          "file": "第218章_任務情報.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8533236"
+        },
+        {
+          "number": 219,
+          "title": "第二百一十九章 仙跡",
+          "cid": "8533366",
+          "file": "第219章_仙跡.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8533366"
+        },
+        {
+          "number": 220,
+          "title": "第二百二十章 稱號",
+          "cid": "8533572",
+          "file": "第220章_稱號.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8533572"
+        },
+        {
+          "number": 221,
+          "title": "第二百二十一章 三式外景",
+          "cid": "8534047",
+          "file": "第221章_三式外景.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8534047"
+        },
+        {
+          "number": 222,
+          "title": "第二百二十二章 再入九鄉",
+          "cid": "8534334",
+          "file": "第222章_再入九鄉.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8534334"
+        },
+        {
+          "number": 223,
+          "title": "第二百二十三章 雪夜",
+          "cid": "8534526",
+          "file": "第223章_雪夜.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8534526"
+        },
+        {
+          "number": 224,
+          "title": "第二百二十四章  雪中梅花開",
+          "cid": "8535116",
+          "file": "第224章_雪中梅花開.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8535116"
+        },
+        {
+          "number": 225,
+          "title": "第二百二十五章 一馬平川",
+          "cid": "8535455",
+          "file": "第225章_一馬平川.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8535455"
+        },
+        {
+          "number": 226,
+          "title": "第二百二十六章 神宵矛法",
+          "cid": "8536068",
+          "file": "第226章_神宵矛法.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8536068"
+        },
+        {
+          "number": 227,
+          "title": "第二百二十七章 赤眉刀王",
+          "cid": "8536388",
+          "file": "第227章_赤眉刀王.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8536388"
+        },
+        {
+          "number": 228,
+          "title": "第二百二十八章 戰半步",
+          "cid": "8537002",
+          "file": "第228章_戰半步.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8537002"
+        },
+        {
+          "number": 229,
+          "title": "第二百二十九章 玄武佩的下落",
+          "cid": "8537906",
+          "file": "第229章_玄武佩的下落.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8537906"
+        },
+        {
+          "number": 230,
+          "title": "第二百三十章 山人自有妙計",
+          "cid": "8538236",
+          "file": "第230章_山人自有妙計.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8538236"
+        },
+        {
+          "number": 231,
+          "title": "第二百三十一章 以我刀劍,謝你相送",
+          "cid": "8538839",
+          "file": "第231章_以我刀劍,謝你相送.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8538839"
+        },
+        {
+          "number": 232,
+          "title": "第二百三十二章 母女密談",
+          "cid": "8539141",
+          "file": "第232章_母女密談.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8539141"
+        },
+        {
+          "number": 233,
+          "title": "第二百三十三章 終究得手",
+          "cid": "8539745",
+          "file": "第233章_終究得手.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8539745"
+        },
+        {
+          "number": 234,
+          "title": "第二百三十四章 精義完整",
+          "cid": "8540079",
+          "file": "第234章_精義完整.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8540079"
+        },
+        {
+          "number": 235,
+          "title": "第二百三十五章 倒霉催的北冥小隊",
+          "cid": "8540466",
+          "file": "第235章_倒霉催的北冥小隊.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8540466"
+        },
+        {
+          "number": 236,
+          "title": "第二百三十六章 心似明鏡臺",
+          "cid": "8541015",
+          "file": "第236章_心似明鏡臺.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8541015"
+        },
+        {
+          "number": 237,
+          "title": "第二百三十七章 興云之宴",
+          "cid": "8541578",
+          "file": "第237章_興云之宴.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8541578"
+        },
+        {
+          "number": 238,
+          "title": "第二百三十八章 青衫薄",
+          "cid": "8541915",
+          "file": "第238章_青衫薄.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8541915"
+        },
+        {
+          "number": 239,
+          "title": "第二百三十九章 出乎意料的順利",
+          "cid": "8542481",
+          "file": "第239章_出乎意料的順利.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8542481"
+        },
+        {
+          "number": 240,
+          "title": "第二百四十章 悉由命定",
+          "cid": "8542871",
+          "file": "第240章_悉由命定.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8542871"
+        },
+        {
+          "number": 241,
+          "title": "第二百四十一章 戒殺",
+          "cid": "8543622",
+          "file": "第241章_戒殺.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8543622"
+        },
+        {
+          "number": 242,
+          "title": "第二百四十二章 詭異的沈家",
+          "cid": "8543836",
+          "file": "第242章_詭異的沈家.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8543836"
+        },
+        {
+          "number": 243,
+          "title": "第二百四十三章 黑夜狂奔",
+          "cid": "8544148",
+          "file": "第243章_黑夜狂奔.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8544148"
+        },
+        {
+          "number": 244,
+          "title": "第二百四十四章 勤儉持家的小孟",
+          "cid": "8544563",
+          "file": "第244章_勤儉持家的小孟.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8544563"
+        },
+        {
+          "number": 245,
+          "title": "第二百四十五章 劈柴斬心",
+          "cid": "8544744",
+          "file": "第245章_劈柴斬心.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8544744"
+        },
+        {
+          "number": 246,
+          "title": "第二百四十六章 十里天秀",
+          "cid": "8545084",
+          "file": "第246章_十里天秀.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8545084"
+        },
+        {
+          "number": 247,
+          "title": "第二百四十七章 不愁前路無“知己”",
+          "cid": "8545468",
+          "file": "第247章_不愁前路無“知己”.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8545468"
+        },
+        {
+          "number": 248,
+          "title": "第二百四十八章 初見何九",
+          "cid": "8545724",
+          "file": "第248章_初見何九.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8545724"
+        },
+        {
+          "number": 249,
+          "title": "第二百四十九章 刀法指點",
+          "cid": "8546124",
+          "file": "第249章_刀法指點.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8546124"
+        },
+        {
+          "number": 250,
+          "title": "第二百五十章 風起郢城",
+          "cid": "8546454",
+          "file": "第250章_風起郢城.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8546454"
+        },
+        {
+          "number": 251,
+          "title": "第二百五十一章 給人挫折",
+          "cid": "8566714",
+          "file": "第251章_給人挫折.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8566714"
+        },
+        {
+          "number": 252,
+          "title": "第二百五十二章 一力降十會",
+          "cid": "8567033",
+          "file": "第252章_一力降十會.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8567033"
+        },
+        {
+          "number": 253,
+          "title": "第二百五十三章 意外之客",
+          "cid": "8567414",
+          "file": "第253章_意外之客.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8567414"
+        },
+        {
+          "number": 254,
+          "title": "第二百五十四章 匆匆而散",
+          "cid": "8577638",
+          "file": "第254章_匆匆而散.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8577638"
+        },
+        {
+          "number": 255,
+          "title": "第二百五十五章 路見不平",
+          "cid": "8578031",
+          "file": "第255章_路見不平.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8578031"
+        },
+        {
+          "number": 256,
+          "title": "第二百五十六章 意外得到的線索",
+          "cid": "8578390",
+          "file": "第256章_意外得到的線索.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8578390"
+        },
+        {
+          "number": 257,
+          "title": "第二百五十七章 橫插一手",
+          "cid": "8588598",
+          "file": "第257章_橫插一手.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8588598"
+        },
+        {
+          "number": 258,
+          "title": "第二百五十八章 半山亭之會",
+          "cid": "8589315",
+          "file": "第258章_半山亭之會.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8589315"
+        },
+        {
+          "number": 259,
+          "title": "第二百五十九章 戰而不戰 全憑己心",
+          "cid": "8589510",
+          "file": "第259章_戰而不戰_全憑己心.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8589510"
+        },
+        {
+          "number": 260,
+          "title": "第二百六十章 聯手之秘",
+          "cid": "8590230",
+          "file": "第260章_聯手之秘.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8590230"
+        },
+        {
+          "number": 261,
+          "title": "第二百六十一章 虎踞龍盤",
+          "cid": "8590428",
+          "file": "第261章_虎踞龍盤.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8590428"
+        },
+        {
+          "number": 262,
+          "title": "第二百六十二章 前朝舊事多",
+          "cid": "8591082",
+          "file": "第262章_前朝舊事多.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8591082"
+        },
+        {
+          "number": 263,
+          "title": "第二百六十三章 河心煙雨釀",
+          "cid": "8591285",
+          "file": "第263章_河心煙雨釀.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8591285"
+        },
+        {
+          "number": 264,
+          "title": "第二百六十四章 踏破鐵鞋無覓處",
+          "cid": "8618672",
+          "file": "第264章_踏破鐵鞋無覓處.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8618672"
+        },
+        {
+          "number": 265,
+          "title": "第二百六十五章 笑看風云起",
+          "cid": "8618977",
+          "file": "第265章_笑看風云起.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8618977"
+        },
+        {
+          "number": 266,
+          "title": "第二百六十六章 萬古大劫",
+          "cid": "8619746",
+          "file": "第266章_萬古大劫.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8619746"
+        },
+        {
+          "number": 267,
+          "title": "第二百六十七章 人榜第一",
+          "cid": "8619996",
+          "file": "第267章_人榜第一.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8619996"
+        },
+        {
+          "number": 268,
+          "title": "第二百六十八章 除舊迎新",
+          "cid": "8620510",
+          "file": "第268章_除舊迎新.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8620510"
+        },
+        {
+          "number": 269,
+          "title": "第二百六十九章 山搖地動",
+          "cid": "8621091",
+          "file": "第269章_山搖地動.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8621091"
+        },
+        {
+          "number": 270,
+          "title": "第二百七十章 蒼天有怒,五雷轟頂",
+          "cid": "8621854",
+          "file": "第270章_蒼天有怒,五雷轟頂.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8621854"
+        },
+        {
+          "number": 271,
+          "title": "第二百七十一章 真正的左道邪魔",
+          "cid": "8622107",
+          "file": "第271章_真正的左道邪魔.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8622107"
+        },
+        {
+          "number": 272,
+          "title": "第二百七十二章 莫名人物",
+          "cid": "8622892",
+          "file": "第272章_莫名人物.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8622892"
+        },
+        {
+          "number": 273,
+          "title": "第二百七十三章 雙星耀世",
+          "cid": "8623151",
+          "file": "第273章_雙星耀世.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8623151"
+        },
+        {
+          "number": 274,
+          "title": "第二百七十四章 古道",
+          "cid": "8623903",
+          "file": "第274章_古道.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8623903"
+        },
+        {
+          "number": 275,
+          "title": "第二百七十五章 意外之財",
+          "cid": "8624144",
+          "file": "第275章_意外之財.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8624144"
+        },
+        {
+          "number": 276,
+          "title": "第二百七十六章 兩個醉鬼",
+          "cid": "8624908",
+          "file": "第276章_兩個醉鬼.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8624908"
+        },
+        {
+          "number": 277,
+          "title": "第二百七十七章 金剛印",
+          "cid": "8625136",
+          "file": "第277章_金剛印.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8625136"
+        },
+        {
+          "number": 278,
+          "title": "第二百七十八章 新人",
+          "cid": "8625883",
+          "file": "第278章_新人.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8625883"
+        },
+        {
+          "number": 279,
+          "title": "第二百七十九章 不是人",
+          "cid": "8626086",
+          "file": "第279章_不是人.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8626086"
+        },
+        {
+          "number": 280,
+          "title": "第二百八十章 知易行難",
+          "cid": "8626837",
+          "file": "第280章_知易行難.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8626837"
+        },
+        {
+          "number": 281,
+          "title": "第二百八十一章 火遁",
+          "cid": "8627062",
+          "file": "第281章_火遁.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8627062"
+        },
+        {
+          "number": 282,
+          "title": "第二百八十二章 大寧",
+          "cid": "8627532",
+          "file": "第282章_大寧.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8627532"
+        },
+        {
+          "number": 283,
+          "title": "第二百八十三章 異人",
+          "cid": "8628103",
+          "file": "第283章_異人.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8628103"
+        },
+        {
+          "number": 284,
+          "title": "第二百八十四章 成功混入的好處",
+          "cid": "8628980",
+          "file": "第284章_成功混入的好處.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8628980"
+        },
+        {
+          "number": 285,
+          "title": "第二百八十五章 蟲人",
+          "cid": "8629662",
+          "file": "第285章_蟲人.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8629662"
+        },
+        {
+          "number": 286,
+          "title": "第二百八十六章 巫術人偶",
+          "cid": "8629902",
+          "file": "第286章_巫術人偶.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8629902"
+        },
+        {
+          "number": 287,
+          "title": "第二百八十七章 老祖(大家羊年好)",
+          "cid": "8630604",
+          "file": "第287章_老祖(大家羊年好).txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8630604"
+        },
+        {
+          "number": 288,
+          "title": "第二百八十八章 虛與委蛇",
+          "cid": "8630783",
+          "file": "第288章_虛與委蛇.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8630783"
+        },
+        {
+          "number": 289,
+          "title": "第二百八十九章 江湖騙子小孟",
+          "cid": "8641432",
+          "file": "第289章_江湖騙子小孟.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8641432"
+        },
+        {
+          "number": 290,
+          "title": "第二百九十章 各有等待",
+          "cid": "8641608",
+          "file": "第290章_各有等待.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8641608"
+        },
+        {
+          "number": 291,
+          "title": "第二百九十一章 斗謀",
+          "cid": "8642270",
+          "file": "第291章_斗謀.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8642270"
+        },
+        {
+          "number": 292,
+          "title": "第二百九十二章 斬斷聯系",
+          "cid": "8642478",
+          "file": "第292章_斬斷聯系.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8642478"
+        },
+        {
+          "number": 293,
+          "title": "第二百九十三章 死不瞑目",
+          "cid": "8643109",
+          "file": "第293章_死不瞑目.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8643109"
+        },
+        {
+          "number": 294,
+          "title": "第二百九十四章 陰陽鏡",
+          "cid": "8643293",
+          "file": "第294章_陰陽鏡.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8643293"
+        },
+        {
+          "number": 295,
+          "title": "第二百九十五章 無人敢攖其鋒",
+          "cid": "8643988",
+          "file": "第295章_無人敢攖其鋒.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8643988"
+        },
+        {
+          "number": 296,
+          "title": "第二百九十六章 向死求生",
+          "cid": "8644154",
+          "file": "第296章_向死求生.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8644154"
+        },
+        {
+          "number": 297,
+          "title": "第二百九十七章 孟奇的選擇",
+          "cid": "8644847",
+          "file": "第297章_孟奇的選擇.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8644847"
+        },
+        {
+          "number": 298,
+          "title": "第二百九十八章 屠雞劍神當日事",
+          "cid": "8645027",
+          "file": "第298章_屠雞劍神當日事.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8645027"
+        },
+        {
+          "number": 299,
+          "title": "第二百九十九章 北上",
+          "cid": "8655714",
+          "file": "第299章_北上.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8655714"
+        },
+        {
+          "number": 300,
+          "title": "第三百章 江湖多苦",
+          "cid": "8655934",
+          "file": "第300章_江湖多苦.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8655934"
+        },
+        {
+          "number": 301,
+          "title": "第三百零一章 得來全不費工夫",
+          "cid": "8656653",
+          "file": "第301章_得來全不費工夫.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8656653"
+        },
+        {
+          "number": 302,
+          "title": "第三百零二章 無憂谷",
+          "cid": "8656881",
+          "file": "第302章_無憂谷.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8656881"
+        },
+        {
+          "number": 303,
+          "title": "第三百零三章 你敢去嗎?",
+          "cid": "8657604",
+          "file": "第303章_你敢去嗎.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8657604"
+        },
+        {
+          "number": 304,
+          "title": "第三百零四章 雪山",
+          "cid": "8657845",
+          "file": "第304章_雪山.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8657845"
+        },
+        {
+          "number": 305,
+          "title": "第三百零五章 黃粱",
+          "cid": "8658583",
+          "file": "第305章_黃粱.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8658583"
+        },
+        {
+          "number": 306,
+          "title": "第三百零六章 真實之界",
+          "cid": "8658836",
+          "file": "第306章_真實之界.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8658836"
+        },
+        {
+          "number": 307,
+          "title": "第三百零七章 意外的重臨",
+          "cid": "8659683",
+          "file": "第307章_意外的重臨.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8659683"
+        },
+        {
+          "number": 308,
+          "title": "第三百零八章 故人",
+          "cid": "8659943",
+          "file": "第308章_故人.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8659943"
+        },
+        {
+          "number": 309,
+          "title": "第三百零九章 精神奇旅",
+          "cid": "8660412",
+          "file": "第309章_精神奇旅.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8660412"
+        },
+        {
+          "number": 310,
+          "title": "第三百一十章 苦海無邊,回頭是岸",
+          "cid": "8660733",
+          "file": "第310章_苦海無邊,回頭是岸.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8660733"
+        },
+        {
+          "number": 311,
+          "title": "第三百一十一章 神劍木偶",
+          "cid": "8660981",
+          "file": "第311章_神劍木偶.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8660981"
+        },
+        {
+          "number": 312,
+          "title": "第三百一十二章 驚神劍與劍皇落日峰之戰",
+          "cid": "8661489",
+          "file": "第312章_驚神劍與劍皇落日峰之戰.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8661489"
+        },
+        {
+          "number": 313,
+          "title": "第三百一十三章 老烏恩",
+          "cid": "8662026",
+          "file": "第313章_老烏恩.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8662026"
+        },
+        {
+          "number": 314,
+          "title": "第三百一十四章 薩滿",
+          "cid": "8662416",
+          "file": "第314章_薩滿.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8662416"
+        },
+        {
+          "number": 315,
+          "title": "第三百一十五章 殺狼會的情報",
+          "cid": "8662810",
+          "file": "第315章_殺狼會的情報.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8662810"
+        },
+        {
+          "number": 316,
+          "title": "第三百一十六章 初會",
+          "cid": "8663047",
+          "file": "第316章_初會.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8663047"
+        },
+        {
+          "number": 317,
+          "title": "第三百一十七章 “等待”",
+          "cid": "8670423",
+          "file": "第317章_“等待”.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8670423"
+        },
+        {
+          "number": 318,
+          "title": "第三百一十八章 激烈交鋒",
+          "cid": "8670815",
+          "file": "第318章_激烈交鋒.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8670815"
+        },
+        {
+          "number": 319,
+          "title": "第三百一十九章 生死一線間",
+          "cid": "8671316",
+          "file": "第319章_生死一線間.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8671316"
+        },
+        {
+          "number": 320,
+          "title": "第三百二十章 事后",
+          "cid": "8671862",
+          "file": "第320章_事后.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8671862"
+        },
+        {
+          "number": 321,
+          "title": "第三百二十一章 靈寶天尊",
+          "cid": "8672544",
+          "file": "第321章_靈寶天尊.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8672544"
+        },
+        {
+          "number": 322,
+          "title": "第三百二十二章 天下喧動我自靜",
+          "cid": "8672933",
+          "file": "第322章_天下喧動我自靜.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8672933"
+        },
+        {
+          "number": 323,
+          "title": "第三百二十三章 日明風懶殺人天",
+          "cid": "8673609",
+          "file": "第323章_日明風懶殺人天.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8673609"
+        },
+        {
+          "number": 324,
+          "title": "第三百二十四章 瓊華宴",
+          "cid": "8673981",
+          "file": "第324章_瓊華宴.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8673981"
+        },
+        {
+          "number": 325,
+          "title": "第三百二十五章 堂堂正正入神都",
+          "cid": "8674533",
+          "file": "第325章_堂堂正正入神都.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8674533"
+        },
+        {
+          "number": 326,
+          "title": "第三百二十六章 小樓一夜聽秋雨",
+          "cid": "8675117",
+          "file": "第326章_小樓一夜聽秋雨.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8675117"
+        },
+        {
+          "number": 327,
+          "title": "第三百二十七章 負盡狂名",
+          "cid": "8675954",
+          "file": "第327章_負盡狂名.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8675954"
+        },
+        {
+          "number": 328,
+          "title": "第三百二十八章 兩份請帖",
+          "cid": "8676165",
+          "file": "第328章_兩份請帖.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8676165"
+        },
+        {
+          "number": 329,
+          "title": "第三百二十九章 歪防正著",
+          "cid": "8686871",
+          "file": "第329章_歪防正著.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8686871"
+        },
+        {
+          "number": 330,
+          "title": "第三百三十章 獎賞之事",
+          "cid": "8687236",
+          "file": "第330章_獎賞之事.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8687236"
+        },
+        {
+          "number": 331,
+          "title": "第三百三十一章 柳漱玉",
+          "cid": "8687926",
+          "file": "第331章_柳漱玉.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8687926"
+        },
+        {
+          "number": 332,
+          "title": "第三百三十二章 氣勢壓制",
+          "cid": "8688277",
+          "file": "第332章_氣勢壓制.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8688277"
+        },
+        {
+          "number": 333,
+          "title": "第三百三十三章 大水沖了龍王廟",
+          "cid": "8688954",
+          "file": "第333章_大水沖了龍王廟.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8688954"
+        },
+        {
+          "number": 334,
+          "title": "第三百三十四章 圣皇魔令",
+          "cid": "8689363",
+          "file": "第334章_圣皇魔令.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8689363"
+        },
+        {
+          "number": 335,
+          "title": "第三百三十五章 總捕頭",
+          "cid": "8690145",
+          "file": "第335章_總捕頭.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8690145"
+        },
+        {
+          "number": 336,
+          "title": "第三百三十六章 “狹”路相逢",
+          "cid": "8690374",
+          "file": "第336章_“狹”路相逢.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8690374"
+        },
+        {
+          "number": 337,
+          "title": "第三百三十七章 混戰",
+          "cid": "8690800",
+          "file": "第337章_混戰.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8690800"
+        },
+        {
+          "number": 338,
+          "title": "第三百三十八章 鳥獸散",
+          "cid": "8691163",
+          "file": "第338章_鳥獸散.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8691163"
+        },
+        {
+          "number": 339,
+          "title": "第三百三十九章 斗姆元君",
+          "cid": "8691415",
+          "file": "第339章_斗姆元君.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8691415"
+        },
+        {
+          "number": 340,
+          "title": "第三百四十章 “放棄前嫌”",
+          "cid": "8691937",
+          "file": "第340章_“放棄前嫌”.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8691937"
+        },
+        {
+          "number": 341,
+          "title": "第三百四十一章 崔清羽",
+          "cid": "8692252",
+          "file": "第341章_崔清羽.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8692252"
+        },
+        {
+          "number": 342,
+          "title": "第三百四十二章 瓊華宴",
+          "cid": "8692479",
+          "file": "第342章_瓊華宴.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8692479"
+        },
+        {
+          "number": 343,
+          "title": "第三百四十三章 誠于武道者",
+          "cid": "8693245",
+          "file": "第343章_誠于武道者.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8693245"
+        },
+        {
+          "number": 344,
+          "title": "第三百四十四章 無字之碑",
+          "cid": "8693480",
+          "file": "第344章_無字之碑.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8693480"
+        },
+        {
+          "number": 345,
+          "title": "第三百四十五章 感悟",
+          "cid": "8694116",
+          "file": "第345章_感悟.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8694116"
+        },
+        {
+          "number": 346,
+          "title": "第三百四十六章 幻境遭遇戰",
+          "cid": "8695113",
+          "file": "第346章_幻境遭遇戰.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8695113"
+        },
+        {
+          "number": 347,
+          "title": "第三百四十七章 玉林苑之變",
+          "cid": "8695477",
+          "file": "第347章_玉林苑之變.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8695477"
+        },
+        {
+          "number": 348,
+          "title": "第三百四十八章 六滅落神掌",
+          "cid": "8696122",
+          "file": "第348章_六滅落神掌.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8696122"
+        },
+        {
+          "number": 349,
+          "title": "第三百四十九章 一刀開混沌",
+          "cid": "8696458",
+          "file": "第349章_一刀開混沌.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8696458"
+        },
+        {
+          "number": 350,
+          "title": "第三百五十章 劫變",
+          "cid": "8697069",
+          "file": "第350章_劫變.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8697069"
+        },
+        {
+          "number": 351,
+          "title": "第三百五十一章 滿堂花醉三千客",
+          "cid": "8697206",
+          "file": "第351章_滿堂花醉三千客.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8697206"
+        },
+        {
+          "number": 352,
+          "title": "第三百五十二章 仰天大笑出門去",
+          "cid": "8697800",
+          "file": "第352章_仰天大笑出門去.txt",
+          "url": "https://tw.hjwzw.com/Book/Read/35150,8697800"
+        }
+      ]
     }
   ]
 }

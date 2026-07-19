@@ -33,11 +33,16 @@ EXAMPLES_DIR = Path(__file__).resolve().parent
 # ── 抓取設定（作者已拍板的書目與範圍）───────────────────────────────
 # mode="opening": 取開頭 → 前導引子/序章 + 第1章…第{end}章（遇卷內章號重置即停，避免跨卷誤抓）
 # mode="mid":     取中段 → 第{start}章…第{end}章（連續一段）
+# mode="volumes": 取整卷 → 依「章號重置回 1」偵測卷界，抓 volumes 指定的卷（ord 由 1 起），
+#                 各卷寫入 <書名>/<dir>/ 子資料夾（章號各卷重置，故必須分夾避免撞名）。
 BOOKS = [
     {"name": "詭秘之主", "author": "愛潛水的烏賊", "source": "piaotia", "id": "9/9459",
      "mode": "opening", "end": 40},
     {"name": "一世之尊", "author": "愛潛水的烏賊", "source": "hjwzw", "id": "35150",
-     "mode": "opening", "end": 40},
+     "mode": "volumes",
+     # 卷界經目錄核對：卷一 第一章 機心→第八十三章 處罰（第73章來源拆兩頁）、
+     # 卷二 第一章 瀚海邊緣→第六十五章 人榜、卷三 第一章 仗劍江湖閑散意→第三百五十二章 仰天大笑出門去。
+     "volumes": [{"ord": 1, "dir": "卷一"}, {"ord": 2, "dir": "卷二"}, {"ord": 3, "dir": "卷三"}]},
     {"name": "極道天魔", "author": "滾開", "source": "hjwzw", "id": "36213",
      "mode": "opening", "end": 40},
     {"name": "我有一個修仙世界", "author": "純九蓮寶燈", "source": "hjwzw", "id": "48754",
@@ -207,6 +212,19 @@ def select_mid(items, start, end):
     return res
 
 
+def select_volumes(items):
+    """依「章號重置回 1」切卷：每遇 num==1 起新卷，其後（含 num 為 None 的附頁）併入該卷。
+    第一個 num==1 之前的項目（若有前導 recent 區塊或無章號雜項）一律丟棄。"""
+    vols, cur = [], None
+    for it in items:
+        if it["num"] == 1:
+            cur = [it]
+            vols.append(cur)
+        elif cur is not None:
+            cur.append(it)
+    return vols
+
+
 def select(book, items):
     if book["mode"] == "opening":
         return select_opening(items, book["end"])
@@ -227,7 +245,84 @@ def chapter_filename(item) -> str:
 
 
 # ── 主流程 ───────────────────────────────────────────────────────────
+def _write_chapters(out_dir, picked, client, body_fn, enc, book_name, do_download):
+    """抓 picked 各章寫入 out_dir，回傳 (manifest_chapters, short_count)。
+    同名檔（來源把一章拆多頁、標題重複）：內容相同則略過，不同則加 _2/_3 後綴各留一檔。"""
+    written: dict[str, str] = {}     # fname → text，用於撞名去重／區分
+    chapters, short = [], 0
+    for k, it in enumerate(picked, 1):
+        raw = fetch(client, it["url"], enc)
+        text = body_fn(raw, book_name)
+        base = chapter_filename(it)
+        fname = base
+        if base in written:
+            if written[base] == text:
+                print(f"  [{k}/{len(picked)}] {base}  ← 內容重複，略過")
+                continue
+            stem, i = base[:-4], 2
+            while f"{stem}_{i}.txt" in written and written[f"{stem}_{i}.txt"] != text:
+                i += 1
+            if f"{stem}_{i}.txt" in written:   # 已有相同內容的後綴檔
+                print(f"  [{k}/{len(picked)}] {base}  ← 內容重複，略過")
+                continue
+            fname = f"{stem}_{i}.txt"
+        (out_dir / fname).write_text(it["title"] + "\n\n" + text + "\n", encoding="utf-8")
+        written[fname] = text
+        chapters.append({"number": it["num"], "title": it["title"],
+                         "cid": it["cid"], "file": fname, "url": it["url"]})
+        flag = ""
+        if len(text) < 200:
+            short += 1; flag = "  ⚠ 正文過短"
+        print(f"  [{k}/{len(picked)}] {fname}  ({len(text)} 字){flag}")
+        time.sleep(DELAY)
+    return chapters, short
+
+
+def run_book_volumes(client, book, do_download):
+    toc_fn, body_fn, enc = SOURCES[book["source"]]
+    items = toc_fn(client, book)
+    vols = select_volumes(items)
+    wanted = book["volumes"]
+    print(f"\n=== {book['name']}（{book['author']}）｜{book['source']}｜"
+          f"卷 {[w['ord'] for w in wanted]}｜目錄 {len(items)} 章，偵測 {len(vols)} 卷 ===")
+    base_dir = EXAMPLES_DIR / book["name"]
+    manifest = {"title": book["name"], "author": book["author"], "source": book["source"],
+                "id": book["id"], "fetched": time.strftime("%Y-%m-%d"), "volumes": []}
+    for w in wanted:
+        idx = w["ord"] - 1
+        if idx < 0 or idx >= len(vols):
+            print(f"  !! 卷{w['ord']} 不存在（僅偵測 {len(vols)} 卷）")
+            continue
+        picked = vols[idx]
+        print(f"\n  ── {w['dir']}（卷{w['ord']}）：{len(picked)} 章"
+              f"｜首：{picked[0]['title']}｜尾：{picked[-1]['title']}")
+        if not do_download:
+            preview = (picked[:3] + [None] + picked[-3:]) if len(picked) > 6 else picked
+            for it in preview:
+                if it is None:
+                    print("        …"); continue
+                print(f"        第{(it['num'] or 0):03d}章  {it['title']}  → {w['dir']}/{chapter_filename(it)}")
+            continue
+        out_dir = base_dir / w["dir"]
+        out_dir.mkdir(parents=True, exist_ok=True)
+        chapters, short = _write_chapters(out_dir, picked, client, body_fn, enc,
+                                          book["name"], do_download)
+        manifest["volumes"].append({"volume": w["ord"], "dir": w["dir"],
+                                    "first": picked[0]["title"], "last": picked[-1]["title"],
+                                    "chapters": chapters})
+        print(f"  完成 {w['dir']} {len(chapters)} 章 → {out_dir}"
+              + (f"（{short} 章正文過短，請抽查）" if short else ""))
+    if do_download and manifest["volumes"]:
+        base_dir.mkdir(parents=True, exist_ok=True)
+        (base_dir / "manifest.json").write_text(
+            json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+        total = sum(len(v["chapters"]) for v in manifest["volumes"])
+        print(f"\n  {book['name']} 共 {len(manifest['volumes'])} 卷 {total} 章 → {base_dir}/manifest.json")
+
+
 def run_book(client, book, do_download):
+    if book["mode"] == "volumes":
+        return run_book_volumes(client, book, do_download)
     toc_fn, body_fn, enc = SOURCES[book["source"]]
     items = toc_fn(client, book)
     picked = select(book, items)
