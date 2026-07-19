@@ -6,7 +6,7 @@
 ## 進度總覽
 | Session | 階段 | 範圍 | 狀態 | commit |
 |---------|------|------|------|--------|
-| P  | 前置：產 raw＋情境測試腦＋init 書架 | — | ✅ | <填 commit hash> |
+| P  | 前置：產 raw＋情境測試腦＋init 書架 | — | ✅ | dfec88f |
 | S1 | develop（raw→摘要＋設定冷啟動） | 全書 | ⬜ 未開始 | — |
 | S2 | organize→outline-test（→大綱） | 全書大綱 | ⬜ 未開始 | — |
 | S3…| 逐 arc：beat-sheet→beat-test | story/幕綱/arcNN | ⬜ 未開始 | — |
