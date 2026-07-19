@@ -9,7 +9,7 @@
 | 技法檔 | 層 | 何時查它（use-when） | 被哪些 skill 引用 |
 |---|---|---|---|
 | [選題與收斂](選題與收斂.md) | 粗階段 | raw 有一堆靈感、還不確定這本要寫什麼；要用連問法從概念收斂出有焦點的摘要主線 | `develop`、`organize`、`outline-test` |
-| [世界觀與背景](世界觀與背景.md) | 粗階段 | 整理 raw 的世界觀／設定，判斷設定是否服務劇情（抽掉就垮）、魔法／力量體系是否自洽（冰山理論、Sanderson 三法則、按需揭示）；§九「設定帶出的操作判準」供排揭露節奏／渲染設定登場（對治「設定突然蹦出」） | `develop`、`organize`、`worldbuild`、`expand`、`character`、`beat-sheet`、`write` |
+| [世界觀與背景](世界觀與背景.md) | 粗階段 | 整理 raw 的世界觀／設定，判斷設定是否服務劇情（抽掉就垮）、魔法／力量體系是否自洽（冰山理論、Sanderson 三法則、按需揭示）；§九「設定帶出的操作判準」供排揭露節奏／渲染設定登場、及審設定傾倒（對治「設定突然蹦出」） | `develop`、`organize`、`worldbuild`、`expand`、`character`、`beat-sheet`、`write`、`beat-test`、`write-test` |
 | [故事本質與要素](故事本質與要素.md) | 粗階段 | 建立「什麼算故事／好故事」的共同語言：故事三要素（人物／劇情／背景）、人物導向 vs 劇情導向、好故事 3 加 1、故事設定 3 要領、故事類型選單 | `develop`、`organize` |
 | [網文與文學取捨](網文與文學取捨.md) | 跨階段 | 決定本書偏網文爽感還是文學深度（取向定位）、調爽點密度與節奏、查網文的爽點/金手指/連載鉤子；辨識哪些技巧是 AND 疊加、哪些是 OR 對衝 | `develop`、`organize`、`beat-sheet`、`write`、`write-test`、`revise`、`worldbuild`、`expand`、`character` |
 | [創作流程](創作流程.md) | 跨階段 | 需要六步驟總覽、分清摘要／大綱／幕綱之別，或卡住時判斷該回哪一層修 | `develop`、`organize`、`sync` |
@@ -23,7 +23,7 @@
 | [結構公式](結構公式.md) | 結構排幕 | 選一套結構公式排幕（三幕劇／起承轉合／七問題／編劇九階段／Save the Cat!／雪花法／MICE 四線索／起承転結・序破急），或檢查必要階段是否齊全 | `organize`、`beat-sheet`、`beat-test`、`outline-test`、`expand` |
 | [伏筆與意外](伏筆與意外.md) | 結構排幕 | 埋設與回收伏筆、讓意外合理（源於主角努力、非機器神）、設計謎三角雙重誤導；配置距離／四詞辨析／反轉速度 | `beat-sheet`、`beat-test`、`write`、`worldbuild`、`expand` |
 | [結局類型](結局類型.md) | 結構排幕 | 選結局類型（喜/悲/悲喜/暗示/開放/諷刺）、對照好結局六要素、檢查結局與題旨一致、防機器神 | `develop`、`organize`、`beat-sheet`、`outline-test`、`beat-test` |
-| [戲劇張力與懸念](戲劇張力與懸念.md) | 結構排幕 | 設計幕尾懸念（七種停止點）／開場鉤子、悶燒蓄勢、讓讀者心痛的四手法、維持翻頁動力 | `beat-sheet`、`write`、`expand` |
+| [戲劇張力與懸念](戲劇張力與懸念.md) | 結構排幕 | 設計幕尾懸念（七種停止點）／開場鉤子、悶燒蓄勢、讓讀者心痛的四手法、維持翻頁動力；§一 資訊差引擎（同步/優越·扮豬吃虎/替他捏汗）、§六(d) 開頭vs常態兩檔位 | `beat-sheet`、`write`、`expand`、`beat-test`、`outline-test` |
 | [場景與情節推進](場景與情節推進.md) | 正文執行 | 把一幕展開成正文：Scene（Goal/Conflict/Disaster）＋Sequel（Reaction/Dilemma/Decision）、Try/Fail、控節奏、判分章邊界是否自然 | `write`、`write-test`、`expand` |
 | [展示而非講述與五感描寫](展示而非講述與五感描寫.md) | 正文執行 | 把幕綱濃縮的欄位寫成有畫面的正文：關鍵時刻用展示、五感描寫、去過濾詞／情緒標籤、間接刻畫／白描 | `write`、`write-test`、`revise` |
 | [對白](對白.md) | 正文執行 | 寫／審對白：句型配置、六大功能、潛台詞、action beat、八招點亮、七大壞習慣 | `write`、`write-test`、`revise` |
