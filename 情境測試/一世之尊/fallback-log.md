@@ -3,7 +3,7 @@
 > 測試 meta，**只放 `情境測試/一世之尊/`，永不進書資料夾**。
 > 記每一筆「作者 agent 腦裡（raw／情境測試/作者腦內-*）真沒有、去翻了 `examples/` 舊稿」的 fallback。
 > 有效性量尺：fallback 次數愈少＝elicitation 缺口設計愈逼真、作者愈少靠背原著。
-> S1＋S2＋S3＋S4 皆零 fallback；本檔於 S5 首次產生；S6＋S7＋S8＋S9＋S10＋S11 回到零 fallback。
+> S1＋S2＋S3＋S4 皆零 fallback；本檔於 S5 首次產生；S6＋S7＋S8＋S9＋S10＋S11＋S12 回到零 fallback。
 
 ## 進度
 | Session | 階段 | 作者 agent 輪次 | 該輪 fallback 筆數 |
@@ -19,6 +19,7 @@
 | S9 | beat-sheet 微修＋write(arc02) | 3 輪（保命貨二擇一／write Q1–Q6／加厚待決點） | **0**（全 `[來源：腦]`；⭐S7 前瞻翻案：arc02 質地未逼 fallback） |
 | S10 | worldbuild(收待裁決)＋revise(arc02) | 1 輪（revise 三題品味/節奏；worldbuild 無 elicitation） | **0**（全 `[來源：腦]`；品味題不碰缺口·同 S8 最不吃 fallback） |
 | S11 | write(arc03) | 1 輪（write Q1–Q9，含 Q3/Q4 承重拍板） | **0**（全 `[來源：腦]`；⭐arc03 質地薄但已在 S5 一次性 fallback 補足、write 沿用即可） |
+| S12 | revise(arc03)＋worldbuild(收橫練具名) | 1 輪（revise 中1 一題；worldbuild 無 elicitation） | **0**（全 `[來源：腦]`；藏法/品味題不碰腦內缺口·同 S8/S10 最不吃 fallback） |
 
 ---
 
