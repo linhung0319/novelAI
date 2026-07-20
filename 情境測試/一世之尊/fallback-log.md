@@ -3,7 +3,7 @@
 > 測試 meta，**只放 `情境測試/一世之尊/`，永不進書資料夾**。
 > 記每一筆「作者 agent 腦裡（raw／情境測試/作者腦內-*）真沒有、去翻了 `examples/` 舊稿」的 fallback。
 > 有效性量尺：fallback 次數愈少＝elicitation 缺口設計愈逼真、作者愈少靠背原著。
-> S1＋S2＋S3＋S4 皆零 fallback；本檔於 S5 首次產生；S6＋S7 回到零 fallback。
+> S1＋S2＋S3＋S4 皆零 fallback；本檔於 S5 首次產生；S6＋S7＋S8 回到零 fallback。
 
 ## 進度
 | Session | 階段 | 作者 agent 輪次 | 該輪 fallback 筆數 |
@@ -15,6 +15,7 @@
 | S5 | beat-sheet(arc03) | 1 輪（Q1–Q8） | **1**（Q2 部分 fallback） |
 | S6 | beat-sheet(arc04) | 1 輪（Q1–Q10＋DQ1） | 0 |
 | S7 | write(arc01) | 2 輪（Q1–Q6＋字數待決點/知會點） | 0（全 `[來源：腦]`） |
+| S8 | revise(arc01) | 1 輪（7 題＋1 附問） | 0（全 `[來源：腦]`） |
 
 ---
 
