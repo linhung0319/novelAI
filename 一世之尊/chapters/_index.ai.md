@@ -1,5 +1,5 @@
 ---
-generated-from: 585f602b7876
+generated-from: 507213f23cd0
 generated-at: 2026-07-20
 ---
 # 章節索引（衍生 rollup，權威章序）
