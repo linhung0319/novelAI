@@ -1,6 +1,6 @@
 ---
-generated-from: d25fa519a013
-generated-at: 2026-07-20
+generated-from: eb7625c640a7
+generated-at: 2026-07-21
 ---
 ## 角色清單
 | 角色 | 定位 | 一行需求（期盼／反派正當需求） | 所屬arc | 暫定 |
