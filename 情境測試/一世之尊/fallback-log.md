@@ -3,7 +3,7 @@
 > 測試 meta，**只放 `情境測試/一世之尊/`，永不進書資料夾**。
 > 記每一筆「作者 agent 腦裡（raw／情境測試/作者腦內-*）真沒有、去翻了 `examples/` 舊稿」的 fallback。
 > 有效性量尺：fallback 次數愈少＝elicitation 缺口設計愈逼真、作者愈少靠背原著。
-> S1＋S2＋S3＋S4 皆零 fallback；本檔於 S5 首次產生；S6＋S7＋S8＋S9＋S10＋S11＋S12 回到零 fallback。
+> S1＋S2＋S3＋S4 皆零 fallback；本檔於 S5 首次產生；S6–S18 一路回到零 fallback（S18 零 elicitation）。
 
 ## 進度
 | Session | 階段 | 作者 agent 輪次 | 該輪 fallback 筆數 |
@@ -20,6 +20,12 @@
 | S10 | worldbuild(收待裁決)＋revise(arc02) | 1 輪（revise 三題品味/節奏；worldbuild 無 elicitation） | **0**（全 `[來源：腦]`；品味題不碰缺口·同 S8 最不吃 fallback） |
 | S11 | write(arc03) | 1 輪（write Q1–Q9，含 Q3/Q4 承重拍板） | **0**（全 `[來源：腦]`；⭐arc03 質地薄但已在 S5 一次性 fallback 補足、write 沿用即可） |
 | S12 | revise(arc03)＋worldbuild(收橫練具名) | 1 輪（revise 中1 一題；worldbuild 無 elicitation） | **0**（全 `[來源：腦]`；藏法/品味題不碰腦內缺口·同 S8/S10 最不吃 fallback） |
+| S13 | write(arc04) | 1 輪（WR-R1 六題） | **0**（全 `[來源：腦]`；作者兩度據既成正文校正系統理由瑕疵·非背原著） |
+| S14 | revise(arc04)＋worldbuild(羅漢堂/院堂)＋sync(卷一收官盤點) | 3 場八問 | **0**（全 `[來源：腦]`；作者兩度主動加碼〔院/堂矛盾·長線重心校到玄藏知情〕） |
+| S15 | write-test→revise(arc02 補審)＋worldbuild(遊身步升格)＋sync(新伏筆對齊) | 1 輪九問 | **0**（全 `[來源：腦]`；作者兩度據書內既成檔校正系統前提） |
+| S16 | sync(反向護欄)→develop(題旨定調·終局部分收斂) | 1 輪九問 | **0**（全 `[來源：腦]`；⭐首度逼近腦內最大留白·作者選暫緩不捏造·仍零） |
+| S17 | sync(反向視角)→develop(終局定案)＋worldbuild(同源骨架) | 1 輪十五問＋D | **0**（全 `[來源：腦]`；⭐⭐逼問透底·作者願往下拍死終局·仍零＝第三層最強印證） |
+| S18 | organize(全書大綱收斂)＋角色源→衍生對齊 | **0 輪（零 elicitation）** | **0**（終局已定案落源·純機械收斂＋propagate 已定案事實·無缺口需撈作者） |
 
 ---
 
