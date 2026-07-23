@@ -1,0 +1,6 @@
+{
+  "site": { "title": "書櫃", "baseHref": "/novelAI/" },
+  "books": [
+    { "dir": "一世之尊", "slug": "yishizhizun", "title": "一世之尊", "published": true }
+  ]
+}

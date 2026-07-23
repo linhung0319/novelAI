@@ -28,3 +28,6 @@ uv.lock
 
 # MCP 除錯產物（playwright console/page 快照·非專案內容·非以檔案形式保留）
 .playwright-mcp/
+
+# 網站建置產物（由 GitHub Actions 部署，不版控）
+/dist/

@@ -1,0 +1,53 @@
+:root {
+  --fs: 20px;           /* 字級（校準自參考站 twkan.com 手機 dark），可由 app.js 調整 */
+  --lh: 2.0;            /* 行距（參考站 line-height 40px / 20px = 2.0） */
+  --bg: #20282e;        /* 閱讀區背景（參考站 .mybox rgb(32,40,46)） */
+  --fg: #999999;        /* 閱讀文字（參考站 rgb(153,153,153)） */
+  --fg-dim: #6f7b83;
+  --accent: #8ab4c8;
+  --border: #2d3134;    /* 外層／分隔線（參考站 body rgb(45,49,52)） */
+  --border-soft: #262f36;
+  --panel: #262f36;
+  --maxw: 40rem;
+  --pad: 5vw;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: "PingFang TC", "Noto Sans CJK TC", "Microsoft JhengHei",
+    system-ui, -apple-system, "Helvetica Neue", sans-serif;
+  font-size: var(--fs); line-height: var(--lh);
+  padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+}
+a { color: var(--accent); text-decoration: none; }
+.site-head {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.75rem var(--pad); border-bottom: 1px solid var(--border);
+  color: var(--fg-dim); font-size: 0.85rem;
+}
+.chapter, .page-toc, .page-home { max-width: var(--maxw); margin: 0 auto; padding: 0 var(--pad) 3rem; }
+.chapter h1, .book-title { font-size: 1.35rem; line-height: 1.5; margin: 1.4rem 0; color: #c2cacf; }
+.prose p { margin: 0 0 1.15em; text-align: left; }
+.prose strong { color: #c2cacf; font-weight: 600; }
+.chapter-nav {
+  display: flex; justify-content: space-between; gap: 0.5rem; margin: 1.6rem 0;
+}
+.nav-btn {
+  flex: 1; text-align: center; min-height: 44px; line-height: 44px;
+  border: 1px solid var(--border); border-radius: 8px; color: var(--accent);
+}
+.nav-btn[aria-disabled="true"] { color: #4a545b; border-color: var(--border-soft); }
+.toc { list-style: none; padding: 0; margin: 1rem 0; }
+.toc li a, .shelf li a { display: block; min-height: 44px; line-height: 44px;
+  padding: 0 0.5rem; border-bottom: 1px solid var(--border-soft); color: var(--fg); }
+.continue { display: block; margin: 0.5rem 0 1rem; padding: 0.6rem 0.8rem;
+  background: var(--panel); border-radius: 8px; color: var(--accent); }
+.prefs-toggle { background: none; border: 1px solid var(--border); border-radius: 6px;
+  color: var(--fg-dim); min-width: 40px; min-height: 32px; }
+.prefs-panel { max-width: var(--maxw); margin: 0 auto; padding: 0.6rem var(--pad);
+  display: flex; gap: 1.5rem; border-bottom: 1px solid var(--border); }
+.prefs-panel[hidden] { display: none; }  /* class selector 會蓋過 UA 的 [hidden]，需顯式復原 */
+.continue[hidden] { display: none; }
+.prefs-panel button { min-width: 40px; min-height: 36px; margin-left: 0.3rem;
+  background: var(--panel); color: var(--fg); border: 1px solid var(--border); border-radius: 6px; }

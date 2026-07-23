@@ -1,0 +1,7 @@
+{
+  "site": { "title": "測試書櫃", "baseHref": "/novelAI/" },
+  "books": [
+    { "dir": "test-fixtures/goodbook", "slug": "goodbook", "title": "好書", "published": true },
+    { "dir": "test-fixtures/oldbook", "slug": "oldbook", "title": "舊書", "published": false }
+  ]
+}

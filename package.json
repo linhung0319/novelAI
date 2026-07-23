@@ -1,0 +1,11 @@
+{
+  "name": "novel-reader-site",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "build": "node site/build.js",
+    "test": "node --test",
+    "serve": "node site/build.js && npx --yes serve dist"
+  }
+}
