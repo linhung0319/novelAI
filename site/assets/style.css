@@ -1,0 +1,48 @@
+:root {
+  --fs: 20px;           /* 字級，可由 app.js 調整 */
+  --lh: 1.9;            /* 行距 */
+  --bg: #1c1c1c;        /* 深灰底（非純黑），Task 8 校準 */
+  --fg: #bfbfbf;        /* 中灰字，Task 8 校準 */
+  --fg-dim: #7a7a7a;
+  --accent: #8ab4c8;
+  --maxw: 40rem;
+  --pad: 5vw;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: "PingFang TC", "Noto Sans CJK TC", "Microsoft JhengHei",
+    system-ui, -apple-system, "Helvetica Neue", sans-serif;
+  font-size: var(--fs); line-height: var(--lh);
+  padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+}
+a { color: var(--accent); text-decoration: none; }
+.site-head {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.75rem var(--pad); border-bottom: 1px solid #2c2c2c;
+  color: var(--fg-dim); font-size: 0.85rem;
+}
+.chapter, .page-toc, .page-home { max-width: var(--maxw); margin: 0 auto; padding: 0 var(--pad) 3rem; }
+.chapter h1, .book-title { font-size: 1.35rem; line-height: 1.5; margin: 1.4rem 0; color: var(--fg); }
+.prose p { margin: 0 0 1.15em; text-align: justify; }
+.prose strong { color: #d8d8d8; font-weight: 600; }
+.chapter-nav {
+  display: flex; justify-content: space-between; gap: 0.5rem; margin: 1.6rem 0;
+}
+.nav-btn {
+  flex: 1; text-align: center; min-height: 44px; line-height: 44px;
+  border: 1px solid #333; border-radius: 8px; color: var(--accent);
+}
+.nav-btn[aria-disabled="true"] { color: #444; border-color: #262626; }
+.toc { list-style: none; padding: 0; margin: 1rem 0; }
+.toc li a, .shelf li a { display: block; min-height: 44px; line-height: 44px;
+  padding: 0 0.5rem; border-bottom: 1px solid #262626; color: var(--fg); }
+.continue { display: block; margin: 0.5rem 0 1rem; padding: 0.6rem 0.8rem;
+  background: #262626; border-radius: 8px; color: var(--accent); }
+.prefs-toggle { background: none; border: 1px solid #333; border-radius: 6px;
+  color: var(--fg-dim); min-width: 40px; min-height: 32px; }
+.prefs-panel { max-width: var(--maxw); margin: 0 auto; padding: 0.6rem var(--pad);
+  display: flex; gap: 1.5rem; border-bottom: 1px solid #2c2c2c; }
+.prefs-panel button { min-width: 40px; min-height: 36px; margin-left: 0.3rem;
+  background: #262626; color: var(--fg); border: 1px solid #333; border-radius: 6px; }
