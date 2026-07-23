@@ -1,5 +1,5 @@
 ---
-generated-from: e34797c55f83
+generated-from: b28cb3dfc6a8
 generated-at: 2026-07-23
 ---
 ## 角色清單
