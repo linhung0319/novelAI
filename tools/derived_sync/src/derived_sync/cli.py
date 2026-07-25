@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 
 from .core import check_book, content_hash, source_digest_for_derived, stamp
+from .sentinel import run as run_sentinel
 
 _MARK = {"fresh": "[ok]  ", "stale": "[STALE]", "unstamped": "[?]   ", "orphan": "[ORPH]"}
 
@@ -18,10 +19,27 @@ def _force_utf8() -> None:
             pass
 
 
+def _print_sentinel(book: Path) -> None:
+    """成長哨兵：advisory，**不計入需處理數、不影響 exit code**。
+
+    偵測的是「檔案形態走樣」（設計理由滲進幕綱、源檔該拆、狀態格被當日誌），
+    不是「新鮮度」——兩者混在一起會讓 check 的契約變模糊，故分開印、分開計。
+    """
+    findings = run_sentinel(book)
+    if not findings:
+        return
+    print("\n--- 成長哨兵（建議值，非門檻）---")
+    for f in findings:
+        rel = f.path.relative_to(book) if f.path.is_relative_to(book) else f.path
+        print(f"[!]    {f.kind:<6} {rel}  {f.detail}")
+        print(f"           {f.hint}")
+
+
 def _cmd_check(args: argparse.Namespace) -> int:
     results = check_book(args.book)
     if not results:
         print("（此書無 .ai.md 衍生檔）")
+        _print_sentinel(args.book)
         return 0
     problems = 0
     for r in results:
@@ -30,6 +48,8 @@ def _cmd_check(args: argparse.Namespace) -> int:
         if r.status in ("stale", "unstamped", "orphan"):
             problems += 1
     print(f"\n合計 {len(results)} 個衍生檔，{problems} 個需處理。", file=sys.stderr)
+    if not args.no_sentinel:
+        _print_sentinel(args.book)
     return 1 if problems else 0
 
 
@@ -55,8 +75,11 @@ def main(argv: list[str] | None = None) -> int:
     )
     sub = ap.add_subparsers(dest="cmd", required=True)
 
-    p_check = sub.add_parser("check", help="掃一本書，列出所有衍生檔的新鮮度")
+    p_check = sub.add_parser("check", help="掃一本書，列出所有衍生檔的新鮮度＋成長哨兵")
     p_check.add_argument("--book", required=True, type=Path, help="書資料夾路徑")
+    p_check.add_argument(
+        "--no-sentinel", action="store_true", help="不跑成長哨兵，只看新鮮度"
+    )
     p_check.set_defaults(func=_cmd_check)
 
     p_stamp = sub.add_parser("stamp", help="重生某 .ai.md 後，把源 hash 封回其 front-matter")

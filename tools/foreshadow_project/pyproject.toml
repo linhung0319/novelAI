@@ -1,0 +1,19 @@
+[project]
+name = "foreshadow-project"
+version = "0.1.0"
+description = "novelAI 伏筆投影：跨 arc 掃描配對 埋/收[[伏筆:x]]（零 LLM、可覆算）"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+foreshadow-project = "foreshadow_project.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/foreshadow_project"]
