@@ -22,6 +22,7 @@ from .metrics import (
     load_vocab,
 )
 from .rhythm import (
+    MIN_ECHO_SAMPLE,
     RhythmStat,
     combine,
     detect_rhythm,
@@ -53,18 +54,21 @@ def in_range(label: str, span: tuple[str, str] | None) -> bool:
 
 
 def _rhythm_line(s: RhythmStat) -> str:
-    echo = f"{s.echo_share:.1%}" if s.short_paras else "—"
-    thin = "*" if 0 < s.short_paras < 20 else " "
+    # 回聲**連分母一起印**：佔比的分母是「≤12字非對白段」，短段少的書分母極小，
+    # 樣本不足時的 0.0% 是「沒得測」不是「測出零」。只印百分比會讓人把前者讀成後者
+    # （實測踩過：13 個短段的 0.0% 被當成合格）。`*`＝分母 <20，不列入判讀。
+    echo = f"{s.echo_share:.1%}({s.echoes}/{s.short_paras})" if s.short_paras else "—"
+    thin = "*" if 0 < s.short_paras < MIN_ECHO_SAMPLE else " "
     return (
         f"{s.group:<26} {s.chapters:>3} 章  "
         f"{s.dash_density:>5.2f} 破折號  "
         f"{s.jolt_index:>5.2f} 顛簸  "
-        f"回聲 {echo:>5}{thin}"
+        f"句/段 {s.sent_per_para:>4.2f}  "
+        f"回聲 {echo:>13}{thin}"
         f"｜句長中位 {s.sent_median:>4.0f}  "
         f"≥40字句佔 {s.long_sent_share:>4.0%}  "
         f"逗號:句號 {s.comma_period:>4.2f}  "
-        f"分句均長 {s.clause_mean:>4.1f}  "
-        f"句/段 {s.sent_per_para:>4.2f}"
+        f"分句均長 {s.clause_mean:>4.1f}"
     )
 
 
@@ -73,21 +77,26 @@ def _corpus_lines(book: RhythmStat, corpus: RhythmStat, name: str) -> list[str]:
     rows = [
         ("破折號/千漢字", book.dash_density, corpus.dash_density, "{:.2f}"),
         ("顛簸/千漢字", book.jolt_index, corpus.jolt_index, "{:.2f}"),
+        ("句/段", book.sent_per_para, corpus.sent_per_para, "{:.2f}"),
         ("回聲佔比", book.echo_share * 100, corpus.echo_share * 100, "{:.1f}%"),
         ("句長中位數", book.sent_median, corpus.sent_median, "{:.0f}"),
         ("≥40字句字數佔比", book.long_sent_share * 100, corpus.long_sent_share * 100, "{:.1f}%"),
         ("逗號:句號", book.comma_period, corpus.comma_period, "{:.2f}"),
         ("分句平均長度", book.clause_mean, corpus.clause_mean, "{:.1f}"),
-        ("句/段", book.sent_per_para, corpus.sent_per_para, "{:.2f}"),
     ]
     lines = [
         f"### 語料對照（{name}；{corpus.chapters} 章）",
         "",
         "> 用途：`可用句式` 宣告的是**讀感**，這張表給的是它由哪一級標點承擔。"
         "宣告「短句為主」而語料的句長中位是它的兩倍，就是宣告寫錯了（診斷03 R12-a）。"
-        "前三項有絕對門檻（跨文類收斂），後五項是文類自由、只供對照，別當門檻用。",
+        "前四項有絕對門檻（跨文類收斂），後四項是文類自由、只供對照，別當門檻用。",
         "",
-        f"| 指標 | 本書 | 語料 | 倍數 |",
+        "> **後四項正是這張表存在的理由**：「該長的地方要長」**沒有普世判準**——長句"
+        "佔比六本從 17% 到 62% 全是好書，句長離散度兩組完全重疊（見 `rhythm.py` 檔頭"
+        "「已測過但不成立」）。它只能對著本書的參照語料或 `可用句式` 宣告判，"
+        "所以要看這幾項就得跑 `--corpus`。",
+        "",
+        "| 指標 | 本書 | 語料 | 倍數 |",
         "|---|---|---|---|",
     ]
     for label, b, c, fmt in rows:
@@ -156,9 +165,12 @@ def format_report(
     for r in rhythm_stats:
         lines.append("- " + _rhythm_line(r))
     lines.append(
-        "> 門檻 破折號 ≤0.5／顛簸 ≤0.3／回聲 ≤1.5%（六本 known-good 語料 max 0.38／0.23／0.6%）。"
-        "`*`＝≤12字非對白段不足 20 個，回聲佔比樣本不足、不報。"
-        "後四項是輔助量、**無門檻**，供對照 `可用句式` 宣告用。"
+        "> 門檻 破折號 ≤0.5／顛簸 ≤0.3／句/段 ≤1.35／回聲 ≤1.5%"
+        "（六本 known-good 語料 max 0.38／0.23／1.25／0.6%）。"
+        "回聲括號內是分子/分母（分母＝≤12字非對白段）；"
+        "`*`＝分母不足 20，佔比樣本不足、不報也**不算過關**。"
+        "後四項是輔助量、**無門檻**（長句佔比是文類自由的量，六本 17–62% 全是好書），"
+        "供對照 `可用句式` 宣告用。"
     )
 
     lines += ["", "### 漂移可疑點（相對本書前段）"]
