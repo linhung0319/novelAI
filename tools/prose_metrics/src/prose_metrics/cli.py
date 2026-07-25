@@ -21,6 +21,13 @@ from .metrics import (
     load_plain_chapters,
     load_vocab,
 )
+from .rhythm import (
+    RhythmStat,
+    combine,
+    detect_rhythm,
+    scan_rhythm,
+    summarize_rhythm,
+)
 
 
 def _force_utf8() -> None:
@@ -43,6 +50,50 @@ def _stat_line(s: GroupStat) -> str:
 
 def in_range(label: str, span: tuple[str, str] | None) -> bool:
     return span is None or span[0] <= label <= span[1]
+
+
+def _rhythm_line(s: RhythmStat) -> str:
+    echo = f"{s.echo_share:.1%}" if s.short_paras else "—"
+    thin = "*" if 0 < s.short_paras < 20 else " "
+    return (
+        f"{s.group:<26} {s.chapters:>3} 章  "
+        f"{s.dash_density:>5.2f} 破折號  "
+        f"{s.jolt_index:>5.2f} 顛簸  "
+        f"回聲 {echo:>5}{thin}"
+        f"｜句長中位 {s.sent_median:>4.0f}  "
+        f"≥40字句佔 {s.long_sent_share:>4.0%}  "
+        f"逗號:句號 {s.comma_period:>4.2f}  "
+        f"分句均長 {s.clause_mean:>4.1f}  "
+        f"句/段 {s.sent_per_para:>4.2f}"
+    )
+
+
+def _corpus_lines(book: RhythmStat, corpus: RhythmStat, name: str) -> list[str]:
+    """語料對照。**只印數字，不引原文片段。**"""
+    rows = [
+        ("破折號/千漢字", book.dash_density, corpus.dash_density, "{:.2f}"),
+        ("顛簸/千漢字", book.jolt_index, corpus.jolt_index, "{:.2f}"),
+        ("回聲佔比", book.echo_share * 100, corpus.echo_share * 100, "{:.1f}%"),
+        ("句長中位數", book.sent_median, corpus.sent_median, "{:.0f}"),
+        ("≥40字句字數佔比", book.long_sent_share * 100, corpus.long_sent_share * 100, "{:.1f}%"),
+        ("逗號:句號", book.comma_period, corpus.comma_period, "{:.2f}"),
+        ("分句平均長度", book.clause_mean, corpus.clause_mean, "{:.1f}"),
+        ("句/段", book.sent_per_para, corpus.sent_per_para, "{:.2f}"),
+    ]
+    lines = [
+        f"### 語料對照（{name}；{corpus.chapters} 章）",
+        "",
+        "> 用途：`可用句式` 宣告的是**讀感**，這張表給的是它由哪一級標點承擔。"
+        "宣告「短句為主」而語料的句長中位是它的兩倍，就是宣告寫錯了（診斷03 R12-a）。"
+        "前三項有絕對門檻（跨文類收斂），後五項是文類自由、只供對照，別當門檻用。",
+        "",
+        f"| 指標 | 本書 | 語料 | 倍數 |",
+        "|---|---|---|---|",
+    ]
+    for label, b, c, fmt in rows:
+        ratio = f"{b / c:.1f}×" if c else "—"
+        lines.append(f"| {label} | {fmt.format(b)} | {fmt.format(c)} | {ratio} |")
+    return lines
 
 
 def _candidate_lines(
@@ -70,6 +121,9 @@ def format_report(
     expo_rows: list[ChapterExposition],
     expo_list: bool,
     span: tuple[str, str] | None,
+    rhythm_stats: list[RhythmStat],
+    rhythm_findings,
+    corpus: tuple[RhythmStat, RhythmStat, str] | None = None,
 ) -> str:
     lines = [f"## {title}（{len(chapters)} 章；零 LLM、可覆算）", ""]
     if per_chapter:
@@ -98,7 +152,16 @@ def format_report(
     if expo_base is not None:
         lines.append(f"- 基準密度 {expo_base:.2f} 候選/千字")
 
-    lines += ["", "### 漂移可疑點"]
+    lines += ["", "### 行文節奏（P8·每千漢字）"]
+    for r in rhythm_stats:
+        lines.append("- " + _rhythm_line(r))
+    lines.append(
+        "> 門檻 破折號 ≤0.5／顛簸 ≤0.3／回聲 ≤1.5%（六本 known-good 語料 max 0.38／0.23／0.6%）。"
+        "`*`＝≤12字非對白段不足 20 個，回聲佔比樣本不足、不報。"
+        "後四項是輔助量、**無門檻**，供對照 `可用句式` 宣告用。"
+    )
+
+    lines += ["", "### 漂移可疑點（相對本書前段）"]
     all_findings = list(findings) + list(expo_findings)
     if base is None:
         lines.append("（分段數不足，不談漂移——需要至少 3 段才有基準可比）")
@@ -107,6 +170,18 @@ def format_report(
     else:
         for f in all_findings:
             lines.append(f"- [{f.metric}] {f.group}：{f.detail}")
+
+    # 與上一節分開印：判準基礎不同。上面相對本書前段（篇幅／對白密度是文類相依的），
+    # 這裡是絕對門檻（三項簽名跨文類收斂，見 rhythm.py 檔頭）。兩套並存，互不取代。
+    lines += ["", "### 行文節奏可疑點（絕對門檻）"]
+    if not rhythm_findings:
+        lines.append("（無）")
+    else:
+        for f in rhythm_findings:
+            lines.append(f"- [{f.metric}] {f.group}：{f.detail}")
+
+    if corpus is not None:
+        lines += [""] + _corpus_lines(*corpus)
 
     if expo_list:
         scope = f"（範圍 {span[0]}–{span[1]}）" if span else "（全書）"
@@ -138,6 +213,13 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument(
         "--vocab-from", type=Path, default=None, help="借用某本書的角色詞彙表（供對照語料用）"
     )
+    ap.add_argument(
+        "--corpus",
+        type=Path,
+        default=None,
+        metavar="目錄",
+        help="拿一份參照語料對照行文節奏（任何含 .txt/.md 的目錄；只輸出數字，不引原文）",
+    )
     ap.add_argument("--per-chapter", action="store_true", help="連逐章明細一起印")
     ap.add_argument(
         "--exposition-list",
@@ -166,12 +248,25 @@ def main(argv: list[str] | None = None) -> int:
             chapters = load_book_chapters(args.book)
             vocab = load_vocab(args.book)
             title = f"{args.book.name} 正文結構"
+            plain = False
         else:
             chapters = load_plain_chapters(args.plain_dir)
             vocab = load_vocab(args.vocab_from) if args.vocab_from else []
             title = f"{args.plain_dir.name} 正文結構（對照語料）"
+            plain = True
         rows = [chapter_metrics(c, vocab) for c in chapters]
         expo_rows = [scan_chapter(c) for c in chapters]
+        rhythm_rows = [scan_rhythm(c, drop_title=plain) for c in chapters]
+        corpus = None
+        if args.corpus:
+            corpus_rows = [
+                scan_rhythm(c, drop_title=True) for c in load_plain_chapters(args.corpus)
+            ]
+            corpus = (
+                combine(rhythm_rows, "本書"),
+                combine(corpus_rows, "語料"),
+                args.corpus.name,
+            )
     except MetricsError as e:
         print(f"統計錯誤：{e}", file=sys.stderr)
         return 1
@@ -195,6 +290,8 @@ def main(argv: list[str] | None = None) -> int:
     findings, base = detect(stats, cast_metrics=not borrowed)
     expo_stats = summarize_exposition(expo_rows)
     expo_findings, expo_base = detect_exposition(expo_stats)
+    rhythm_stats = summarize_rhythm(rhythm_rows)
+    rhythm_findings = detect_rhythm(rhythm_stats)
     print(
         format_report(
             title,
@@ -210,10 +307,13 @@ def main(argv: list[str] | None = None) -> int:
             expo_rows,
             args.exposition_list,
             span,
+            rhythm_stats,
+            rhythm_findings,
+            corpus,
         ),
         end="",
     )
-    return 1 if findings or expo_findings else 0
+    return 1 if findings or expo_findings or rhythm_findings else 0
 
 
 if __name__ == "__main__":
