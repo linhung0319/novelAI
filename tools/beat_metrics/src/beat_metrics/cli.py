@@ -1,0 +1,151 @@
+from __future__ import annotations
+
+import argparse
+import sys
+from pathlib import Path
+
+from .motif import ArcMotif, Finding, detect, measure
+from .playability import HOLLOW_SHARE_CAP, RUN_CAP, ArcPlayability, analyse
+from .scan import ScanError, load_book, load_pov
+
+
+def _force_utf8() -> None:
+    """Windows 主控台常是 cp950，會在印中文時炸。強制 UTF-8 輸出。"""
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8")  # type: ignore[union-attr]
+        except (AttributeError, ValueError):
+            pass
+
+
+def _play_line(p: ArcPlayability, m: ArcMotif) -> str:
+    runs = "／".join("–".join(f"幕{b}" for b in (r[0], r[-1])) for r in p.hollow_runs)
+    return (
+        f"{p.arc:<8} {p.total:>3} 幕  "
+        f"空洞 {len(p.hollow_beats):>2}/{p.total:<2} {p.hollow_share:>4.0%}  "
+        f"純內在 {len(p.solo_beats):>2}  "
+        f"分區衛生 {len(p.meta_beats):>2} 幕  "
+        f"母題重複 {m.repeat_rate:>5.1f}‰  "
+        f"行動欄 {m.action_mean:>4.0f} 字/幕"
+        + (f"  連續空洞 {runs}" if runs else "")
+    )
+
+
+def format_report(
+    book: Path,
+    pov: str | None,
+    plays: list[ArcPlayability],
+    motifs: list[ArcMotif],
+    findings: list[Finding],
+    base: ArcMotif | None,
+    detail: bool,
+) -> str:
+    lines = [
+        f"## 幕綱層統計 {book.name}（{len(plays)} 個 arc；零 LLM、可覆算）",
+        "",
+        f"主角（`00-摘要.ai.md` 視角結構.POV）：{pov or '（讀不到——空洞／純內在幕一律報不適用，不猜）'}",
+        "",
+        "### 分 arc",
+    ]
+    for p, m in zip(plays, motifs):
+        lines.append("- " + _play_line(p, m))
+    if base:
+        lines.append(f"- 基準：母題重複 {base.repeat_rate:.1f}‰　行動欄 {base.action_mean:.0f} 字/幕")
+
+    lines += ["", "### 可疑點（絕對門檻：可演性）"]
+    hits = []
+    for p in plays:
+        if p.hollow_share > HOLLOW_SHARE_CAP:
+            hits.append(
+                f"- [空洞幕比例] {p.arc}：{len(p.hollow_beats)}/{p.total}"
+                f"＝{p.hollow_share:.0%}，超過 {HOLLOW_SHARE_CAP:.0%}"
+                f"（幕 {'、'.join(str(b) for b in p.hollow_beats)}）"
+            )
+        for r in p.hollow_runs:
+            hits.append(
+                f"- [連續空洞幕] {p.arc}：幕{r[0]}–幕{r[-1]} 連續 {len(r)} 幕"
+                f"皆為「主角獨處＋行動欄只剩主題陳述」"
+            )
+        if p.meta_beats:
+            hits.append(
+                f"- [分區衛生] {p.arc}：{len(p.meta_beats)} 幕的八欄出現元管理字樣"
+                f"（幕 {'、'.join(str(b) for b in p.meta_beats)}）——設計理由屬檔尾設計註"
+            )
+    lines += hits or ["（無）"]
+
+    lines += ["", "### 可疑點（相對本書前段：母題自我複製／行動欄膨脹）"]
+    if base is None:
+        lines.append(f"（arc 數不足，不談漂移——需要至少 {3} 個有內容的 arc 才有基準可比）")
+    elif not findings:
+        lines.append("（無）")
+    else:
+        for f in findings:
+            lines.append(f"- [{f.metric}] {f.arc}：{f.detail}")
+
+    if detail:
+        lines += ["", "### 各 arc 最常重複的八欄片段（供人眼認出是哪個母題在迴圈）", ""]
+        for m in motifs:
+            hot = "　".join(f"{g}×{c}" for c, g in m.hot) or "（無 ≥4 次者）"
+            lines.append(f"- {m.arc}：{hot}")
+
+    lines += [
+        "",
+        "> 空洞幕＝**角色欄只剩主角一人 ∧ 行動欄命中禁止清單詞式**（`幕綱.schema.md`"
+        "「八欄只寫故事事實」四類）。**兩個條件缺一不可**：一個人在場不是病，一個人在場"
+        "而且沒有東西可拍才是——純內在幕單獨列出只當資訊（實測 arc01 的 2 幕獨處是健康的，"
+        "見 `playability.py` 檔頭）。",
+        "> 母題重複率與行動欄長度用**相對本書前段**的判準（同 `prose-metrics` 漂移），"
+        "不設絕對門檻——絕對值是書/文類相依的。",
+    ]
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def main(argv: list[str] | None = None) -> int:
+    ap = argparse.ArgumentParser(
+        description="幕綱層機械統計（零 LLM、可覆算）：幕的可演性（beat-test 測試9）"
+        "＋分區衛生＋母題自我複製＋行動欄膨脹。"
+        "取代『為了數這幾個數字而整批讀 arc 檔』——確定性的計數進程式，LLM 只做判斷"
+        "（`共同約定.md` 八）。",
+    )
+    ap.add_argument("--book", required=True, type=Path, help="書資料夾路徑（含 story/）")
+    ap.add_argument("--arc", default=None, help="只印這個 arc（統計與基準一律仍看全書）")
+    ap.add_argument("--detail", action="store_true", help="連各 arc 最常重複的八欄片段一起印")
+    args = ap.parse_args(argv)
+
+    _force_utf8()
+    try:
+        arcs = load_book(args.book)
+        pov = load_pov(args.book)
+    except ScanError as e:
+        print(f"掃描錯誤：{e}", file=sys.stderr)
+        return 1
+    except OSError as e:
+        print(f"讀取失敗：{e}", file=sys.stderr)
+        return 1
+
+    plays = [analyse(a, pov) for a in arcs]
+    motifs = [measure(a, p.action_mean) for a, p in zip(arcs, plays)]
+    findings, base = detect(motifs)
+
+    if args.arc:
+        keep = {args.arc}
+        shown_plays = [p for p in plays if p.arc in keep]
+        shown_motifs = [m for m in motifs if m.arc in keep]
+        findings = [f for f in findings if f.arc in keep]
+    else:
+        shown_plays, shown_motifs = plays, motifs
+
+    print(
+        format_report(args.book, pov, shown_plays, shown_motifs, findings, base, args.detail),
+        end="",
+    )
+
+    suspect = bool(findings) or any(
+        p.hollow_share > HOLLOW_SHARE_CAP or p.hollow_runs or p.meta_beats
+        for p in shown_plays
+    )
+    return 1 if suspect else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
