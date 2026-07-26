@@ -11,6 +11,7 @@ from .constraints import active_at
 from .fold import (
     KIND_CONSTRAINT,
     KINDS,
+    RELATION_SEP,
     Event,
     FoldError,
     Slot,
@@ -48,7 +49,14 @@ def format_projection(
 ) -> str:
     if entities:
         wanted = set(entities)
-        slots = [s for s in slots if s.entity in wanted]
+        # 關係型 slot 是 `A↔B`，任一端命中就要留。用完全相等比對會讓 `關係` 這一
+        # 整維在 `--for-beat` 這條路上靜默消失——幕綱的角色欄寫的是單個名字，
+        # 永遠不會是 `A↔B`。
+        slots = [
+            s
+            for s in slots
+            if s.entity in wanted or (wanted & set(s.entity.split(RELATION_SEP)))
+        ]
     lines = [
         f"## as-of 幕{target_beat:03d}（{target_arc}）事實投影"
         f"（{_SOURCE_DESC.get(mode, mode)}，零 LLM、可覆算）",

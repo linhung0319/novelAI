@@ -17,7 +17,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from .constraints import Constraint, parse_constraints
+from .constraints import Constraint, check_duplicates, parse_constraints
 from .fold import KIND_CONSTRAINT, KIND_STATE, Event, FoldError, parse_events
 from .ops import OpError, STATEFUL_DIMENSIONS, SET_DIMENSIONS, parse_ops
 
@@ -157,9 +157,12 @@ def collect_constraints(
     path, is_legacy_log = resolve_constraint_file(book)
     if path is None or is_legacy_log or resolve_legacy_stream(book) is not None:
         return []
-    return parse_constraints(
+    out = parse_constraints(
         path.read_text(encoding=_ENCODING), origin=CONSTRAINT_TABLE, errors=errors
     )
+    if errors is not None:
+        errors += check_duplicates(out, origin=CONSTRAINT_TABLE)
+    return out
 
 
 def check_kind_placement(events: list[Event]) -> list[str]:

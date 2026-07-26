@@ -8,6 +8,9 @@ from .ops import OpError, apply_ops, parse_ops, render
 # 狀態的 6 維（封閉枚舉，跨小說通用）——語意與子專案 C 原版逐字相同。
 DIMENSIONS = frozenset({"知識前沿", "關係", "持有", "位置", "能力", "所屬"})
 
+# 關係類實體寫 `A↔B`，視為一個雙向 slot（見 結構定義/事實流.schema.md 逐欄定義）。
+RELATION_SEP = "↔"
+
 KIND_STATE = "狀態"
 KIND_ANCHOR = "錨"
 KIND_CONSTRAINT = "約束"

@@ -156,6 +156,27 @@ def parse_constraints(
     return out
 
 
+def check_duplicates(constraints: list[Constraint], origin: str = "") -> list[str]:
+    """同一個 `(約束名, 實體)` 出現兩列＝有人「新增一列」而不是「改那一列」。
+
+    這正是改成表要防的事：射程延長要改 `解除於` 一格，不是再加一列。加了會讓
+    投影回兩條並存的同名約束——看得到，但沒有東西會告訴你那是筆誤。
+    """
+    seen: dict[tuple[str, str], int] = {}
+    problems: list[str] = []
+    for c in constraints:
+        key = (c.name, c.entity)
+        if key in seen:
+            where = f"{origin} 第 {c.lineno} 行" if origin else f"第 {c.lineno} 行"
+            problems.append(
+                f"{where}與第 {seen[key]} 行重複（約束〔{c.name}〕· {c.entity}）："
+                "一條約束一列。要延長射程或解除，**改那一列的「解除於」一格**，別新增列"
+            )
+        else:
+            seen[key] = c.lineno
+    return problems
+
+
 def active_at(
     constraints: list[Constraint],
     spine: dict[str, int],

@@ -143,3 +143,28 @@ def test_slot_source_label_handles_全書():
 def test_slot_source_label_handles_a_beat():
     (c,) = parse_constraints(_t("| 甲 | 同伴 | 乙 | 幕005（arc01） | — |"))
     assert c.to_slot("約束.co.md").source_label == "幕005（arc01）"
+
+
+def test_duplicate_rows_are_reported():
+    """「射程延長＝改一格」是紀律，得有東西在守，否則就退回死行累積。"""
+    from fact_projection.constraints import check_duplicates
+    cs = parse_constraints(
+        _t(
+            "| 甲 | 同伴 | 乙 | 全書 | 幕040（arc02） |",
+            "| 甲 | 同伴 | 乙 | 全書 | 幕050（arc03） |",
+        )
+    )
+    (problem,) = check_duplicates(cs, origin="約束.co.md")
+    assert "重複" in problem and "改那一列" in problem
+
+
+def test_same_name_on_different_entities_is_fine():
+    """「不得升為隱藏高手」可以同時管好幾個配角——那不是重複。"""
+    from fact_projection.constraints import check_duplicates
+    cs = parse_constraints(
+        _t(
+            "| 不得升為隱藏高手 | 配角甲 | 就是看起來那樣 | 全書 | — |",
+            "| 不得升為隱藏高手 | 配角乙 | 就是看起來那樣 | 全書 | — |",
+        )
+    )
+    assert check_duplicates(cs) == []

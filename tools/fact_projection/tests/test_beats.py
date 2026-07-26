@@ -142,3 +142,30 @@ def test_default_gives_all_propositions(tmp_path, capsys):
     )
     main(["--book", str(book), "--for-beat", "幕002"])
     assert "主宰目的" in capsys.readouterr().out
+
+
+def test_relationship_slots_survive_entity_filtering(tmp_path, capsys):
+    """關係型 slot 是 `A↔B`，而幕綱角色欄寫的是單個名字。
+
+    用完全相等比對會讓 `關係` 這一整維在 --for-beat 這條路上靜默消失——
+    而那正是 write 動筆前唯一會走的查詢。
+    """
+    book = _book(
+        tmp_path,
+        chapters={
+            "ch0001.ai.md": _ch("- 幕002（arc01）· 少年↔同伴 · 關係：萍水相逢 → 結伴同行\n")
+        },
+    )
+    assert main(["--book", str(book), "--for-beat", "幕002"]) == 0
+    assert "### 少年↔同伴" in capsys.readouterr().out
+
+
+def test_unrelated_relationship_slot_is_still_filtered_out(tmp_path, capsys):
+    book = _book(
+        tmp_path,
+        chapters={
+            "ch0001.ai.md": _ch("- 幕002（arc01）· 路人甲↔路人乙 · 關係：陌生\n")
+        },
+    )
+    main(["--book", str(book), "--for-beat", "幕002"])
+    assert "路人" not in capsys.readouterr().out
