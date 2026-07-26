@@ -107,3 +107,18 @@ def test_since_filters_by_date():
 def test_bad_since_raises():
     with pytest.raises(ParseError, match="--since"):
         select(parse_decisions(STREAM), since="2026/07/24")
+
+
+def test_html_comment_rows_are_not_parsed_as_decisions():
+    """書本模板把欄位說明與範例列放在註解裡——那些不是裁決，
+    讀進來會讓查詢吐出根本不存在的決定。"""
+    text = (
+        "| 日期 | 來源 | 標的 | 裁決 | 理由 | 射程 | 狀態 |\n"
+        "|--|--|--|--|--|--|--|\n"
+        "| 2026-07-26 | character | 全書 | 真的裁決 | x | 全書 | 生效中 |\n"
+        "<!-- 範例：\n"
+        "| 2026-07-22 | write-test | 設定/角色/少年/核心.md | 假的 | y | 全書 | 生效中 |\n"
+        "-->\n"
+    )
+    ds = parse_decisions(text)
+    assert [d.ruling for d in ds] == ["真的裁決"]

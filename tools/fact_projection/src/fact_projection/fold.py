@@ -54,9 +54,38 @@ def classify_token(token: str) -> tuple[str, str]:
     )
 
 
+def strip_html_comments(lines: list[str]) -> list[tuple[int, str]]:
+    """濾掉 `<!-- ... -->` 區塊，回傳 [(原始行號, 行)]。
+
+    schema 與書本模板會把範例事件放在註解裡；那些**不是事件**，讀進來會
+    因為引用了不存在的 arc 而整份投影報錯。
+    """
+    out: list[tuple[int, str]] = []
+    in_comment = False
+    for i, raw in enumerate(lines, start=1):
+        line = raw
+        if in_comment:
+            if "-->" in line:
+                in_comment = False
+                line = line.split("-->", 1)[1]
+            else:
+                continue
+        while "<!--" in line:
+            before, _, rest = line.partition("<!--")
+            if "-->" in rest:
+                line = before + rest.split("-->", 1)[1]
+            else:
+                line = before
+                in_comment = True
+                break
+        if line.strip():
+            out.append((i, line))
+    return out
+
+
 def parse_events(text: str) -> list[Event]:
     events: list[Event] = []
-    for i, raw in enumerate(text.splitlines(), start=1):
+    for i, raw in strip_html_comments(text.splitlines()):
         line = raw.strip()
         if not line.startswith("-"):
             continue

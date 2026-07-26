@@ -53,6 +53,11 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--since", default=None, help="只看這個日期（含）之後的，格式 YYYY-MM-DD")
     args = ap.parse_args(argv)
 
+    # 書內容是中文，主控台編碼（如 Windows cp950）不該決定工具能不能輸出。
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8")
+
     try:
         path = resolve_stream(args.book)
         decisions = parse_decisions(path.read_text(encoding="utf-8"))

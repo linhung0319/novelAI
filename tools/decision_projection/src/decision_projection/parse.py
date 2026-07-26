@@ -42,11 +42,40 @@ def _cells(line: str) -> list[str]:
     return [c.strip() for c in line.strip().strip("|").split("|")]
 
 
+def strip_html_comments(lines: list[str]) -> list[tuple[int, str]]:
+    """濾掉 `<!-- ... -->` 區塊，回傳 [(原始行號, 行)]。
+
+    schema 與書本模板會把範例列放在註解裡；那些**不是裁決**，讀進來會讓
+    查詢吐出根本不存在的決定。
+    """
+    out: list[tuple[int, str]] = []
+    in_comment = False
+    for i, raw in enumerate(lines, start=1):
+        line = raw
+        if in_comment:
+            if "-->" in line:
+                in_comment = False
+                line = line.split("-->", 1)[1]
+            else:
+                continue
+        while "<!--" in line:
+            before, _, rest = line.partition("<!--")
+            if "-->" in rest:
+                line = before + rest.split("-->", 1)[1]
+            else:
+                line = before
+                in_comment = True
+                break
+        if line.strip():
+            out.append((i, line))
+    return out
+
+
 def parse_decisions(text: str) -> list[Decision]:
-    """讀裁決流表格。非表格行（標題、引言）跳過；壞行報錯、不靜默丟。"""
+    """讀裁決流表格。非表格行（標題、引言、HTML 註解）跳過；壞行報錯、不靜默丟。"""
     out: list[Decision] = []
     seen_header = False
-    for i, raw in enumerate(text.splitlines(), start=1):
+    for i, raw in strip_html_comments(text.splitlines()):
         line = raw.strip()
         if not line.startswith("|"):
             continue

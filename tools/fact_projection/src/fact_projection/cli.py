@@ -78,6 +78,11 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = ap.parse_args(argv)
 
+    # 書內容是中文，主控台編碼（如 Windows cp950）不該決定工具能不能輸出。
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8")
+
     m = _ASOF_RE.match(args.as_of.strip())
     if not m:
         print(f"--as-of 格式須為『幕NNN（arcAA）』，得到 {args.as_of!r}", file=sys.stderr)

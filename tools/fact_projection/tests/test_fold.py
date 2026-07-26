@@ -213,3 +213,29 @@ def test_constraint_release_is_explicit_and_active_only_filters_it():
     # 不加 --active-only 時解除列仍看得到（審稿要知道它曾經在）
     released = _slot(project(events, spine, 12, "arcF"), "榮恩", tok)
     assert released.released and released.content.startswith("（解除）")
+
+
+# ---------------------------------------------------------------- HTML 註解
+
+def test_html_comment_block_is_not_parsed_as_events():
+    """schema 與書本模板把範例事件放在註解裡；讀進來會因引用不存在的 arc
+    而整份投影報錯（實測：模板的 arc03 範例讓新書第一次查詢就掛掉）。"""
+    text = (
+        "- 幕001（arcF）· 哈利 · 持有：真的事件\n"
+        "<!-- 範例（實際使用時刪掉）：\n"
+        "- 幕051（arc03）· 少年 · 持有：這行不是事件\n"
+        "- 幕052（arcZZ）· 少年 · 心情：連類型都是壞的\n"
+        "-->\n"
+    )
+    events = parse_events(text)
+    assert [e.entity for e in events] == ["哈利"]
+
+
+def test_inline_comment_is_stripped_but_line_kept():
+    events = parse_events("- 幕001（arcF）· 哈利 · 持有：斗篷 <!-- 待確認 -->\n")
+    assert len(events) == 1 and events[0].content == "斗篷"
+
+
+def test_lineno_still_points_at_the_real_file_line():
+    events = parse_events("<!--\nx\n-->\n- 幕001（arcF）· 哈利 · 持有：斗篷\n")
+    assert events[0].lineno == 4
