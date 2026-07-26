@@ -81,11 +81,74 @@ def test_mentioned_only_is_reported_but_not_selected(tmp_path):
     assert "同伴" in {h.entity.name for h in sel.mentioned_only}
 
 
-def test_prefers_derived_falls_back_to_source(tmp_path):
+def test_reads_both_derived_and_source(tmp_path):
+    """衍生檔依 schema 只放四象限分析，人物描述在源——兩邊都要。"""
     sel = select(_book(tmp_path), "arc09")
     by_name = {h.entity.name: h.entity for h in sel.selected}
-    assert by_name["少年"].read_path.name == "少年.ai.md"
-    assert by_name["山門"].read_path.name == "山門.md"  # 無 .ai.md → 退回源
+    assert [p.name for p in by_name["少年"].read_paths()] == ["少年.ai.md", "少年.md"]
+    assert [p.name for p in by_name["山門"].read_paths()] == ["山門.md"]  # 無 .ai.md
+
+
+# ---------------------------------------------------------------- 目錄形態＋切面
+
+def _with_dir_form(tmp_path):
+    book = _book(tmp_path)
+    d = book / "story" / "設定" / "角色"
+    (d / "少年.md").unlink()
+    (d / "少年").mkdir()
+    for facet in ("核心", "來歷", "能力", "關係", "水下"):
+        (d / "少年" / f"{facet}.md").write_text(facet, encoding="utf-8")
+    return book
+
+
+def test_directory_form_entity_is_discovered_by_dir_name(tmp_path):
+    ents = {e.name: e for e in load_entities(_with_dir_form(tmp_path))}
+    assert ents["少年"].dir_form and ents["少年"].derived is not None
+    assert not ents["老僕"].dir_form
+
+
+def test_underwater_facet_withheld_by_default(tmp_path):
+    """水下＝存取控制：揭底前的 write 拿不到它。"""
+    ents = {e.name: e for e in load_entities(_with_dir_form(tmp_path))}
+    names = [p.name for p in ents["少年"].read_paths()]
+    assert "水下.md" not in names
+    assert set(names) == {"少年.ai.md", "核心.md", "來歷.md", "能力.md", "關係.md"}
+
+
+def test_underwater_facet_opt_in(tmp_path):
+    ents = {e.name: e for e in load_entities(_with_dir_form(tmp_path))}
+    names = [p.stem for p in ents["少年"].read_paths(include_underwater=True)]
+    assert "水下" in names
+
+
+def test_facet_filter_narrows(tmp_path):
+    ents = {e.name: e for e in load_entities(_with_dir_form(tmp_path))}
+    names = [p.name for p in ents["少年"].read_paths(facets=("核心", "能力"))]
+    assert names == ["少年.ai.md", "核心.md", "能力.md"]  # 衍生在前
+
+
+def test_facet_filter_cannot_smuggle_underwater(tmp_path):
+    ents = {e.name: e for e in load_entities(_with_dir_form(tmp_path))}
+    names = [p.stem for p in ents["少年"].read_paths(facets=("核心", "水下"))]
+    assert "水下" not in names
+
+
+def test_single_file_form_ignores_facets(tmp_path):
+    """單檔形態切不動——不能改成「只讀一部分」。"""
+    ents = {e.name: e for e in load_entities(_with_dir_form(tmp_path))}
+    assert [p.name for p in ents["老僕"].read_paths(facets=("核心",))] == [
+        "老僕.ai.md",
+        "老僕.md",
+    ]
+
+
+def test_parse_facets_rejects_unknown():
+    from settings_select.select import parse_facets
+
+    assert parse_facets(None) is None
+    assert parse_facets("核心, 能力") == ("核心", "能力")
+    with pytest.raises(SelectError, match="未知切面"):
+        parse_facets("核心,秘密")
 
 
 def test_beat_range_filter(tmp_path):

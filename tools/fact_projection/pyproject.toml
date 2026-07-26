@@ -1,0 +1,19 @@
+[project]
+name = "fact-projection"
+version = "0.2.0"
+description = "novelAI：事實流 as-of 投影（狀態／錨／約束，fold，零 LLM、可覆算）"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+fact-project = "fact_projection.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/fact_projection"]

@@ -11,19 +11,57 @@ class SelectError(Exception):
 
 # ---------------------------------------------------------------- 已知實體詞彙表
 
+# 角色源檔目錄形態的切面枚舉（見 結構定義/角色.schema.md）。檔名即選擇器。
+FACETS = ("核心", "來歷", "能力", "關係", "水下")
+# 水下＝揭底資訊。預設**不給**——這是存取控制，不只是分大小：讓 write 在揭底
+# 前的章節拿不到它，比同檔內的 🧊 標記強一級。要它得顯式 include_underwater。
+UNDERWATER_FACET = "水下"
+
+
 @dataclass(frozen=True)
 class Entity:
-    """一個設定層實體。name 取自**源檔檔名**——源是唯一真實來源，故檔名即權威名。"""
+    """一個設定層實體。name 取自**源的檔名／目錄名**——源是唯一真實來源，故名即權威名。
+
+    源有兩種形態（`角色.schema.md`）：單檔 `<名>.md`，或目錄 `<名>/<切面>.md`。
+    """
 
     name: str
     kind: str  # 角色 / 世界觀
-    source: Path
+    source: Path  # 單檔形態＝該 .md；目錄形態＝該目錄
     derived: Path | None  # <名>.ai.md，尚未重生時為 None
 
     @property
-    def read_path(self) -> Path:
-        """下游該讀哪一份：有衍生讀衍生（機器事實＋分析），否則退回源。"""
-        return self.derived or self.source
+    def dir_form(self) -> bool:
+        return self.source.is_dir()
+
+    def source_paths(
+        self,
+        facets: tuple[str, ...] | None = None,
+        include_underwater: bool = False,
+    ) -> list[Path]:
+        """源這一側該讀哪幾支。單檔形態切不動，一律整檔。"""
+        if not self.dir_form:
+            return [self.source]
+        wanted = set(facets) if facets else set(FACETS)
+        if not include_underwater:
+            wanted.discard(UNDERWATER_FACET)
+        return [p for p in sorted(self.source.glob("*.md")) if p.stem in wanted]
+
+    def read_paths(
+        self,
+        facets: tuple[str, ...] | None = None,
+        include_underwater: bool = False,
+    ) -> list[Path]:
+        """下游該讀哪幾份＝衍生（四象限分析）＋源的相關切面（他是誰／聲音／能力）。
+
+        兩邊都要：衍生檔依 schema 只放分析，人物描述在源——只讀衍生會拿不到腔調
+        與外貌，只讀源會拿不到需求弧線。
+        """
+        out: list[Path] = []
+        if self.derived:
+            out.append(self.derived)
+        out += self.source_paths(facets, include_underwater)
+        return out
 
 
 def load_entities(book: Path) -> list[Entity]:
@@ -37,15 +75,23 @@ def load_entities(book: Path) -> list[Entity]:
         d = book / "story" / "設定" / kind
         if not d.is_dir():
             continue
-        for src in sorted(d.glob("*.md")):
-            if src.name.endswith(".ai.md") or src.name.startswith("_"):
+        for entry in sorted(d.iterdir()):
+            if entry.is_dir():  # 目錄形態
+                name = entry.name
+            elif (
+                entry.suffix == ".md"
+                and not entry.name.endswith(".ai.md")
+                and not entry.name.startswith("_")
+            ):
+                name = entry.stem
+            else:
                 continue
-            derived = src.parent / f"{src.stem}.ai.md"
+            derived = d / f"{name}.ai.md"
             entities.append(
                 Entity(
-                    name=src.stem,
+                    name=name,
                     kind=kind,
-                    source=src,
+                    source=entry,
                     derived=derived if derived.exists() else None,
                 )
             )
@@ -145,6 +191,16 @@ def _hits(
                 if beat_no not in found[e.name]:
                     found[e.name].append(beat_no)
     return found
+
+
+def parse_facets(spec: str | None) -> tuple[str, ...] | None:
+    if not spec:
+        return None
+    facets = tuple(f.strip() for f in spec.split(",") if f.strip())
+    unknown = [f for f in facets if f not in FACETS]
+    if unknown:
+        raise SelectError(f"--facets 含未知切面 {unknown}（限 {list(FACETS)}）")
+    return facets
 
 
 def select(

@@ -3,11 +3,20 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
+# 狀態的 6 維（封閉枚舉，跨小說通用）——語意與子專案 C 原版逐字相同。
 DIMENSIONS = frozenset({"知識前沿", "關係", "持有", "位置", "能力", "所屬"})
+
+KIND_STATE = "狀態"
+KIND_ANCHOR = "錨"
+KIND_CONSTRAINT = "約束"
+KINDS = (KIND_STATE, KIND_ANCHOR, KIND_CONSTRAINT)
+
+# 約束退場靠顯式解除，不加第 5 欄（見 結構定義/事實流.schema.md）。
+RELEASE_PREFIX = "（解除）"
 
 
 class FoldError(Exception):
-    """事件流/spine 解析或定位失敗（格式壞行、未知維度、無法定位）。"""
+    """事實流/spine 解析或定位失敗（格式壞行、未知類型 token、無法定位）。"""
 
 
 @dataclass(frozen=True)
@@ -15,13 +24,34 @@ class Event:
     beat: int
     arc: str
     entity: str
-    dimension: str
+    token: str  # 第三欄原文：6 維之一，或 錨〔名〕／約束〔名〕
+    kind: str  # 狀態／錨／約束
+    name: str  # 狀態＝維度名；錨/約束＝〔〕內的名字
     content: str
     lineno: int
+
+    @property
+    def released(self) -> bool:
+        return self.content.startswith(RELEASE_PREFIX)
 
 
 # 位置從左端解析：幕NNN（arcAA）後第一個 · 為位置/實體分隔；實體之後（含名字內的 ·）全歸實體。
 _POS_RE = re.compile(r"^幕(\d+)（(arc[^）]+)）\s*·\s*(.+)$")
+# 錨／約束的 token 帶名字；名字內不得再有全形方括號。
+_TYPED_TOKEN_RE = re.compile(r"^(錨|約束)〔([^〔〕]+)〕$")
+
+
+def classify_token(token: str) -> tuple[str, str]:
+    """第三欄 token → (kind, name)。未知 token 報錯、不靜默丟。"""
+    if token in DIMENSIONS:
+        return KIND_STATE, token
+    m = _TYPED_TOKEN_RE.match(token)
+    if m:
+        return m.group(1), m.group(2).strip()
+    raise FoldError(
+        f"未知類型 token {token!r}"
+        f"（限 6 維狀態 {sorted(DIMENSIONS)}，或 錨〔名〕／約束〔名〕）"
+    )
 
 
 def parse_events(text: str) -> list[Event]:
@@ -36,14 +66,15 @@ def parse_events(text: str) -> list[Event]:
         if "：" not in body:
             raise FoldError(f"第 {i} 行事件缺少內容分隔『：』：{raw!r}")
         head, _, content = body.partition("：")
-        left, sep, dim = head.rpartition("·")  # 維度是無點枚舉，最後一個 · 必為實體/維度分隔
+        # token 內無 ·（6 維無點；錨/約束的〔〕內也不容 ·），故最後一個 · 必為實體/token 分隔
+        left, sep, tok = head.rpartition("·")
         if not sep:
-            raise FoldError(f"第 {i} 行事件缺少維度分隔『·』：{raw!r}")
-        dimension = dim.strip()
-        if dimension not in DIMENSIONS:
-            raise FoldError(
-                f"第 {i} 行未知變化維度 {dimension!r}（限 {sorted(DIMENSIONS)}）"
-            )
+            raise FoldError(f"第 {i} 行事件缺少類型分隔『·』：{raw!r}")
+        token = tok.strip()
+        try:
+            kind, name = classify_token(token)
+        except FoldError as e:
+            raise FoldError(f"第 {i} 行{e}") from None
         m = _POS_RE.match(left.strip())
         if not m:
             raise FoldError(f"第 {i} 行位置/實體格式不符：{raw!r}")
@@ -52,7 +83,9 @@ def parse_events(text: str) -> list[Event]:
                 beat=int(m.group(1)),
                 arc=m.group(2).strip(),
                 entity=m.group(3).strip(),
-                dimension=dimension,
+                token=token,
+                kind=kind,
+                name=name,
                 content=content.strip(),
                 lineno=i,
             )
@@ -81,10 +114,16 @@ def parse_spine(text: str) -> dict[str, int]:
 @dataclass(frozen=True)
 class Slot:
     entity: str
-    dimension: str
+    token: str
+    kind: str
+    name: str
     content: str
     source_beat: int
     source_arc: str
+
+    @property
+    def released(self) -> bool:
+        return self.content.startswith(RELEASE_PREFIX)
 
 
 def _pos(spine: dict[str, int], arc: str, beat: int) -> tuple[int, int]:
@@ -94,8 +133,18 @@ def _pos(spine: dict[str, int], arc: str, beat: int) -> tuple[int, int]:
 
 
 def project(
-    events: list[Event], spine: dict[str, int], target_beat: int, target_arc: str
+    events: list[Event],
+    spine: dict[str, int],
+    target_beat: int,
+    target_arc: str,
+    kinds: tuple[str, ...] | None = None,
+    active_only: bool = False,
 ) -> list[Slot]:
+    """as-of 投影。三類型共用同一套 fold：slot key ＝(實體, token)，序最新勝。
+
+    kinds=None 代表全開。active_only 剔除內容以「（解除）」起頭的 slot
+    ——約束的退場靠顯式解除，見 結構定義/事實流.schema.md。
+    """
     target = _pos(spine, target_arc, target_beat)
     # 對每個事件都定位（含被過濾的），arc 無法定位即報錯、不靜默丟。
     positioned = [(_pos(spine, e.arc, e.beat), e) for e in events]
@@ -105,11 +154,18 @@ def project(
     )
     slots: dict[tuple[str, str], Slot] = {}
     for _p, e in kept:
-        slots[(e.entity, e.dimension)] = Slot(
+        slots[(e.entity, e.token)] = Slot(
             entity=e.entity,
-            dimension=e.dimension,
+            token=e.token,
+            kind=e.kind,
+            name=e.name,
             content=e.content,
             source_beat=e.beat,
             source_arc=e.arc,
         )
-    return list(slots.values())
+    out = list(slots.values())
+    if kinds is not None:
+        out = [s for s in out if s.kind in kinds]
+    if active_only:
+        out = [s for s in out if not s.released]
+    return out

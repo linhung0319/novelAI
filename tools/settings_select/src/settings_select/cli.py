@@ -4,7 +4,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from .select import Selection, SelectError, select
+from .select import FACETS, Selection, SelectError, parse_facets, select
 
 
 def _beats_label(beats: tuple[int, ...], limit: int = 4) -> str:
@@ -14,26 +14,39 @@ def _beats_label(beats: tuple[int, ...], limit: int = 4) -> str:
     return "／".join(shown)
 
 
-def format_selection(sel: Selection, book: Path, show_bytes: bool = True) -> str:
+def format_selection(
+    sel: Selection,
+    book: Path,
+    show_bytes: bool = True,
+    facets: tuple[str, ...] | None = None,
+    include_underwater: bool = False,
+) -> str:
+    facet_note = f"；切面 {'／'.join(facets)}" if facets else ""
+    if include_underwater:
+        facet_note += "；含水下"
     lines = [
-        f"## {sel.arc} 設定選取（掃 {sel.beat_count} 幕；零 LLM、可覆算）",
+        f"## {sel.arc} 設定選取（掃 {sel.beat_count} 幕{facet_note}；零 LLM、可覆算）",
         "",
         "### 要讀的設定檔",
     ]
     if not sel.selected:
         lines.append("（本範圍的幕沒有命中任何設定層實體——請確認幕綱「角色」欄有填）")
     total = 0
+    files = 0
     for hit in sel.selected:
-        p = hit.entity.read_path
-        size = p.stat().st_size if p.exists() else 0
-        total += size
-        rel = p.relative_to(book) if p.is_relative_to(book) else p
-        tag = "" if hit.entity.derived else "　※衍生檔未生成，退回源檔"
-        sz = f"　{size:>6}B" if show_bytes else ""
-        lines.append(f"- [{hit.entity.kind}] {rel}{sz}　←{_beats_label(hit.beats)}{tag}")
+        paths = hit.entity.read_paths(facets, include_underwater)
+        tag = "" if hit.entity.derived else "　※衍生檔未生成，只有源"
+        for i, p in enumerate(paths):
+            size = p.stat().st_size if p.exists() else 0
+            total += size
+            files += 1
+            rel = p.relative_to(book) if p.is_relative_to(book) else p
+            sz = f"　{size:>6}B" if show_bytes else ""
+            beats = f"　←{_beats_label(hit.beats)}{tag}" if i == 0 else ""
+            lines.append(f"- [{hit.entity.kind}] {rel}{sz}{beats}")
 
     if show_bytes:
-        lines += ["", f"合計 {total} bytes（{len(sel.selected)} 檔）"]
+        lines += ["", f"合計 {total} bytes（{files} 檔／{len(sel.selected)} 個實體）"]
 
     if sel.mentioned_only:
         lines += [
@@ -63,6 +76,18 @@ def main(argv: list[str] | None = None) -> int:
         "--beats", default=None, help="只看這個幕號範圍，如 幕1001-1005（預設整個 arc）"
     )
     ap.add_argument(
+        "--facets",
+        default=None,
+        help=f"角色目錄形態只取這些切面，逗號分隔（{'／'.join(FACETS)}）。"
+        "預設取全部（水下除外）。單檔形態的角色切不動，一律整檔。",
+    )
+    ap.add_argument(
+        "--include-underwater",
+        action="store_true",
+        help="連「水下」切面一起給（揭底資訊）。預設不給——這是存取控制，"
+        "讓 write 在揭底前的章節拿不到它。character／beat-sheet 才該開。",
+    )
+    ap.add_argument(
         "--paths-only",
         action="store_true",
         help="只印檔案路徑，一行一個（供 shell 串接）",
@@ -75,6 +100,7 @@ def main(argv: list[str] | None = None) -> int:
             stream.reconfigure(encoding="utf-8")
 
     try:
+        facets = parse_facets(args.facets)
         sel = select(args.book, args.arc, args.beats)
     except SelectError as e:
         print(f"選取錯誤：{e}", file=sys.stderr)
@@ -85,10 +111,16 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.paths_only:
         for hit in sel.selected:
-            print(hit.entity.read_path)
+            for p in hit.entity.read_paths(facets, args.include_underwater):
+                print(p)
         return 0
 
-    print(format_selection(sel, args.book), end="")
+    print(
+        format_selection(
+            sel, args.book, facets=facets, include_underwater=args.include_underwater
+        ),
+        end="",
+    )
     return 0
 
 
