@@ -206,3 +206,21 @@ def test_run_aggregates_all_four(tmp_path):
 
 def test_missing_dirs_do_not_crash(tmp_path):
     assert run(tmp_path / "nonexistent") == []
+
+
+def test_declarative_files_scanned_under_both_namings(tmp_path):
+    """就緒儀表／結構 2026-07-26 起改叫 .ai.md；既有書仍是舊名。兩種都要掃到。"""
+    for name in ("就緒儀表.ai.md", "結構.md"):
+        book = _book(tmp_path / name)
+        (book / "story" / "參照" / name).write_text(
+            "| 主線 | " + "沿" * 3000 + " |\n", encoding="utf-8"
+        )
+        findings = long_lines(book)
+        assert len(findings) == 1 and findings[0].path.name == name
+
+
+def test_append_log_exempt_under_both_namings(tmp_path):
+    book = _book(tmp_path)
+    for name in ("事實流.md", "狀態事件流.md", "裁決流.md"):
+        (book / "story" / "參照" / name).write_text("- " + "長" * 3000, encoding="utf-8")
+    assert long_lines(book) == []

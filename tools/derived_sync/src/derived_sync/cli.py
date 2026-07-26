@@ -7,7 +7,13 @@ from pathlib import Path
 from .core import check_book, content_hash, source_digest_for_derived, stamp
 from .sentinel import run as run_sentinel
 
-_MARK = {"fresh": "[ok]  ", "stale": "[STALE]", "unstamped": "[?]   ", "orphan": "[ORPH]"}
+_MARK = {
+    "fresh": "[ok]  ",
+    "stale": "[STALE]",
+    "unstamped": "[?]   ",
+    "orphan": "[ORPH]",
+    "declarative": "[decl]",  # 宣告式綜合檔：不走 hash，不計入需處理數
+}
 
 
 def _force_utf8() -> None:

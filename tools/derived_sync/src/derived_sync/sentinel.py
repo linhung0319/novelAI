@@ -44,12 +44,24 @@ DERIVED_SECTIONS: dict[str, tuple[str, ...]] = {
 }
 
 
+# append log 有投影工具、且天生一行一筆——不受行長規範。含 2026-07-26 前的舊檔名。
+APPEND_LOG_STEMS = frozenset({"事實流", "狀態事件流", "裁決流"})
+
+
 @dataclass(frozen=True)
 class Finding:
     kind: str
     path: Path
     detail: str
     hint: str
+
+
+def _base_stem(p: Path) -> str:
+    """去掉 `.ai.md` 或 `.md`，取實體名。`就緒儀表.ai.md` → `就緒儀表`。"""
+    name = p.name
+    if name.endswith(AI_SUFFIX):
+        return name[: -len(AI_SUFFIX)]
+    return p.stem
 
 
 def _size(p: Path) -> int:
@@ -209,11 +221,11 @@ def long_lines(
     targets: list[tuple[Path, int]] = []
     ref = book / "story" / "參照"
     if ref.is_dir():
+        # 依 base stem 判斷，才能同時吃到新命名（就緒儀表.ai.md）與既有書的舊命名
         targets += [
             (p, limit)
             for p in sorted(ref.glob("*.md"))
-            if not p.name.endswith(AI_SUFFIX)
-            and p.stem not in ("事實流", "狀態事件流", "裁決流")
+            if _base_stem(p) not in APPEND_LOG_STEMS
         ]
     for kind in SETTINGS_KINDS:
         d = book / "story" / "設定" / kind
