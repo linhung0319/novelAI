@@ -6,6 +6,7 @@ from pathlib import Path
 
 from .core import check_book, content_hash, source_digest_for_derived, stamp
 from .sentinel import run as run_sentinel
+from .validate import validate_book
 
 _MARK = {
     "fresh": "[ok]  ",
@@ -62,6 +63,23 @@ def _cmd_check(args: argparse.Namespace) -> int:
     return 1 if problems else 0
 
 
+def _cmd_validate(args: argparse.Namespace) -> int:
+    """格式閘門：`.ai.md` 宣稱保證格式，這裡是唯一在守那條保證的東西。
+
+    與新鮮度分開跑、分開計——`check` 問「內容過期沒」，`validate` 問「形狀對不對」。
+    """
+    problems = validate_book(args.book)
+    if not problems:
+        print("所有 .ai.md 格式合規。")
+        return 0
+    for p in problems:
+        rel = p.path.relative_to(args.book) if p.path.is_relative_to(args.book) else p.path
+        print(f"[x] {rel}  {p.detail}")
+        print(f"       {p.hint}")
+    print(f"\n合計 {len(problems)} 個格式問題。", file=sys.stderr)
+    return 1
+
+
 def _cmd_stamp(args: argparse.Namespace) -> int:
     digest = stamp(args.derived, on=args.date)
     print(f"已封章 {args.derived.name}：generated-from={digest}")
@@ -90,6 +108,12 @@ def main(argv: list[str] | None = None) -> int:
         "--no-sentinel", action="store_true", help="不跑成長哨兵，只看新鮮度"
     )
     p_check.set_defaults(func=_cmd_check)
+
+    p_validate = sub.add_parser(
+        "validate", help="驗所有 .ai.md 的格式（front-matter 必填鍵＋節枚舉）"
+    )
+    p_validate.add_argument("--book", required=True, type=Path, help="書資料夾路徑")
+    p_validate.set_defaults(func=_cmd_validate)
 
     p_stamp = sub.add_parser("stamp", help="重生某 .ai.md 後，把源 hash 封回其 front-matter")
     p_stamp.add_argument("derived", type=Path, help="欲封章的 .ai.md 路徑")

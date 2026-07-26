@@ -110,7 +110,7 @@ def test_stray_section_fires_regardless_of_size(tmp_path):
     findings = unsliceable_derived(book)
     assert len(findings) == 1 and findings[0].kind == "衍生檔不可切片"
     assert "硬事實" in findings[0].detail and "下游硬約束" in findings[0].detail
-    assert "事實流" in findings[0].hint
+    assert "本章事實" in findings[0].hint and "約束.md" in findings[0].hint
 
 
 def test_section_title_may_carry_a_suffix_note(tmp_path):

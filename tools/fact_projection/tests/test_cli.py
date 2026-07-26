@@ -1,6 +1,7 @@
 import pytest
-from fact_projection.cli import format_projection, main, resolve_stream
+from fact_projection.cli import format_projection, main
 from fact_projection.fold import parse_events, project
+from fact_projection.sources import collect_events, resolve_legacy_stream
 
 
 def _slots(target):
@@ -74,24 +75,30 @@ def test_main_bad_kinds_returns_1(tmp_path, capsys):
     assert rc == 1 and "未知類型" in capsys.readouterr().err
 
 
-# ---------------------------------------------------------------- 舊檔名相容
+# ------------------------------------------------ 舊格式相容（既有書不遷移）
 
-def test_resolve_stream_prefers_new_name(tmp_path):
+def test_legacy_prefers_new_name(tmp_path):
     book = _make_book(tmp_path)
     (book / "story" / "參照" / "狀態事件流.md").write_text("# 舊檔\n", encoding="utf-8")
-    assert resolve_stream(book).name == "事實流.md"
+    assert resolve_legacy_stream(book).name == "事實流.md"
 
 
-def test_resolve_stream_falls_back_to_legacy_name(tmp_path):
-    """一世之尊等既有書尚未改檔名，仍須跑得動（見 事實流.schema.md 舊檔名相容）。"""
+def test_legacy_falls_back_to_older_name(tmp_path):
+    """一世之尊等既有書不遷移，仍須跑得動（見 事實流.schema.md 舊格式相容）。"""
     book = _make_book(tmp_path, stream_name="狀態事件流.md")
-    assert resolve_stream(book).name == "狀態事件流.md"
+    assert resolve_legacy_stream(book).name == "狀態事件流.md"
     rc = main(["--book", str(book), "--as-of", "幕011（arcF）"])
     assert rc == 0
 
 
-def test_resolve_stream_missing_raises(tmp_path):
+def test_legacy_absent_returns_none(tmp_path):
     book = tmp_path / "empty"
     (book / "story" / "參照").mkdir(parents=True)
-    with pytest.raises(FileNotFoundError, match="事實流.md 或 狀態事件流.md"):
-        resolve_stream(book)
+    assert resolve_legacy_stream(book) is None
+
+
+def test_no_source_at_all_raises(tmp_path):
+    book = tmp_path / "empty"
+    (book / "story" / "參照").mkdir(parents=True)
+    with pytest.raises(FileNotFoundError, match="約束.md"):
+        collect_events(book)

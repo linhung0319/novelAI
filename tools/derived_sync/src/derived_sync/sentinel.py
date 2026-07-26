@@ -5,13 +5,14 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .core import AI_SUFFIX
+from .validate import SETTINGS_KINDS, enum_for, stray_sections
 
 # 門檻皆為**建議值**（advisory），不是門檻式 pass/fail——呼應「AI 是審稿員不是門檻」。
 # 取值依據見各函式 docstring，全部可由 CLI 覆寫。
 #
 # 哨兵量的是**「必須整檔讀的東西有多大」**，不是「檔多大」（`共同約定.md` 零）：
-# 有投影工具可切片的 append log（事實流／裁決流）不受大小規範；沒有工具切得動
-# 的（源檔、`.ai.md`）才受。
+# 有投影工具可切片的 append log（約束／裁決流，以及舊格式的事實流）不受大小
+# 規範；沒有工具切得動的（源檔、`.ai.md`）才受。
 BEAT_BYTES_PER_BEAT = 2500  # 幕綱：每幕位元組
 SOURCE_BYTES = 25000  # 源：單檔（或單一角色目錄總和）絕對上限（約 8000 漢字）
 DERIVED_BYTES = 12000  # 衍生 `.ai.md`：無切片工具，且應是源的壓縮，故更嚴（約 4000 漢字）
@@ -20,32 +21,12 @@ ROLLUP_LINE_CHARS = 400  # rollup 一列＝一行摘要，比綜合檔嚴得多�
 
 _ARC_RE = re.compile(r"^arc[0-9A-Za-z]+$")
 _BEAT_HEAD_RE = re.compile(r"^##\s*幕(\d+)")
-_H2_RE = re.compile(r"^##\s+(.+?)\s*$")
 
-SETTINGS_KINDS = ("角色", "世界觀", "風格")
-
-# 各 schema 定義的封閉節枚舉。節名取 `##` 標題的**開頭**比對（容許作者在標題後
-# 加註記，如「## 待裁決回饋（2 筆）」）。找不到對應枚舉的 `.ai.md` 只查大小。
-DERIVED_SECTIONS: dict[str, tuple[str, ...]] = {
-    # 結構定義/角色.schema.md
-    "角色": ("需求四象限", "預期弧線", "馬斯洛層次", "對衝關係", "🧊 水下", "待裁決回饋"),
-    "角色/_index": ("角色清單", "待裁決回饋"),
-    # 結構定義/世界觀.schema.md
-    "世界觀": ("限制與代價", "影響力", "自洽 / 升格哨兵", "自洽／升格哨兵", "待裁決回饋"),
-    "世界觀/_總覽": (
-        "一句話定位",
-        "核心規則索引",
-        "背景維度盤點",
-        "待確認／潛在矛盾",
-        "升格哨兵彙總",
-        "素材出處",
-        "待裁決回饋",
-    ),
-}
-
+# 節枚舉／`SETTINGS_KINDS` 的唯一真相在 `validate.py`（那裡是格式的擁有者）。
+# 哨兵借用它判「衍生檔塞了不屬於它的東西」，兩份會漂移，故不另抄一份。
 
 # append log 有投影工具、且天生一行一筆——不受行長規範。含 2026-07-26 前的舊檔名。
-APPEND_LOG_STEMS = frozenset({"事實流", "狀態事件流", "裁決流"})
+APPEND_LOG_STEMS = frozenset({"事實流", "狀態事件流", "裁決流", "約束"})
 
 
 @dataclass(frozen=True)
@@ -142,25 +123,6 @@ def oversized_sources(book: Path, limit: int = SOURCE_BYTES) -> list[Finding]:
     return out
 
 
-def _section_enum_for(path: Path, kind: str) -> tuple[str, ...] | None:
-    stem = path.name[: -len(AI_SUFFIX)]
-    if stem.startswith("_"):
-        return DERIVED_SECTIONS.get(f"{kind}/{stem}")
-    return DERIVED_SECTIONS.get(kind)
-
-
-def _stray_sections(text: str, allowed: tuple[str, ...]) -> list[str]:
-    stray: list[str] = []
-    for ln in text.splitlines():
-        m = _H2_RE.match(ln)
-        if not m:
-            continue
-        title = m.group(1).strip()
-        if not any(title.startswith(a) for a in allowed):
-            stray.append(title)
-    return stray
-
-
 def unsliceable_derived(book: Path, limit: int = DERIVED_BYTES) -> list[Finding]:
     """衍生 `.ai.md` 沒有任何切片工具，故不享有「可以很大」的豁免。
 
@@ -179,8 +141,8 @@ def unsliceable_derived(book: Path, limit: int = DERIVED_BYTES) -> list[Finding]
         for p in sorted(d.glob(f"*{AI_SUFFIX}")):
             text = p.read_text(encoding="utf-8")
             size = len(text.encode("utf-8"))
-            allowed = _section_enum_for(p, kind)
-            stray = _stray_sections(text, allowed) if allowed else []
+            allowed = enum_for(kind, p.name[: -len(AI_SUFFIX)])
+            stray = stray_sections(text, allowed) if allowed else []
             if stray:
                 shown = "、".join(stray[:4]) + ("…" if len(stray) > 4 else "")
                 out.append(
@@ -188,7 +150,7 @@ def unsliceable_derived(book: Path, limit: int = DERIVED_BYTES) -> list[Finding]
                         kind="衍生檔不可切片",
                         path=p,
                         detail=f"{size} B，{len(stray)} 個枚舉外的節：{shown}",
-                        hint="正文釘死的事實／下游硬約束屬 事實流.md（錨／約束）；裁決理由屬 裁決流.md。衍生檔只留 schema 定義的節",
+                        hint="正文釘死的事實（錨）屬該章 chNNNN.ai.md 的「## 本章事實」；下游硬約束屬 story/參照/約束.md；裁決理由屬 裁決流.md。衍生檔只留 schema 定義的節",
                     )
                 )
             elif size > limit:

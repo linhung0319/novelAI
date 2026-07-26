@@ -29,6 +29,8 @@ class Event:
     name: str  # 狀態＝維度名；錨/約束＝〔〕內的名字
     content: str
     lineno: int
+    origin: str = ""  # 來源檔識別（ch0009／約束.md／事實流.md），供投影標注與報錯
+    order: int = 0  # 跨檔全域序號；同位置的 tiebreak（取代單檔時代的 lineno）
 
     @property
     def released(self) -> bool:
@@ -83,7 +85,18 @@ def strip_html_comments(lines: list[str]) -> list[tuple[int, str]]:
     return out
 
 
-def parse_events(text: str) -> list[Event]:
+def parse_events(
+    text: str,
+    origin: str = "",
+    start_order: int = 0,
+    errors: list[str] | None = None,
+) -> list[Event]:
+    """解析事件行。
+
+    `errors` 為 None（預設）＝ 嚴格模式，遇壞行即 raise——投影走這條，因為投影
+    吐出不完整的事實比報錯危險。傳入 list ＝ 收集模式，把每個壞行的訊息 append
+    進去並跳過該行，讓 `lint` 能一次報完全部而不是只報第一個。
+    """
     events: list[Event] = []
     for i, raw in strip_html_comments(text.splitlines()):
         line = raw.strip()
@@ -92,21 +105,28 @@ def parse_events(text: str) -> list[Event]:
         body = line[1:].strip()
         if not body.startswith("幕"):  # 非事件行（標題/說明/其他 bullet）→ 跳過
             continue
-        if "：" not in body:
-            raise FoldError(f"第 {i} 行事件缺少內容分隔『：』：{raw!r}")
-        head, _, content = body.partition("：")
-        # token 內無 ·（6 維無點；錨/約束的〔〕內也不容 ·），故最後一個 · 必為實體/token 分隔
-        left, sep, tok = head.rpartition("·")
-        if not sep:
-            raise FoldError(f"第 {i} 行事件缺少類型分隔『·』：{raw!r}")
-        token = tok.strip()
+        where = f"{origin} 第 {i} 行" if origin else f"第 {i} 行"
         try:
-            kind, name = classify_token(token)
+            if "：" not in body:
+                raise FoldError(f"{where}事件缺少內容分隔『：』：{raw!r}")
+            head, _, content = body.partition("：")
+            # token 內無 ·（6 維無點；錨/約束的〔〕內也不容 ·），故最後一個 · 必為實體/token 分隔
+            left, sep, tok = head.rpartition("·")
+            if not sep:
+                raise FoldError(f"{where}事件缺少類型分隔『·』：{raw!r}")
+            token = tok.strip()
+            try:
+                kind, name = classify_token(token)
+            except FoldError as e:
+                raise FoldError(f"{where}{e}") from None
+            m = _POS_RE.match(left.strip())
+            if not m:
+                raise FoldError(f"{where}位置/實體格式不符：{raw!r}")
         except FoldError as e:
-            raise FoldError(f"第 {i} 行{e}") from None
-        m = _POS_RE.match(left.strip())
-        if not m:
-            raise FoldError(f"第 {i} 行位置/實體格式不符：{raw!r}")
+            if errors is None:
+                raise
+            errors.append(str(e))
+            continue
         events.append(
             Event(
                 beat=int(m.group(1)),
@@ -117,6 +137,8 @@ def parse_events(text: str) -> list[Event]:
                 name=name,
                 content=content.strip(),
                 lineno=i,
+                origin=origin,
+                order=start_order + len(events),
             )
         )
     return events
@@ -149,6 +171,7 @@ class Slot:
     content: str
     source_beat: int
     source_arc: str
+    origin: str = ""  # 這條事實由哪支檔釘下（ch0009／約束.md）
 
     @property
     def released(self) -> bool:
@@ -179,7 +202,7 @@ def project(
     positioned = [(_pos(spine, e.arc, e.beat), e) for e in events]
     kept = sorted(
         ((p, e) for p, e in positioned if p <= target),
-        key=lambda pe: (pe[0], pe[1].lineno),  # 同位置以檔序後者勝
+        key=lambda pe: (pe[0], pe[1].order),  # 同位置以收集序後者勝（跨檔穩定）
     )
     slots: dict[tuple[str, str], Slot] = {}
     for _p, e in kept:
@@ -191,6 +214,7 @@ def project(
             content=e.content,
             source_beat=e.beat,
             source_arc=e.arc,
+            origin=e.origin,
         )
     out = list(slots.values())
     if kinds is not None:
