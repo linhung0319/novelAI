@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+
+from .ops import OpError, apply_ops, parse_ops, render
 
 # 狀態的 6 維（封閉枚舉，跨小說通用）——語意與子專案 C 原版逐字相同。
 DIMENSIONS = frozenset({"知識前沿", "關係", "持有", "位置", "能力", "所屬"})
@@ -169,13 +171,23 @@ class Slot:
     kind: str
     name: str
     content: str
-    source_beat: int
+    source_beat: int | None  # None＝無單一釘下點（約束表寫「生效自：全書」）
     source_arc: str
-    origin: str = ""  # 這條事實由哪支檔釘下（ch0009／約束.md）
+    origin: str = ""  # 這條事實由哪支檔釘下（ch0009／約束.co.md）
+    # 集合維度（知識前沿／持有／能力）折出來的成員 [(名, 態)]；態為空＝無態維度。
+    # 留著結構而不只留 content，是為了讓上層還能再篩一層（見 cli 的命題層選取）。
+    items: tuple[tuple[str, str], ...] = field(default=())
 
     @property
     def released(self) -> bool:
         return self.content.startswith(RELEASE_PREFIX)
+
+    @property
+    def source_label(self) -> str:
+        """人眼可讀的來源位置。約束可以「全書生效」，那時沒有幕號可印。"""
+        if self.source_beat is None:
+            return self.source_arc or "全書"
+        return f"幕{self.source_beat:03d}（{self.source_arc}）"
 
 
 def _pos(spine: dict[str, int], arc: str, beat: int) -> tuple[int, int]:
@@ -191,11 +203,20 @@ def project(
     target_arc: str,
     kinds: tuple[str, ...] | None = None,
     active_only: bool = False,
+    set_dims: frozenset[str] = frozenset(),
 ) -> list[Slot]:
-    """as-of 投影。三類型共用同一套 fold：slot key ＝(實體, token)，序最新勝。
+    """as-of 投影。slot key ＝(實體, token)。
+
+    兩種折法，依維度分（見 `ops.py`）：
+
+    - **集合維度**（`set_dims`，即 `知識前沿`／`持有`／`能力`）：內容欄是操作串，
+      逐筆套上去。這是「每筆 delta 只寫這一幕改變了什麼」得以成立的機制。
+    - **純量維度**（其餘）與錨：序最新勝，逐字沿用原語意。
+
+    `set_dims` 預設空＝全部走覆蓋，舊格式書（自由 prose 的知識前沿）照舊跑得動。
 
     kinds=None 代表全開。active_only 剔除內容以「（解除）」起頭的 slot
-    ——約束的退場靠顯式解除，見 結構定義/事實流.schema.md。
+    ——舊格式約束的退場靠顯式解除，見 結構定義/事實流.schema.md。
     """
     target = _pos(spine, target_arc, target_beat)
     # 對每個事件都定位（含被過濾的），arc 無法定位即報錯、不靜默丟。
@@ -205,16 +226,28 @@ def project(
         key=lambda pe: (pe[0], pe[1].order),  # 同位置以收集序後者勝（跨檔穩定）
     )
     slots: dict[tuple[str, str], Slot] = {}
+    accum: dict[tuple[str, str], list[tuple[str, str]]] = {}
     for _p, e in kept:
-        slots[(e.entity, e.token)] = Slot(
+        key = (e.entity, e.token)
+        content, items = e.content, ()
+        if e.kind == KIND_STATE and e.name in set_dims:
+            where = f"{e.origin} 第 {e.lineno} 行" if e.origin else f"第 {e.lineno} 行"
+            try:
+                merged = apply_ops(accum.get(key, []), parse_ops(e.content, e.name))
+            except OpError as err:
+                raise FoldError(f"{where}{err}") from None
+            accum[key] = merged
+            content, items = render(merged, e.name), tuple(merged)
+        slots[key] = Slot(
             entity=e.entity,
             token=e.token,
             kind=e.kind,
             name=e.name,
-            content=e.content,
+            content=content,
             source_beat=e.beat,
             source_arc=e.arc,
             origin=e.origin,
+            items=items,
         )
     out = list(slots.values())
     if kinds is not None:

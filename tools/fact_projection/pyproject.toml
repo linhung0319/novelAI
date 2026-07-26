@@ -9,6 +9,8 @@ dependencies = []
 fact-project = "fact_projection.cli:main"
 # 格式閘門：驗事實信封行（`derived-sync validate` 管 .ai.md 的結構，兩者互補）
 fact-lint = "fact_projection.cli:lint_main"
+# 反向索引：誰依賴了這條事實（`derived-sync check` 管正向的新鮮度，兩者互補）
+fact-refs = "fact_projection.cli:refs_main"
 
 [dependency-groups]
 dev = ["pytest>=8"]

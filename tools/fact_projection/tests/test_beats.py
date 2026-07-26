@@ -1,0 +1,144 @@
+"""--for-beat：由程式從幕綱導出 context，而不是讓 LLM 自己填 --entities。"""
+
+import pytest
+from fact_projection.beats import BeatLookupError, find_beat
+from fact_projection.cli import main
+
+SPINE = "- 全書順序：arc01（幕001–幕030）→ arc02（幕031–幕060）\n"
+
+ARC01 = """\
+# arc01
+
+## 承諾區
+- 本 arc 承諾：略（這一節不是幕，不得被併進任何一幕）
+
+## 幕002 · 信物現身
+- 角色：少年、同伴（法號真某）
+- 行動：略
+- 伏筆：埋[[伏筆:信物用途]]
+
+## 幕003 · 走了
+- 角色：少年
+- 伏筆：—
+
+## 本 arc 伏筆狀態
+| 伏筆 | 狀態 |
+| 信物用途 | 開著 |
+| 主宰目的 | 開著 |
+"""
+
+
+def _ch(facts: str) -> str:
+    return "---\nk: v\n---\n## 本章事實\n" + facts
+
+
+def _book(tmp_path, chapters: dict[str, str] | None = None, entities=("少年", "同伴")):
+    book = tmp_path / "book"
+    (book / "chapters").mkdir(parents=True)
+    (book / "story" / "幕綱").mkdir(parents=True)
+    (book / "story" / "設定" / "角色").mkdir(parents=True)
+    (book / "story" / "幕綱" / "_index.md").write_text(SPINE, encoding="utf-8")
+    (book / "story" / "幕綱" / "arc01.md").write_text(ARC01, encoding="utf-8")
+    for name in entities:
+        (book / "story" / "設定" / "角色" / f"{name}.md").write_text("略\n", encoding="utf-8")
+    # 「主宰目的」用 🧊 水下標記登記（尚未落到任何一幕的伏筆欄——那是合法狀態，
+    # 見 共同約定.md 六「揭示點還不存在」）
+    (book / "story" / "設定" / "角色" / "少年.ai.md").write_text(
+        "## 水下\n- 那個東西要什麼（🧊 水下｜揭示於 收[[伏筆:主宰目的]]）\n",
+        encoding="utf-8",
+    )
+    for name, body in (chapters or {}).items():
+        (book / "chapters" / name).write_text(body, encoding="utf-8")
+        if name.endswith(".ai.md"):
+            (book / "chapters" / f"{name[:-6]}.md").write_text("（正文）\n", encoding="utf-8")
+    return book
+
+
+# ------------------------------------------------------------ 定位
+
+def test_finds_beat_and_derives_entities(tmp_path):
+    ctx = find_beat(_book(tmp_path), 2)
+    assert ctx.arc == "arc01" and ctx.beat == 2
+    assert ctx.entities == ["少年", "同伴"]
+    assert ctx.foreshadows == ["信物用途"]
+
+
+def test_role_field_grammar_is_not_parsed_only_matched(tmp_path):
+    """角色欄有括號註解與法號別名——靠設定層詞彙表比對，對標點風格免疫。"""
+    ctx = find_beat(_book(tmp_path), 2)
+    assert "同伴" in ctx.entities  # 欄位裡寫的是「同伴（法號真某）」
+
+
+def test_non_beat_sections_do_not_leak_into_a_beat(tmp_path):
+    """檔尾「本 arc 伏筆狀態」表提到大量伏筆，不得被併進最後一幕。"""
+    ctx = find_beat(_book(tmp_path), 3)
+    assert ctx.foreshadows == []
+
+
+def test_missing_beat_raises(tmp_path):
+    with pytest.raises(BeatLookupError, match="幕099"):
+        find_beat(_book(tmp_path), 99)
+
+
+# ------------------------------------------------------------ CLI
+
+def test_for_beat_replaces_entities_and_asof(tmp_path, capsys):
+    book = _book(
+        tmp_path,
+        chapters={
+            "ch0001.ai.md": _ch(
+                "- 幕002（arc01）· 少年 · 位置：市集\n"
+                "- 幕002（arc01）· 路人 · 位置：不該出現在本幕的 context\n"
+            )
+        },
+    )
+    assert main(["--book", str(book), "--for-beat", "幕002"]) == 0
+    out = capsys.readouterr()
+    assert "### 少年" in out.out and "路人" not in out.out
+    assert "由該幕「角色」欄導出實體" in out.err
+
+
+def test_explicit_entities_still_win(tmp_path, capsys):
+    book = _book(
+        tmp_path,
+        chapters={"ch0001.ai.md": _ch("- 幕002（arc01）· 少年 · 位置：市集\n")},
+    )
+    main(["--book", str(book), "--for-beat", "幕002", "--entities", "同伴"])
+    assert "### 少年" not in capsys.readouterr().out
+
+
+def test_relevant_propositions_narrow_and_report_the_hidden_count(tmp_path, capsys):
+    book = _book(
+        tmp_path,
+        chapters={
+            "ch0001.ai.md": _ch(
+                "- 幕001（arc01）· 少年 · 知識前沿："
+                "＋尚不知〔信物用途〕、＋尚不知〔主宰目的〕\n"
+            )
+        },
+    )
+    assert main(["--book", str(book), "--for-beat", "幕002", "--propositions", "relevant"]) == 0
+    out = capsys.readouterr()
+    assert "信物用途" in out.out and "主宰目的" not in out.out
+    assert "另 1 條休眠中" in out.err  # 縮減 context 不能是靜默的
+
+
+def test_relevant_requires_for_beat(tmp_path, capsys):
+    book = _book(tmp_path, chapters={"ch0001.ai.md": _ch("- 幕002（arc01）· 少年 · 位置：甲\n")})
+    rc = main(["--book", str(book), "--as-of", "幕011（arc01）", "--propositions", "relevant"])
+    assert rc == 1 and "需要 --for-beat" in capsys.readouterr().err
+
+
+def test_default_gives_all_propositions(tmp_path, capsys):
+    """預設不縮減——漏一條「尚不知」可能讓 write 洩漏知識邊界。"""
+    book = _book(
+        tmp_path,
+        chapters={
+            "ch0001.ai.md": _ch(
+                "- 幕001（arc01）· 少年 · 知識前沿："
+                "＋尚不知〔信物用途〕、＋尚不知〔主宰目的〕\n"
+            )
+        },
+    )
+    main(["--book", str(book), "--for-beat", "幕002"])
+    assert "主宰目的" in capsys.readouterr().out

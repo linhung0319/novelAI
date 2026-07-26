@@ -11,11 +11,24 @@ STREAM = """\
 """
 
 
-def _make_book(tmp_path, body=STREAM):
+def _make_book(tmp_path, body=STREAM, name="裁決流.co.md"):
     book = tmp_path / "book"
     (book / "story" / "參照").mkdir(parents=True)
-    (book / "story" / "參照" / "裁決流.md").write_text(body, encoding="utf-8")
+    (book / "story" / "參照" / name).write_text(body, encoding="utf-8")
     return book
+
+
+def test_legacy_name_still_resolves(tmp_path):
+    """既有書不必為改名動書內檔（比照 就緒儀表.md / .ai.md 雙吃）。"""
+    book = _make_book(tmp_path, name="裁決流.md")
+    assert resolve_stream(book).name == "裁決流.md"
+    assert main(["--book", str(book)]) == 0
+
+
+def test_new_name_wins_when_both_exist(tmp_path):
+    book = _make_book(tmp_path)
+    (book / "story" / "參照" / "裁決流.md").write_text("# 舊檔\n", encoding="utf-8")
+    assert resolve_stream(book).name == "裁決流.co.md"
 
 
 def test_main_prints_all(tmp_path, capsys):
@@ -61,3 +74,61 @@ def test_main_missing_file_returns_1(tmp_path, capsys):
 def test_resolve_stream_missing_raises(tmp_path):
     with pytest.raises(FileNotFoundError):
         resolve_stream(tmp_path / "nope")
+
+
+# ------------------------------------------------ 標的分段比對（2026-07-27）
+
+def test_directory_form_upgrade_no_longer_loses_old_decisions(tmp_path, capsys):
+    """角色源檔升級成目錄形態是 schema 明文建議的路徑；升級不該讓舊裁決靜默失聯。"""
+    body = STREAM.replace("設定/角色/少年/核心.md", "設定/角色/少年.md")
+    book = _make_book(tmp_path, body=body)
+    main(["--book", str(book), "--target", "設定/角色/少年/核心.md"])
+    assert "年齡收窄成定點" in capsys.readouterr().out
+
+
+def test_prefix_of_a_name_is_not_a_match(tmp_path, capsys):
+    """假陽性：字串前綴會讓「設定/角色/真」命中 真觀／真慧／真應。"""
+    body = STREAM.replace("設定/角色/少年/核心.md", "設定/角色/真觀.md")
+    book = _make_book(tmp_path, body=body)
+    main(["--book", str(book), "--target", "設定/角色/真"])
+    assert "年齡收窄成定點" not in capsys.readouterr().out
+
+
+# ------------------------------------------------ 射程自動判定（2026-07-27）
+
+SPINE = "- 全書順序：arc07（幕701–幕799）→ arc11（幕1001–幕1099）\n"
+
+
+def _with_spine(book):
+    (book / "story" / "幕綱").mkdir(parents=True, exist_ok=True)
+    (book / "story" / "幕綱" / "_index.md").write_text(SPINE, encoding="utf-8")
+    return book
+
+
+def test_scope_expiry_is_computed_not_hand_maintained(tmp_path, capsys):
+    """射程欄 2026-07-27 前程式從未讀過——「至arc07」在 arc11 仍回「生效中」。"""
+    body = STREAM.replace("| 至arc07 | 已過射程 |", "| 至arc07 | 生效中 |")
+    book = _with_spine(_make_book(tmp_path, body=body))
+    main(["--book", str(book), "--active-only", "--as-of", "arc11"])
+    out = capsys.readouterr().out
+    assert "本 arc 母題" not in out  # 射程已過，程式自己算出來的
+    assert "年齡收窄成定點" in out  # 射程＝全書，仍在
+
+
+def test_scope_still_active_within_range(tmp_path, capsys):
+    body = STREAM.replace("| 至arc07 | 已過射程 |", "| 至arc07 | 生效中 |")
+    book = _with_spine(_make_book(tmp_path, body=body))
+    main(["--book", str(book), "--active-only", "--as-of", "arc07"])
+    assert "本 arc 母題" in capsys.readouterr().out
+
+
+def test_as_of_unknown_arc_returns_1(tmp_path, capsys):
+    book = _with_spine(_make_book(tmp_path))
+    assert main(["--book", str(book), "--active-only", "--as-of", "arc99"]) == 1
+    assert "不在 spine" in capsys.readouterr().err
+
+
+def test_missing_target_path_is_reported_as_info(tmp_path, capsys):
+    book = _make_book(tmp_path)
+    main(["--book", str(book)])
+    assert "在書內找不到" in capsys.readouterr().err

@@ -11,22 +11,33 @@ from .validate import SETTINGS_KINDS, enum_for, stray_sections
 # 取值依據見各函式 docstring，全部可由 CLI 覆寫。
 #
 # 哨兵量的是**「必須整檔讀的東西有多大」**，不是「檔多大」（`共同約定.md` 零）：
-# 有投影工具可切片的 append log（約束／裁決流，以及舊格式的事實流）不受大小
-# 規範；沒有工具切得動的（源檔、`.ai.md`）才受。
+# 有投影工具可切片的檔（約束表／裁決流，以及舊格式的事實流）**檔案大小**不受規範。
+#
+# **但「有投影工具」不豁免行長**：投影的粒度**就是行**，一行不可再切。2026-07-27
+# 前這裡曾整支檔豁免，於是實測 1,728 字的單一事件行一聲沒吭地長了 11 個 arc
+# （見 `結構定義/事實流.schema.md`）。故行長改為一律受管，只是門檻不同。
 BEAT_BYTES_PER_BEAT = 2500  # 幕綱：每幕位元組
 SOURCE_BYTES = 25000  # 源：單檔（或單一角色目錄總和）絕對上限（約 8000 漢字）
 DERIVED_BYTES = 12000  # 衍生 `.ai.md`：無切片工具，且應是源的壓縮，故更嚴（約 4000 漢字）
 LINE_CHARS = 2000  # 綜合檔單行（單一表格 cell）字元數
 ROLLUP_LINE_CHARS = 400  # rollup 一列＝一行摘要，比綜合檔嚴得多（schema 說「一行需求」）
+# 事實行量的是**內容欄**（信封第四欄），與 `fact-lint` 同一把尺，只是門檻更早：
+# 哨兵 120（≈1.6× 健康均值）先示警，`fact-lint` 200 才擋。
+FACT_LINE_CHARS = 120
+FACT_PAREN_RATIO = 0.40  # 括號內註解佔比（夾帶設計註的信號）
+FACT_PAREN_MIN_CHARS = 60
 
 _ARC_RE = re.compile(r"^arc[0-9A-Za-z]+$")
 _BEAT_HEAD_RE = re.compile(r"^##\s*幕(\d+)")
+_PAREN_RE = re.compile(r"（[^（）]*）")
 
 # 節枚舉／`SETTINGS_KINDS` 的唯一真相在 `validate.py`（那裡是格式的擁有者）。
 # 哨兵借用它判「衍生檔塞了不屬於它的東西」，兩份會漂移，故不另抄一份。
 
-# append log 有投影工具、且天生一行一筆——不受行長規範。含 2026-07-26 前的舊檔名。
-APPEND_LOG_STEMS = frozenset({"事實流", "狀態事件流", "裁決流", "約束"})
+# 有投影工具可切片的檔——**檔案大小**不受規範（行長仍受，見上）。含各代舊檔名。
+APPEND_LOG_STEMS = frozenset(
+    {"事實流", "狀態事件流", "裁決流", "裁決流.co", "約束", "約束.co"}
+)
 
 
 @dataclass(frozen=True)
@@ -215,10 +226,103 @@ def long_lines(
     return out
 
 
+def _fact_lines(text: str) -> list[tuple[int, str]]:
+    """`## 本章事實` 區塊裡的事件行。區塊外的一律不算（待裁決回饋也是 `- ` 開頭）。"""
+    out: list[tuple[int, str]] = []
+    inside = False
+    for i, raw in enumerate(text.replace("\r\n", "\n").split("\n"), start=1):
+        s = raw.strip()
+        if s.startswith("## "):
+            inside = s[3:].strip().startswith("本章事實")
+            continue
+        if inside and s.startswith("- 幕"):
+            out.append((i, s))
+    return out
+
+
+def bloated_fact_lines(
+    book: Path,
+    limit: int = FACT_LINE_CHARS,
+    ratio: float = FACT_PAREN_RATIO,
+) -> list[Finding]:
+    """事實行只該寫「這一幕改變了什麼」——一行一筆 delta，不是一份前情提要。
+
+    這是 2026-07-27 補上的哨兵。在它之前，事實／約束整支檔被豁免行長檢查（理由是
+    「有投影工具」），但**投影的粒度就是行**：一行不可再切，所以有工具不構成豁免。
+
+    實測一世之尊（93 章／11 arc，字元數）：事件**筆數**每 arc 都是 15–36 沒有成長，
+    **內容欄**卻從 arc01–04 的平均 76 字脹到 arc09–11 的 194 字（最長 645），
+    括號內註解佔比 36.1% → 51.9%，全程無人示警。
+
+    兩個信號分別對應兩個成長機制：**內容長**＝重抄（fold 覆蓋逼出的前情提要效應）、
+    **括號佔比**＝夾帶（伏筆狀態／裁決理由／排除線塞進唯一會被 write 讀到的欄位）。
+    """
+    # (路徑, 是否只認 `## 本章事實` 區塊)。章衍生檔一定要限定區塊——「## 待裁決
+    # 回饋」底下也是 `- ` 開頭，全檔掃會誤報；參照/ 底下的檔沒有區塊標題，全檔掃。
+    targets: list[tuple[Path, bool]] = []
+    chapters = book / "chapters"
+    if chapters.is_dir():
+        targets += [(p, True) for p in sorted(chapters.glob("ch*" + AI_SUFFIX))]
+    ref = book / "story" / "參照"
+    if ref.is_dir():
+        targets += [
+            (p, False)
+            for p in sorted(ref.glob("*.md"))
+            if _base_stem(p) in APPEND_LOG_STEMS
+        ]
+
+    out: list[Finding] = []
+    for p, sectioned in targets:
+        text = p.read_text(encoding="utf-8")
+        if sectioned:
+            lines = _fact_lines(text)
+        else:
+            lines = [
+                (i, ln.strip())
+                for i, ln in enumerate(text.splitlines(), start=1)
+                if ln.strip().startswith("- 幕")
+            ]
+        # 量的是**內容欄**（信封第四欄），與 fact-lint 同一把尺。第一個全形冒號
+        # 是 token/內容的分隔（見 事實流.schema.md 信封格式）。
+        bodies = [(i, ln.split("：", 1)[-1]) for i, ln in lines if "：" in ln]
+        long_hits = [(i, b) for i, b in bodies if len(b) > limit]
+        paren_hits = [
+            (i, b)
+            for i, b in bodies
+            if len(b) >= FACT_PAREN_MIN_CHARS
+            and sum(len(m) for m in _PAREN_RE.findall(b)) / len(b) > ratio
+        ]
+        if long_hits:
+            worst_no, worst = max(long_hits, key=lambda t: len(t[1]))
+            out.append(
+                Finding(
+                    kind="事實行肥大",
+                    path=p,
+                    detail=f"{len(long_hits)} 行的內容欄超過 {limit} 字"
+                    f"（最長 {len(worst)} 字，第 {worst_no} 行）",
+                    hint="delta 只寫這一幕改變了什麼；仍然成立的舊事不必重抄"
+                    "（查得到：fact-project --history <實體>/<維度>）",
+                )
+            )
+        if paren_hits:
+            out.append(
+                Finding(
+                    kind="事實行夾帶",
+                    path=p,
+                    detail=f"{len(paren_hits)} 行的括號註解佔比超過 {ratio:.0%}"
+                    f"（最早在第 {paren_hits[0][0]} 行）",
+                    hint="伏筆埋／收屬幕綱、裁決理由屬 裁決流.co.md、"
+                    "下游排除線屬 story/參照/約束.co.md",
+                )
+            )
+    return out
+
+
 def run(book: Path) -> list[Finding]:
     return (
         beat_sheet_density(book)
         + oversized_sources(book)
         + unsliceable_derived(book)
         + long_lines(book)
+        + bloated_fact_lines(book)
     )

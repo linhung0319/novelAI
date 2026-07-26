@@ -1,5 +1,6 @@
 from derived_sync.sentinel import (
     beat_sheet_density,
+    bloated_fact_lines,
     long_lines,
     oversized_sources,
     run,
@@ -224,3 +225,75 @@ def test_append_log_exempt_under_both_namings(tmp_path):
     for name in ("事實流.md", "狀態事件流.md", "裁決流.md"):
         (book / "story" / "參照" / name).write_text("- " + "長" * 3000, encoding="utf-8")
     assert long_lines(book) == []
+
+
+# ---------------------------------------------------------------- 事實行（2026-07-27）
+
+def _facts(*lines: str) -> str:
+    return "---\nk: v\n---\n## 本章事實\n" + "".join(f"- {ln}\n" for ln in lines)
+
+
+def _chapters(tmp_path, **files: str):
+    book = _book(tmp_path)
+    (book / "chapters").mkdir(parents=True)
+    for name, body in files.items():
+        (book / "chapters" / f"{name}.ai.md").write_text(body, encoding="utf-8")
+    return book
+
+
+def test_pure_delta_lines_are_clean(tmp_path):
+    book = _chapters(
+        tmp_path,
+        ch0001=_facts(
+            "幕002（arc01）· 少年 · 知識前沿：＋尚不知〔信物用途〕",
+            "幕003（arc01）· 少年 · 位置：雜役院",
+        ),
+    )
+    assert bloated_fact_lines(book) == []
+
+
+def test_rewritten_recap_line_is_reported(tmp_path):
+    """重抄：fold 覆蓋逼出的前情提要效應（實測病態期內容欄平均 194 字）。"""
+    book = _chapters(
+        tmp_path, ch0001=_facts("幕002（arc01）· 少年 · 位置：" + "字" * 200)
+    )
+    (finding,) = bloated_fact_lines(book)
+    assert finding.kind == "事實行肥大" and "200 字" in finding.detail
+
+
+def test_smuggled_design_notes_are_reported(tmp_path):
+    """夾帶：伏筆狀態／裁決理由／排除線塞進唯一會被 write 讀到的欄位。"""
+    body = "他到了那裡" + "（" + "本 arc 收·口子閉合·on-page 最後一次" * 4 + "）"
+    book = _chapters(tmp_path, ch0001=_facts(f"幕002（arc01）· 少年 · 位置：{body}"))
+    kinds = {f.kind for f in bloated_fact_lines(book)}
+    assert "事實行夾帶" in kinds
+
+
+def test_feedback_section_lines_are_not_facts(tmp_path):
+    """「## 待裁決回饋」底下也是 `- ` 開頭，不得被當成事實行誤報。"""
+    book = _chapters(
+        tmp_path,
+        ch0001="---\nk: v\n---\n## 待裁決回饋\n- 幕002（arc01）· 少年 · 位置："
+        + "字" * 300
+        + "\n",
+    )
+    assert bloated_fact_lines(book) == []
+
+
+def test_append_log_no_longer_exempt_from_line_length(tmp_path):
+    """2026-07-27 前這裡整支檔豁免——但投影的粒度就是行，一行不可再切。"""
+    book = _book(tmp_path)
+    (book / "story" / "參照" / "約束.co.md").write_text(
+        "- 幕002（arc01）· 少年 · 位置：" + "字" * 300 + "\n", encoding="utf-8"
+    )
+    assert [f.kind for f in bloated_fact_lines(book)] == ["事實行肥大"]
+
+
+def test_file_size_exemption_for_append_logs_survives(tmp_path):
+    """行長受管，但**檔案大小**仍不受管（有投影工具可切片）。"""
+    book = _book(tmp_path)
+    (book / "story" / "參照" / "約束.co.md").write_text(
+        "".join(f"- 幕{i:03d}（arc01）· 少年 · 位置：走到某處\n" for i in range(400)),
+        encoding="utf-8",
+    )
+    assert long_lines(book) == [] and bloated_fact_lines(book) == []
