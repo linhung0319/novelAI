@@ -118,3 +118,61 @@ def find_beat(book: Path, beat: int) -> BeatContext:
     raise BeatLookupError(
         f"全書幕綱裡找不到 幕{beat:03d}（找的是 `## 幕{beat:03d}` 小節）"
     )
+
+
+# ------------------------------------------------- 承諾區的排除線（抉擇 4 B）
+#
+# **為什麼排除線住幕綱、卻要由這支工具讀出來。** 排除線（`不得發生`）與 `story/物件/
+# <名>.md` 的「## 不得寫成什麼」是同一種東西——負向約束——但兩者的**射程不同**：物件檔
+# 那批是全書級、綁實體；承諾區這批是「本 arc 不引爆某條線」，射程天然就是這個 arc。
+# 2026-07-27 作者拍板**落點留在 arc 檔**（拆幕當下手邊就是這支檔，強迫跳去物件檔寫會
+# 讓人乾脆不寫），代價是「兩種約束兩個家」。
+#
+# 補償是**在查詢層合流**：`write` 只跑一次 `fact-project`，就該同時看到兩邊，否則
+# 「落點方便」換來的是下游理直氣壯地違反它——這正是 `_entity_vocabulary` 已經踩過的
+# 那個洞（漏一條排除線比多給一點 context 嚴重得多）。
+#
+# **這份分區／承諾解析的唯一真相在 `tools/beat_metrics/src/beat_metrics/structure.py`**
+# （`parse_arc`／`_label`／`ArcStructure.exclusions`，並由 `beat-lint` 守它的格式）；
+# 工具間零相依，故此處複製最小片段。
+_PROMISE_HEAD_RE = re.compile(r"^##\s*本 arc 承諾\s*$")
+_BULLET_RE = re.compile(r"^-\s*(.+?)\s*[：:]\s*(.*)$")
+_SUBITEM_RE = re.compile(r"^\s+-\s*(.+?)\s*$")
+EXCLUSION_LABEL = "不得發生"
+
+
+def _promise_label(raw: str) -> str:
+    """`**不得發生**` → `不得發生`；`**措辭硬約束**（…）` → `措辭硬約束`。
+
+    實測作者寫的是粗體包裹＋括註，schema 範例寫的是裸標籤——**兩種都要認**，
+    標籤的形狀不該決定排除線抓不抓得到。
+    """
+    s = raw.replace("*", "").strip()
+    return re.split(r"[（(]", s, maxsplit=1)[0].strip()
+
+
+def arc_exclusions(book: Path, arc: str) -> list[str]:
+    """讀某個 arc 承諾區的排除線。arc 檔不存在或沒有承諾區都回空清單（非錯誤）。"""
+    path = book / "story" / "幕綱" / f"{arc}.md"
+    if not path.is_file():
+        return []
+    out: list[str] = []
+    in_promise = False
+    in_exclusion = False
+    for raw in path.read_text(encoding="utf-8-sig").splitlines():
+        if raw.startswith("##"):
+            in_promise = bool(_PROMISE_HEAD_RE.match(raw))
+            in_exclusion = False
+            continue
+        if not in_promise:
+            continue
+        if _SUBITEM_RE.match(raw):
+            if in_exclusion:
+                out.append(_SUBITEM_RE.match(raw).group(1))
+        elif raw.startswith("-"):
+            m = _BULLET_RE.match(raw.strip())
+            in_exclusion = bool(m) and _promise_label(m.group(1)) == EXCLUSION_LABEL
+            # 單行寫法：`- 不得發生：某某不登場`（schema 範例的形狀）
+            if in_exclusion and m.group(2).strip():
+                out.append(m.group(2).strip())
+    return out

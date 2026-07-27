@@ -159,9 +159,15 @@ def test_hot_grams_surface_the_actual_motif(bad):
 # ------------------------------------------------------------- load_pov
 
 def test_load_pov_reads_summary_front_matter():
+    """**找不到書就 fail，不 skip。**
+
+    2026-07-27 前這裡是 `pytest.skip("需要書資料夾")`——而一個會自己 skip 掉的測試，
+    正是功能 02 這一輪要修掉的那一類守衛：它跑了、它報綠燈、而它什麼都沒檢查
+    （`設計原則.md` E2 第五格）。病例書是這支測試的全部語料，不在就是真的壞了。
+    """
     book = Path(__file__).resolve().parents[3] / "一世之尊"
-    if not (book / "story" / "00-摘要.ai.md").is_file():
-        pytest.skip("需要書資料夾")
+    summary = book / "story" / "00-摘要.ai.md"
+    assert summary.is_file(), f"病例書的摘要不在 {summary}——它是這支測試的全部語料"
     assert load_pov(book) == POV
 
 

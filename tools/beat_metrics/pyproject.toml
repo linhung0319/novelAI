@@ -1,12 +1,16 @@
 [project]
 name = "beat-metrics"
 version = "0.1.0"
-description = "novelAI 幕綱層機械統計：幕的可演性＋分區衛生＋母題重複（零 LLM、可覆算）"
+description = "novelAI 幕綱層：格式閘門（beat-lint）＋機械統計（可演性·分區衛生·母題重複）；零 LLM、可覆算"
 requires-python = ">=3.11"
 dependencies = []
 
 [project.scripts]
 beat-metrics = "beat_metrics.cli:main"
+# 格式閘門：驗幕號／前因／八欄／spine／分區（`beat-metrics` 量漂移，兩者互補）。
+# 與 beat-metrics 同套件、共用 scan.py 的八欄解析器——新增一個要記得跑的閘門，
+# 就是新增一個會被忘記的觸發時機（同 fact-lint／object-lint 的先例）。
+beat-lint = "beat_metrics.cli:lint_main"
 
 [dependency-groups]
 dev = ["pytest>=8"]

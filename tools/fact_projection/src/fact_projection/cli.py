@@ -6,7 +6,7 @@ import sys
 from dataclasses import replace
 from pathlib import Path
 
-from .beats import BeatLookupError, find_beat
+from .beats import BeatLookupError, arc_exclusions, find_beat
 from .chapters import covering_chapter, load_chapter_meta
 from .constraints import CONSTRAINT_SECTION, active_at
 from .fold import (
@@ -48,6 +48,7 @@ def format_projection(
     target_arc: str,
     entities: list[str] | None = None,
     mode: str = "chapters",
+    exclusions: list[str] | None = None,
 ) -> str:
     if entities:
         wanted = set(entities)
@@ -78,6 +79,15 @@ def format_projection(
                 src += f"· {s.origin}"
             lines.append(f"- {s.token}：{s.content}　←來源 {src}")
         lines.append("")
+
+    # arc 射程的排除線。**刻意與上面的實體節分開列**：它們沒有實體（射程是整個
+    # arc、不是某個人），硬塞進某個 `### <實體>` 節會謊報它只管那一個人。
+    # 一律印這一節（0 條也印）——「本 arc 沒有排除線」與「沒有人去讀排除線」是
+    # 兩件事，而舊版連讀都沒讀（`設計原則.md` E2）。
+    lines.append(f"### 本 arc 排除線（{target_arc} 承諾區·射程＝本 arc）")
+    lines += [f"- 不得發生：{x}" for x in (exclusions or [])] or [
+        "（無——該 arc 承諾區沒有「不得發生」條目）"
+    ]
     return "\n".join(lines).rstrip() + "\n"
 
 
@@ -260,7 +270,14 @@ def main(argv: list[str] | None = None) -> int:
         print(f"（資訊）{n}", file=sys.stderr)
 
     print(
-        format_projection(slots, target_beat, target_arc, entities, mode=mode),
+        format_projection(
+            slots,
+            target_beat,
+            target_arc,
+            entities,
+            mode=mode,
+            exclusions=arc_exclusions(args.book, target_arc),
+        ),
         end="",
     )
     return 0

@@ -4,6 +4,7 @@ import argparse
 import sys
 from pathlib import Path
 
+from .lint import lint_report
 from .motif import ArcMotif, Finding, detect, measure
 from .playability import HOLLOW_SHARE_CAP, RUN_CAP, ArcPlayability, analyse
 from .scan import ScanError, load_book, load_pov
@@ -145,6 +146,47 @@ def main(argv: list[str] | None = None) -> int:
         for p in shown_plays
     )
     return 1 if suspect else 0
+
+
+CLEAN = "幕綱格式乾淨（幕號／前因／八欄／spine／分區）"
+
+
+def lint_main(argv: list[str] | None = None) -> int:
+    """格式閘門。輸出契約照抄 `fact_projection/cli.py:_print_lint`：
+
+    覆蓋率行＋資訊＋提示走 **stdout**（乾淨時也印），問題清單走 **stderr**，exit 0/1。
+    """
+    ap = argparse.ArgumentParser(
+        description="幕綱格式閘門（零 LLM、可覆算）：幕號唯一與號段、`前因 [[幕NNN]]` "
+        "目標存在、八欄完整、`_index.md` spine 涵蓋、分區、伏筆近似名、設計註目的地。"
+        "守的是「人破結構」那一側（`設計原則.md` B1），與 `derived-sync validate` 同類；"
+        "內容好壞交 `beat-test`，漂移統計交 `beat-metrics`。",
+    )
+    ap.add_argument("--book", required=True, type=Path, help="書資料夾路徑（含 story/）")
+    args = ap.parse_args(argv)
+
+    _force_utf8()
+    try:
+        problems, stats = lint_report(args.book)
+    except ScanError as e:
+        print(f"掃描錯誤：{e}", file=sys.stderr)
+        return 1
+    except OSError as e:
+        print(f"讀取失敗：{e}", file=sys.stderr)
+        return 1
+
+    print(stats.render())
+    for n in stats.notes:
+        print(f"（資訊）{n}")
+    for h in stats.hints:
+        print(f"（提示）{h}")
+    if not problems:
+        print(CLEAN)
+        return 0
+    print(f"發現 {len(problems)} 個問題：", file=sys.stderr)
+    for p in problems:
+        print(f"  [x] {p}", file=sys.stderr)
+    return 1
 
 
 if __name__ == "__main__":

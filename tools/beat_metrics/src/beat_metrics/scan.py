@@ -36,6 +36,20 @@ PROSE_FIELDS = ("角色", "時空", "行動", "衝突", "結果", "結構階段"
 # （「心裡不在場」×5、「孟奇真定妙音」×5），排除後 arc01↔arc11 的分離從 8 倍升到 11 倍。
 MOTIF_FIELDS = ("時空", "行動", "衝突", "結果", "結構階段")
 
+# Windows 上的編輯器（含 PowerShell `Set-Content -Encoding utf8`）常寫出帶 BOM 的
+# UTF-8。BOM 會黏在第一行行首，讓開頭的 `# arcNN`／`## 幕001` 認不出來而被靜默跳過
+# ——**少掃一整支 arc 比報錯還難查**，而本套件的 `beat-lint` 存在的理由正是消滅這類
+# 靜默漏掉。`utf-8-sig` 有 BOM 就吃掉、沒有也照常運作。
+# （理由與 `fact_projection/sources.py:_ENCODING` 同源；`derived_sync` 刻意不跟進，
+#  它讀檔是為了算 hash，換編碼會讓既有 `generated-from` 全數失準。）
+_ENCODING = "utf-8-sig"
+
+
+def read_text(path: Path) -> str:
+    """本套件讀幕綱檔的唯一入口（見 `_ENCODING` 的理由）。"""
+    return path.read_text(encoding=_ENCODING)
+
+
 _BEAT_HEAD_RE = re.compile(r"^##\s*幕(\d+)\s*[·・]?\s*(.*)$")
 # 全形／半形冒號都收：schema 寫全形，實檔兩種都出現過，錯字不該靜默漏掉。
 _FIELD_RE = re.compile(rf"^-\s*({'|'.join(FIELDS)})\s*[：:]\s*(.*)$")
@@ -77,7 +91,7 @@ def scan_arc(path: Path, arc: str) -> ArcBeats:
     out = ArcBeats(arc=arc, path=path)
     current: Beat | None = None
     current_field: str | None = None
-    for i, raw in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+    for i, raw in enumerate(read_text(path).splitlines(), start=1):
         if raw.startswith("##"):
             m = _BEAT_HEAD_RE.match(raw)
             if m:
@@ -127,13 +141,20 @@ _SPINE_RE = re.compile(r"全書順序：(.+)$")
 _ARC_TOKEN_RE = re.compile(r"arc[0-9A-Za-z]+")
 
 
-def _spine(index: Path) -> dict[str, int]:
-    """讀不到 spine 就回空 dict——本工具全部是**逐 arc 統計**，定序只影響
-    「誰是前段基準」。缺 spine 時退回檔名排序仍可用，不值得為此中止。
+def parse_spine(text: str) -> dict[str, int]:
+    """`幕綱/_index.md` 的「全書順序」→ {arc: 排名}。
+
+    **這份解析的唯一真相在 `tools/fact_projection/src/fact_projection/fold.py:parse_spine`**；
+    工具間零相依（所有 tools/*/pyproject.toml 皆 dependencies = []），故複製最小片段。
+
+    **2026-07-27（功能 02 重構·V4）改成硬報錯。** 舊版讀不到就回 `{}` 退檔名排序，
+    理由是「本工具全部是逐 arc 統計，定序只影響誰是前段基準」——那個理由**本身是錯的**：
+    定序錯了，「相對本書前段」的基準就是拿錯誤的前段算的，可疑點排序全歪，**而它印
+    exit 0**。同一個壞法，`foreshadow_project`／`fact_projection`／`decision_projection`
+    三支全部 raise，只有本支靜默退化：**同一份資料，看你先跑哪支工具決定你會不會發現**
+    （`設計原則.md` E2 第五格·假陰性）。實測 `驗證範例` 的 `_index.md` 就缺這一行。
     """
-    if not index.is_file():
-        return {}
-    for raw in index.read_text(encoding="utf-8").splitlines():
+    for raw in text.splitlines():
         m = _SPINE_RE.search(raw)
         if not m:
             continue
@@ -143,7 +164,13 @@ def _spine(index: Path) -> dict[str, int]:
                 arcs.append(tok)
         if arcs:
             return {a: r for r, a in enumerate(arcs)}
-    return {}
+    raise ScanError("幕綱 _index 找不到可解析的『全書順序：』arc 序列")
+
+
+def _spine(index: Path) -> dict[str, int]:
+    if not index.is_file():
+        raise ScanError(f"找不到幕綱索引：{index}（「全書順序：」是四支工具共用的定序來源）")
+    return parse_spine(read_text(index))
 
 
 _POV_RE = re.compile(r"^視角結構:.*?POV\s*[:：]\s*([^,，}\s]+)", re.MULTILINE)
@@ -158,5 +185,5 @@ def load_pov(book: Path) -> str | None:
     p = book / "story" / "00-摘要.ai.md"
     if not p.is_file():
         return None
-    m = _POV_RE.search(p.read_text(encoding="utf-8"))
+    m = _POV_RE.search(read_text(p))
     return m.group(1).strip() if m else None
