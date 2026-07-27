@@ -1,4 +1,9 @@
-"""章 delta ＋ 約束表的收集、落點檢查與 lint。"""
+"""章 delta ＋ 物件檔的收集、落點檢查與 lint。
+
+**這裡的 fixture 全是自造的。** 新格式（章 delta ＋ 物件檔）在真實語料上覆蓋率是 0
+（一世之尊 93 章有 `## 本章事實` 的 0 支、錨 0 筆、約束 0 列），所以那本書只能當
+**反**例（見 `test_golden_一世之尊.py`），正例一律在這裡造。
+"""
 
 import pytest
 from fact_projection.cli import lint_main, main
@@ -9,26 +14,38 @@ from fact_projection.sources import (
     collect_constraints,
     collect_events,
     lint,
+    lint_report,
     section_lines,
 )
 
 SPINE = "- 全書順序：arc01（幕001–幕030）→ arc02（幕031–幕060）\n"
 
-TABLE_HEAD = (
-    "| 約束名 | 實體 | 不得寫成 | 生效自 | 解除於 |\n"
-    "|---|---|---|---|---|\n"
-)
+TABLE_HEAD = "| 約束名 | 不得寫成 | 生效自 | 解除於 |\n|---|---|---|---|\n"
 
 
-def _table(*rows: str) -> str:
-    return "# 約束\n\n" + TABLE_HEAD + "".join(r if r.endswith("\n") else r + "\n" for r in rows)
+def _obj(
+    *rows: str,
+    kind: str = "角色",
+    reveal: str = "",
+    why: str = "作者拍板：這條線要撐到收束。",
+) -> str:
+    """一支物件檔。給了 rows 就帶約束表，沒給就靠 `為什麼存在` 過內容測試。"""
+    fm = f"---\n型別: {kind}\n"
+    if reveal:
+        fm += f"揭示層級: {reveal}\n"
+    fm += "---\n"
+    body = f"## 是什麼\n（一句話。）\n\n## 為什麼存在\n{why}\n"
+    if rows:
+        body += "\n## 不得寫成什麼\n" + TABLE_HEAD + "".join(r + "\n" for r in rows)
+    return fm + body
 
 
 def _book(
     tmp_path,
     chapters: dict[str, str] | None = None,
-    constraints: str = "",
-    legacy_constraints: str = "",
+    objects: dict[str, str] | None = None,
+    legacy_stream: str = "",
+    retired_constraints: str = "",
 ):
     book = tmp_path / "book"
     (book / "chapters").mkdir(parents=True)
@@ -40,18 +57,26 @@ def _book(
         # 每支衍生檔都要有正文源，否則會被（正確地）報成孤兒
         if name.endswith(".ai.md"):
             (book / "chapters" / f"{name[:-6]}.md").write_text("（正文）\n", encoding="utf-8")
-    if constraints:
-        (book / "story" / "參照" / "約束.co.md").write_text(constraints, encoding="utf-8")
-    if legacy_constraints:
-        (book / "story" / "參照" / "約束.md").write_text(
-            legacy_constraints, encoding="utf-8"
+    if objects:
+        d = book / "story" / "物件"
+        d.mkdir(parents=True)
+        for name, body in objects.items():
+            (d / name).write_text(body, encoding="utf-8")
+    if legacy_stream:
+        (book / "story" / "參照" / "狀態事件流.md").write_text(
+            legacy_stream, encoding="utf-8"
+        )
+    if retired_constraints:
+        (book / "story" / "參照" / "約束.co.md").write_text(
+            retired_constraints, encoding="utf-8"
         )
     return book
 
 
-def _ch(front_facts: str, extra: str = "") -> str:
+def _ch(front_facts: str, extra: str = "", beats: str = "[幕001, 幕099]") -> str:
     return (
-        "---\ngenerated-from: abc\ngenerated-at: 2026-07-26\n所屬arc: arc01\n---\n"
+        "---\ngenerated-from: abc\ngenerated-at: 2026-07-26\n"
+        f"對應幕: {beats}\n所屬arc: arc01\n---\n"
         f"## 本章事實\n{front_facts}\n{extra}"
     )
 
@@ -83,26 +108,16 @@ def test_collects_across_chapters(tmp_path):
             "ch0001.ai.md": _ch("- 幕002（arc01）· 少年 · 持有：＋〔舊劍〕"),
             "ch0002.ai.md": _ch("- 幕009（arc01）· 少年 · 持有：−〔舊劍〕"),
         },
-        constraints=_table("| 不得識破 | 同伴 | 只當是舊物 | 全書 | — |"),
+        objects={"同伴.md": _obj("| 不得識破 | 只當是舊物 | 全書 | — |")},
     )
     events, mode = collect_events(book)
     assert mode == "chapters"
     # 約束不再是事件——它走規則表，不進 fold
     assert [e.origin for e in events] == ["ch0001", "ch0002"]
     assert [e.order for e in events] == [0, 1]  # 跨檔遞增，as-of tiebreak 才穩定
-    assert [c.name for c in collect_constraints(book)] == ["不得識破"]
-
-
-def test_legacy_constraint_log_still_flows_through_events(tmp_path):
-    """2026-07-27 前的 4 欄信封 append log：既有書不遷移，仍須讀得動。"""
-    book = _book(
-        tmp_path,
-        chapters={"ch0001.ai.md": _ch("- 幕002（arc01）· 少年 · 持有：＋〔舊劍〕")},
-        legacy_constraints="- 幕005（arc01）· 同伴 · 約束〔不得識破〕：只當是舊物\n",
-    )
-    events, _ = collect_events(book)
-    assert [e.origin for e in events] == ["ch0001", "約束.md"]
-    assert collect_constraints(book) == []  # 舊格式不走規則表
+    (c,) = collect_constraints(book)
+    assert c.name == "不得識破" and c.entity == "同伴"  # 實體＝檔名
+    assert c.origin == "物件/同伴.md"
 
 
 def test_projection_folds_chapter_delta(tmp_path):
@@ -144,7 +159,7 @@ def test_chapters_without_fact_section_are_skipped(tmp_path):
     book = _book(
         tmp_path,
         chapters={"ch0001.ai.md": "---\nk: v\n---\n（本體留空）\n"},
-        constraints=_table("| 甲 | 同伴 | 乙 | 全書 | — |"),
+        objects={"同伴.md": _obj("| 甲 | 乙 | 全書 | — |")},
     )
     events, _ = collect_events(book)
     assert events == []
@@ -160,15 +175,23 @@ def test_constraint_in_chapter_delta_is_reported(tmp_path):
         },
     )
     events, _ = collect_events(book)
-    (problem,) = check_kind_placement(events)
-    assert "重生就沒了" in problem and "約束.co.md" in problem
+    (problem,) = check_kind_placement(events, book)
+    assert "重生就沒了" in problem and "不得寫成什麼" in problem
 
 
-def test_state_in_legacy_constraint_log_is_reported(tmp_path):
-    book = _book(tmp_path, legacy_constraints="- 幕005（arc01）· 少年 · 持有：＋〔舊劍〕\n")
-    events, _ = collect_events(book)
-    (problem,) = check_kind_placement(events)
-    assert "只住" in problem and "本章事實" in problem
+def test_retired_constraint_location_is_reported(tmp_path):
+    """`約束.co.md` 這個落點已廢除。**留著它比刪掉它危險**——沒有工具會讀，
+    而作者以為那些排除線還在生效。"""
+    book = _book(
+        tmp_path,
+        retired_constraints=(
+            "| 約束名 | 實體 | 不得寫成 | 生效自 | 解除於 |\n|---|---|---|---|---|\n"
+            "| 甲 | 同伴 | 乙 | 全書 | — |\n"
+        ),
+    )
+    (problem,) = check_kind_placement([], book)
+    assert "落點已廢除" in problem and "物件/<該列的實體>.md" in problem
+    assert any("落點已廢除" in p for p in lint(book))
 
 
 # ------------------------------------------------------------ lint
@@ -194,7 +217,7 @@ def test_lint_clean_book(tmp_path):
     book = _book(
         tmp_path,
         chapters={"ch0001.ai.md": _ch("- 幕002（arc01）· 少年 · 持有：＋〔舊劍〕")},
-        constraints=_table("| 甲 | 同伴 | 乙 | 全書 | — |"),
+        objects={"同伴.md": _obj("| 甲 | 乙 | 全書 | — |")},
     )
     assert lint(book) == []
 
@@ -208,6 +231,35 @@ def test_lint_main_exit_codes(tmp_path, capsys):
     )
     assert lint_main(["--book", str(dirty)]) == 1
     assert "未知類型 token" in capsys.readouterr().err
+
+
+# ------------------------------------------------- 覆蓋率輸出（設計原則 E2）
+
+def test_lint_always_reports_what_it_checked_even_when_clean(tmp_path, capsys):
+    """只回答「發現幾個問題」的檢查器，在自己被關掉時會印「乾淨」。
+
+    實測就是這樣讓 206 個問題報 0 的（`sources.py` 的整本書豁免開關）。
+    """
+    book = _book(
+        tmp_path,
+        chapters={"ch0001.ai.md": _ch("- 幕002（arc01）· 少年 · 持有：＋〔舊劍〕")},
+        objects={"同伴.md": _obj("| 甲 | 乙 | 全書 | — |")},
+    )
+    assert lint_main(["--book", str(book)]) == 0
+    out = capsys.readouterr().out
+    assert "1 支章 delta" in out
+    assert "1 筆事實行（新格式 1·舊格式 0）" in out
+    assert "1 支物件檔" in out and "1 條約束" in out
+
+
+def test_stats_count_both_generations_separately(tmp_path):
+    book = _book(
+        tmp_path,
+        chapters={"ch0001.ai.md": _ch("- 幕002（arc01）· 少年 · 持有：＋〔舊劍〕")},
+        legacy_stream="- 幕003（arc01）· 少年 · 位置：舊格式那筆\n",
+    )
+    _, stats = lint_report(book)
+    assert (stats.fact_lines_new, stats.fact_lines_legacy) == (1, 1)
 
 
 # ------------------------------------------------------------ delta 純化
@@ -238,7 +290,7 @@ def test_constraint_vocabulary_in_delta_is_reported(tmp_path):
             "ch0001.ai.md": _ch("- 幕002（arc01）· 少年 · 位置：到了藏經閣，下游不得寫成他離開")
         },
     )
-    assert any("排除線" in p and "約束.co.md" in p for p in lint(book))
+    assert any("排除線" in p and "不得寫成什麼" in p for p in lint(book))
 
 
 def test_short_pure_delta_passes_purity(tmp_path):
@@ -279,18 +331,18 @@ def test_registered_foreshadow_name_passes(tmp_path):
     assert lint(book) == []
 
 
-def test_underwater_marker_also_registers_a_name(tmp_path):
-    """🧊 水下標記指向的伏筆名同樣算登記（共同約定.md 六）。"""
+def test_object_filename_also_registers_a_name(tmp_path):
+    """物件檔名同樣算登記——命題名的命名空間＝幕綱伏筆名 ∪ 物件檔名。
+
+    2026-07-27 前第二個來源是設定層 `.ai.md` 的 🧊 標記，那個落點已廢除
+    （不可重生的裁決住在會被重生的檔裡）。
+    """
     book = _book(
         tmp_path,
         chapters={
             "ch0001.ai.md": _ch("- 幕002（arc01）· 少年 · 知識前沿：＋尚不知〔母愛護盾〕")
         },
-    )
-    (book / "story" / "設定" / "角色").mkdir(parents=True)
-    (book / "story" / "設定" / "角色" / "少年.ai.md").write_text(
-        "## 水下\n- 母親留下的東西（🧊 水下｜揭示於 收[[伏筆:母愛護盾]]）\n",
-        encoding="utf-8",
+        objects={"母愛護盾.md": _obj(kind="設定規則")},
     )
     assert lint(book) == []
 
@@ -306,12 +358,47 @@ def test_plain_set_dimension_names_are_not_cross_checked(tmp_path):
 
 def test_legacy_book_prose_is_not_linted_for_ops(tmp_path):
     """一世之尊刻意不遷移——舊格式的自由 prose 不該被新語法報一整本。"""
-    book = _book(tmp_path)
-    (book / "story" / "參照" / "狀態事件流.md").write_text(
-        "- 幕002（arc01）· 少年 · 知識前沿：得知信物存在，尚不知其真正用途\n",
-        encoding="utf-8",
+    book = _book(
+        tmp_path,
+        legacy_stream="- 幕002（arc01）· 少年 · 知識前沿：得知信物存在，尚不知其真正用途\n",
     )
     assert lint(book) == []
+
+
+# --------------------------------------- 世代是逐行的，不是整本書一個開關（V6）
+
+def test_generation_is_per_line_not_per_book(tmp_path):
+    """混格式的書：舊那行的集合維度豁免，**同一本書裡新章那行照檢**。
+
+    2026-07-27 前 `collect_events` 遇到舊單檔就 early-return，於是新章的 delta
+    連讀都沒讀到——一支檔的存在與否決定整本書要不要跑檢查（實測 206 → 0）。
+    """
+    book = _book(
+        tmp_path,
+        chapters={
+            "ch0001.ai.md": _ch("- 幕002（arc01）· 少年 · 知識前沿：這是自由散文，不是操作串")
+        },
+        legacy_stream="- 幕003（arc01）· 少年 · 知識前沿：舊格式的自由 prose\n",
+    )
+    events, mode = collect_events(book)
+    assert mode == "legacy"
+    assert len(events) == 2  # 兩個來源合流，不是二選一
+    problems = lint(book)
+    assert len(problems) == 1
+    assert "ch0001 第" in problems[0] and "集合運算" in problems[0]
+
+
+def test_purity_applies_to_legacy_lines_too(tmp_path):
+    """純化三條是**行本身**的紀律，跟它出生在哪一代無關。
+
+    那 206 筆全部出自舊格式那支檔——豁免它就等於豁免掉唯一的實測病例。
+    """
+    book = _book(
+        tmp_path,
+        legacy_stream="- 幕002（arc01）· 少年 · 位置：" + "字" * 250 + "\n",
+    )
+    (problem,) = lint(book)
+    assert "250 字" in problem and "狀態事件流.md" in problem
 
 
 # ------------------------------------------------------------ 孤兒衍生檔（洞 b）
@@ -347,18 +434,29 @@ def test_projection_is_gated_by_lint(tmp_path, capsys):
     book = _book(
         tmp_path,
         chapters={"ch0001.ai.md": _ch("- 幕002（arc01）· 少年 · 位置：甲")},
-        constraints=_table("| 甲 | 同伴 | 乙 | 幕005(arc01) | — |"),
+        objects={"同伴.md": _obj("| 甲 | 乙 | 幕005(arc01) | — |")},
     )
     assert main(["--book", str(book), "--as-of", "幕011（arc01）"]) == 1
     err = capsys.readouterr().err
     assert "格式閘門擋下" in err and "全形／半形" in err
 
 
+def test_projection_is_gated_by_object_lint_too(tmp_path, capsys):
+    """物件檔壞了也擋——投影會把約束合流進來，壞物件檔＝漏一條排除線。"""
+    book = _book(
+        tmp_path,
+        chapters={"ch0001.ai.md": _ch("- 幕002（arc01）· 少年 · 位置：甲")},
+        objects={"同伴.md": "---\n型別: 不存在的型\n---\n## 為什麼存在\n因為。\n"},
+    )
+    assert main(["--book", str(book), "--as-of", "幕011（arc01）"]) == 1
+    assert "封閉枚舉" in capsys.readouterr().err
+
+
 def test_ignore_lint_lets_it_through(tmp_path, capsys):
     book = _book(
         tmp_path,
         chapters={"ch0001.ai.md": _ch("- 幕002（arc01）· 少年 · 位置：甲")},
-        constraints=_table("| 甲 | 同伴 | 乙 | 全書 | — |"),
+        objects={"同伴.md": _obj("| 甲 | 乙 | 全書 | — |")},
     )
     assert main(["--book", str(book), "--as-of", "幕011（arc01）", "--ignore-lint"]) == 0
 
@@ -378,8 +476,11 @@ def test_bom_prefixed_files_still_parse(tmp_path):
     (book / "chapters" / "ch0001.ai.md").write_text(
         _ch("- 幕002（arc01）· 少年 · 持有：＋〔舊劍〕"), encoding="utf-8-sig"
     )
-    (book / "story" / "參照" / "約束.co.md").write_text(
-        _table("| 甲 | 同伴 | 乙 | 全書 | — |"), encoding="utf-8-sig"
+    (book / "chapters" / "ch0001.md").write_text("（正文）\n", encoding="utf-8")
+    d = book / "story" / "物件"
+    d.mkdir(parents=True)
+    (d / "同伴.md").write_text(
+        _obj("| 甲 | 乙 | 全書 | — |"), encoding="utf-8-sig"
     )
     events, _ = collect_events(book)
     assert len(events) == 1
@@ -387,13 +488,17 @@ def test_bom_prefixed_files_still_parse(tmp_path):
 
 
 @pytest.mark.parametrize("mode_file", ["事實流.md", "狀態事件流.md"])
-def test_legacy_book_takes_precedence(tmp_path, mode_file):
+def test_both_legacy_stream_names_are_read(tmp_path, mode_file):
+    """舊單檔的兩種命名都吃，而且**不再蓋掉章 delta**——兩邊合流。"""
     book = _book(
         tmp_path, chapters={"ch0001.ai.md": _ch("- 幕002（arc01）· 少年 · 持有：＋〔舊劍〕")}
     )
     (book / "story" / "參照" / mode_file).write_text(
-        "- 幕003（arc01）· 少年 · 持有：舊格式那筆\n", encoding="utf-8"
+        "- 幕003（arc01）· 少年 · 位置：舊格式那筆\n", encoding="utf-8"
     )
     events, mode = collect_events(book)
-    assert mode == "legacy" and len(events) == 1
-    assert events[0].content == "舊格式那筆"
+    assert mode == "legacy"
+    assert [(e.origin, e.generation) for e in events] == [
+        (mode_file, "legacy"),
+        ("ch0001", "new"),
+    ]

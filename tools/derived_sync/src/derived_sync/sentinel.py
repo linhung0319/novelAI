@@ -35,9 +35,10 @@ _PAREN_RE = re.compile(r"（[^（）]*）")
 # 哨兵借用它判「衍生檔塞了不屬於它的東西」，兩份會漂移，故不另抄一份。
 
 # 有投影工具可切片的檔——**檔案大小**不受規範（行長仍受，見上）。含各代舊檔名。
-APPEND_LOG_STEMS = frozenset(
-    {"事實流", "狀態事件流", "裁決流", "裁決流.co", "約束", "約束.co"}
-)
+# `story/參照/` 底下那些「檔可以很大、但一行不可再切」的檔（有投影工具切它們）。
+# 2026-07-27 移除 `約束`／`約束.co`：那個落點已廢除（約束搬進 story/物件/<名>.md 的
+# 「## 不得寫成什麼」）。還留著那支檔的書由 `fact-lint` 報成落點錯，不是在這裡量行長。
+APPEND_LOG_STEMS = frozenset({"事實流", "狀態事件流", "裁決流", "裁決流.co"})
 
 
 @dataclass(frozen=True)
@@ -161,7 +162,7 @@ def unsliceable_derived(book: Path, limit: int = DERIVED_BYTES) -> list[Finding]
                         kind="衍生檔不可切片",
                         path=p,
                         detail=f"{size} B，{len(stray)} 個枚舉外的節：{shown}",
-                        hint="正文釘死的事實（錨）屬該章 chNNNN.ai.md 的「## 本章事實」；下游硬約束屬 story/參照/約束.md；裁決理由屬 裁決流.md。衍生檔只留 schema 定義的節",
+                        hint="正文釘死的事實（錨）屬該章 chNNNN.ai.md 的「## 本章事實」；下游硬約束與揭示層級屬 story/物件/<名>.md；裁決理由屬 裁決流.co.md。衍生檔只留 schema 定義的節",
                     )
                 )
             elif size > limit:
@@ -312,7 +313,7 @@ def bloated_fact_lines(
                     detail=f"{len(paren_hits)} 行的括號註解佔比超過 {ratio:.0%}"
                     f"（最早在第 {paren_hits[0][0]} 行）",
                     hint="伏筆埋／收屬幕綱、裁決理由屬 裁決流.co.md、"
-                    "下游排除線屬 story/參照/約束.co.md",
+                    "下游排除線屬 story/物件/<實體>.md 的「## 不得寫成什麼」",
                 )
             )
     return out

@@ -14,7 +14,7 @@ from .scan import (
     _UNBUILT_RE,
     parse_spine,
     scan_arc,
-    scan_ice,
+    scan_reveal,
 )
 
 _ARC_FILE_RE = re.compile(r"^arc[0-9A-Za-z]+$")
@@ -52,9 +52,15 @@ class Report:
     threads: list[Thread]
     violations: list[Violation]
     ice_resolved: list[tuple[Ice, str]]
-    ice_suspect: list[Ice]
+    ice_pending: list[tuple[Ice, str]]
+    ice_suspect: list[tuple[Ice, str]]
+    ice_scanned: int  # 掃到幾處（含解析不了的）——沒有這個數字就會出現「0 條可疑」的假陰性
     expired_unbuilt: list[tuple[StatusRow, str]]
     scanned_arcs: list[str]
+
+    @property
+    def ice_unparsed(self) -> int:
+        return len(self.ice_suspect)
 
 
 def _pos(spine: dict[str, int], m: Mark) -> tuple[int, int]:
@@ -102,21 +108,50 @@ def build(book: Path) -> Report:
                     if arc in built:
                         expired.append((row, arc))
 
-    ices = scan_ice(book)
+    # 揭示層級：**四種結果都要有數字**。舊版只算 resolved／suspect，而 resolved 算了
+    # 卻不印，於是 92 處出現、91 處根本沒被當成標記時，輸出仍是「0 條為可疑點」。
+    ices = scan_reveal(book)
+    unbuilt = [arc for arc in spine if arc not in built]
     ice_resolved: list[tuple[Ice, str]] = []
-    ice_suspect: list[Ice] = []
+    ice_pending: list[tuple[Ice, str]] = []
+    ice_suspect: list[tuple[Ice, str]] = []
     for ice in ices:
-        if ice.cross_book or ice.target is None:
-            ice_resolved.append((ice, "跨集留白，本書不揭"))
+        if ice.retired_location:
+            ice_suspect.append(
+                (
+                    ice,
+                    "落點已廢除：揭示層級只住 story/物件/<名>.md 的 `揭示層級` 欄"
+                    "——寫在會被重生的設定層 .ai.md 裡，下次重生就沒了",
+                )
+            )
+            continue
+        if ice.cross_book:
+            ice_resolved.append((ice, f"跨集留白，本書不揭"))
+            continue
+        if ice.target is None:
+            ice_suspect.append(
+                (
+                    ice,
+                    "語法解析不了：只有三種寫法（公開／水下｜揭示於 收[[伏筆:X]]／"
+                    "水下｜跨集留白）",
+                )
+            )
             continue
         t = threads.get(ice.target)
         if t and t.pays:
             m = t.pays[0]
-            ice_resolved.append((ice, f"揭示於 幕{m.beat}（{m.arc}）"))
+            ice_resolved.append((ice, f"揭示於 幕{m.beat:03d}（{m.arc}）"))
         elif t:
-            ice_resolved.append((ice, "揭示點待落幕（該伏筆已埋、尚無收點）"))  # 資訊、非可疑點
+            # 資訊、非可疑點（共同約定.md 六：揭示點還不存在是合法狀態）
+            ice_pending.append((ice, "揭示點待落幕（該伏筆已埋、尚無收點）"))
+        elif unbuilt:
+            ice_pending.append(
+                (ice, f"揭示點待落幕（{'、'.join(unbuilt)} 尚未拆幕）")
+            )
         else:
-            ice_suspect.append(ice)  # 全書幕綱找不到這個伏筆名
+            ice_suspect.append(
+                (ice, "全書幕綱既無這條伏筆的埋也無收，也沒有未拆的 arc 可以解釋")
+            )
 
     return Report(
         spine=spine,
@@ -126,7 +161,9 @@ def build(book: Path) -> Report:
         ),
         violations=[v for s in scans for v in s.violations],
         ice_resolved=ice_resolved,
+        ice_pending=ice_pending,
         ice_suspect=ice_suspect,
+        ice_scanned=len(ices),
         expired_unbuilt=expired,
         scanned_arcs=[s.arc for s in scans],
     )

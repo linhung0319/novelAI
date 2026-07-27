@@ -1,6 +1,15 @@
-"""約束＝**規則登記表**，不是事件流。
+"""約束＝**規則登記表**，不是事件流；住 `story/物件/<名>.md` 的「## 不得寫成什麼」。
 
-見 `結構定義/事實流.schema.md`。從「怎麼產生／怎麼被用」推：
+見 `結構定義/物件.schema.md`。**2026-07-27 搬過家**：原本住 `story/參照/約束.co.md`
+一支全書共用的 5 欄表，現在一物件一檔、跟著它管的那個物件走。搬家換掉的是「實體」
+這一欄——**它就是檔名**，所以表降成 4 欄。這修掉三件事：
+
+- 約束的「為什麼這樣定」終於跟規則同居一檔（F2 第三列：理由要跟著它保護的規則）。
+- 「不得寫成什麼」寫不出來的物件不必開檔（G4 的內容測試）；反過來，寫得出來的
+  物件一定有檔，於是**約束的實體天生有存在性檢查**（C1：檔名天生唯一）。
+- 實體欄不再是自由字串，`真觀` 與 `真觀（少林）` 不會變成兩個實體並存。
+
+從「怎麼產生／怎麼被用」推，它為什麼是表：
 
 - **產生**＝離散的拍板事件（低頻，一次一條），由 `character`／`worldbuild`／
   `beat-sheet`／`write-test` 在作者拍板後寫下。
@@ -25,7 +34,11 @@ from dataclasses import dataclass
 
 from .fold import KIND_CONSTRAINT, FoldError, Slot, strip_html_comments
 
-COLUMNS = ("約束名", "實體", "不得寫成", "生效自", "解除於")
+# 4 欄。「實體」不在欄裡——它是物件檔的檔名（C1：ID 優先成為檔名）。
+COLUMNS = ("約束名", "不得寫成", "生效自", "解除於")
+
+# 「## 不得寫成什麼」＝約束表在物件檔裡的家。
+CONSTRAINT_SECTION = "不得寫成什麼"
 
 # 生效自寫這個＝從全書開頭就生效（回溯生效的表達方式，不必偽造一個拍板幕號）。
 SINCE_ALL = "全書"
@@ -53,12 +66,13 @@ class Constraint:
     since: Position | None  # None＝全書（自始生效）
     until: Position | None  # None＝尚未解除
     lineno: int
+    origin: str = ""  # 這條約束住哪支物件檔（物件/<名>.md）
 
     @property
     def token(self) -> str:
         return f"{KIND_CONSTRAINT}〔{self.name}〕"
 
-    def to_slot(self, origin: str) -> Slot:
+    def to_slot(self, origin: str = "") -> Slot:
         return Slot(
             entity=self.entity,
             token=self.token,
@@ -67,7 +81,7 @@ class Constraint:
             content=self.content,
             source_beat=self.since.beat if self.since else None,
             source_arc=self.since.arc if self.since else SINCE_ALL,
-            origin=origin,
+            origin=self.origin or origin,
         )
 
 
@@ -93,9 +107,11 @@ def _parse_position(raw: str, where: str, column: str) -> Position | None:
 
 
 def parse_constraints(
-    text: str, origin: str = "", errors: list[str] | None = None
+    text: str, entity: str, origin: str = "", errors: list[str] | None = None
 ) -> list[Constraint]:
-    """讀約束表。非表格行（標題、引言、HTML 註解）跳過；壞行報錯、不靜默丟。
+    """讀一支物件檔的約束表。`entity` ＝該物件檔的檔名（約束管的就是它）。
+
+    非表格行（標題、引言、HTML 註解）跳過；壞行報錯、不靜默丟。
 
     `errors` 為 None（預設）＝ 嚴格模式，遇壞行即 raise——投影走這條，因為投影
     吐出不完整的約束比報錯危險（漏一條排除線＝下游理直氣壯地違反它）。傳入 list
@@ -114,7 +130,15 @@ def parse_constraints(
         if not seen_header:
             # 第一列表格必須是表頭，用它確認欄序沒被改過
             if tuple(cells) != COLUMNS:
-                msg = f"{where}表頭欄位不符：得到 {cells}，應為 {list(COLUMNS)}"
+                extra = ""
+                if "實體" in cells:
+                    extra = (
+                        "。「實體」欄已取消——它就是這支物件檔的檔名"
+                        f"（本檔＝〔{entity}〕）"
+                    )
+                msg = (
+                    f"{where}表頭欄位不符：得到 {cells}，應為 {list(COLUMNS)}{extra}"
+                )
                 if errors is None:
                     raise FoldError(msg)
                 errors.append(msg)
@@ -124,11 +148,12 @@ def parse_constraints(
         try:
             if len(cells) != len(COLUMNS):
                 raise FoldError(
-                    f"{where}欄數 {len(cells)}，應為 {len(COLUMNS)}：{raw!r}"
+                    f"{where}欄數 {len(cells)}，應為 {len(COLUMNS)}"
+                    f"（`{'｜'.join(COLUMNS)}`）：{raw!r}"
                 )
-            name, entity, content, since_raw, until_raw = cells
-            if not name or not entity:
-                raise FoldError(f"{where}「約束名」與「實體」不得留白：{raw!r}")
+            name, content, since_raw, until_raw = cells
+            if not name:
+                raise FoldError(f"{where}「約束名」不得留白：{raw!r}")
             if since_raw.strip() == SINCE_ALL:
                 since = None  # 全書＝自始生效
             else:
@@ -146,11 +171,13 @@ def parse_constraints(
         out.append(
             Constraint(
                 name=name,
-                entity=entity,
+                entity=entity,  # ＝檔名，不是欄位
+
                 content=content,
                 since=since,
                 until=until,
                 lineno=i,
+                origin=origin,
             )
         )
     return out
@@ -182,7 +209,7 @@ def active_at(
     spine: dict[str, int],
     target_beat: int,
     target_arc: str,
-    origin: str,
+    origin: str = "",
     notes: list[str] | None = None,
 ) -> list[Slot]:
     """篩出在目標幕生效的約束：`生效自 ≤ 目標` 且（未解除 或 `目標 < 解除於`）。

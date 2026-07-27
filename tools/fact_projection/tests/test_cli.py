@@ -100,5 +100,5 @@ def test_legacy_absent_returns_none(tmp_path):
 def test_no_source_at_all_raises(tmp_path):
     book = tmp_path / "empty"
     (book / "story" / "參照").mkdir(parents=True)
-    with pytest.raises(FileNotFoundError, match="約束.md"):
+    with pytest.raises(FileNotFoundError, match="物件"):
         collect_events(book)

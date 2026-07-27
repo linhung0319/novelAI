@@ -7,8 +7,10 @@ dependencies = []
 
 [project.scripts]
 fact-project = "fact_projection.cli:main"
-# 格式閘門：驗事實信封行（`derived-sync validate` 管 .ai.md 的結構，兩者互補）
+# 格式閘門：驗事實信封行與物件檔（`derived-sync validate` 管 .ai.md 的結構，兩者互補）
 fact-lint = "fact_projection.cli:lint_main"
+# 物件軸的聚焦入口：同一組檢查、只印物件檔那幾類（給只動物件檔的 skill 用）
+object-lint = "fact_projection.cli:object_lint_main"
 # 反向索引：誰依賴了這條事實（`derived-sync check` 管正向的新鮮度，兩者互補）
 fact-refs = "fact_projection.cli:refs_main"
 

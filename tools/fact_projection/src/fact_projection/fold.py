@@ -19,6 +19,18 @@ KINDS = (KIND_STATE, KIND_ANCHOR, KIND_CONSTRAINT)
 # 約束退場靠顯式解除，不加第 5 欄（見 結構定義/事實流.schema.md）。
 RELEASE_PREFIX = "（解除）"
 
+# **格式世代是逐行的，不是逐本書的。**
+#
+# 2026-07-27 前，舊格式豁免是一個**整本書**的開關：`story/參照/` 底下只要存在一支
+# `狀態事件流.md`，純化三條與集合維度檢查就整本跳過，只印一行 stderr。實測後果＝
+# 一世之尊 206 個問題報 0，而且那 206 個一路長了 11 個 arc 沒人吭聲。
+#
+# 現在世代跟著**那一行的來源**走：舊單檔事實流的行是 `legacy`，章 delta 的行是
+# `new`。差別只在**集合維度**（舊格式的 `知識前沿` 是自由 prose，那是刻意的）；
+# **純化三條對兩個世代一律照檢**——行長與夾帶是行本身的紀律，與它出生在哪一代無關。
+GEN_LEGACY = "legacy"
+GEN_NEW = "new"
+
 
 class FoldError(Exception):
     """事實流/spine 解析或定位失敗（格式壞行、未知類型 token、無法定位）。"""
@@ -34,12 +46,17 @@ class Event:
     name: str  # 狀態＝維度名；錨/約束＝〔〕內的名字
     content: str
     lineno: int
-    origin: str = ""  # 來源檔識別（ch0009／約束.md／事實流.md），供投影標注與報錯
+    origin: str = ""  # 來源檔識別（ch0009／狀態事件流.md），供投影標注與報錯
     order: int = 0  # 跨檔全域序號；同位置的 tiebreak（取代單檔時代的 lineno）
+    generation: str = GEN_NEW  # 這一行屬哪個格式世代（見上 GEN_LEGACY 的說明）
 
     @property
     def released(self) -> bool:
         return self.content.startswith(RELEASE_PREFIX)
+
+    @property
+    def legacy(self) -> bool:
+        return self.generation == GEN_LEGACY
 
 
 # 位置從左端解析：幕NNN（arcAA）後第一個 · 為位置/實體分隔；實體之後（含名字內的 ·）全歸實體。
@@ -95,6 +112,7 @@ def parse_events(
     origin: str = "",
     start_order: int = 0,
     errors: list[str] | None = None,
+    generation: str = GEN_NEW,
 ) -> list[Event]:
     """解析事件行。
 
@@ -144,6 +162,7 @@ def parse_events(
                 lineno=i,
                 origin=origin,
                 order=start_order + len(events),
+                generation=generation,
             )
         )
     return events
@@ -176,7 +195,7 @@ class Slot:
     content: str
     source_beat: int | None  # None＝無單一釘下點（約束表寫「生效自：全書」）
     source_arc: str
-    origin: str = ""  # 這條事實由哪支檔釘下（ch0009／約束.co.md）
+    origin: str = ""  # 這條事實由哪支檔釘下（ch0009／物件/同伴.md）
     # 集合維度（知識前沿／持有／能力）折出來的成員 [(名, 態)]；態為空＝無態維度。
     # 留著結構而不只留 content，是為了讓上層還能再篩一層（見 cli 的命題層選取）。
     items: tuple[tuple[str, str], ...] = field(default=())
@@ -216,7 +235,9 @@ def project(
       逐筆套上去。這是「每筆 delta 只寫這一幕改變了什麼」得以成立的機制。
     - **純量維度**（其餘）與錨：序最新勝，逐字沿用原語意。
 
-    `set_dims` 預設空＝全部走覆蓋，舊格式書（自由 prose 的知識前沿）照舊跑得動。
+    `set_dims` 預設空＝全部走覆蓋。**它只套在新格式的行上**（`generation`），
+    舊格式那幾行的 `知識前沿` 是自由 prose，折不成集合——這個判斷是**逐行**的，
+    不是整本書一個開關（見 `GEN_LEGACY` 的說明）。
 
     kinds=None 代表全開。active_only 剔除內容以「（解除）」起頭的 slot
     ——舊格式約束的退場靠顯式解除，見 結構定義/事實流.schema.md。
@@ -233,7 +254,7 @@ def project(
     for _p, e in kept:
         key = (e.entity, e.token)
         content, items = e.content, ()
-        if e.kind == KIND_STATE and e.name in set_dims:
+        if e.kind == KIND_STATE and e.name in set_dims and not e.legacy:
             where = f"{e.origin} 第 {e.lineno} 行" if e.origin else f"第 {e.lineno} 行"
             try:
                 merged = apply_ops(accum.get(key, []), parse_ops(e.content, e.name))

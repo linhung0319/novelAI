@@ -111,7 +111,7 @@ def test_stray_section_fires_regardless_of_size(tmp_path):
     findings = unsliceable_derived(book)
     assert len(findings) == 1 and findings[0].kind == "衍生檔不可切片"
     assert "硬事實" in findings[0].detail and "下游硬約束" in findings[0].detail
-    assert "本章事實" in findings[0].hint and "約束.md" in findings[0].hint
+    assert "本章事實" in findings[0].hint and "story/物件/<名>.md" in findings[0].hint
 
 
 def test_section_title_may_carry_a_suffix_note(tmp_path):
@@ -283,7 +283,7 @@ def test_feedback_section_lines_are_not_facts(tmp_path):
 def test_append_log_no_longer_exempt_from_line_length(tmp_path):
     """2026-07-27 前這裡整支檔豁免——但投影的粒度就是行，一行不可再切。"""
     book = _book(tmp_path)
-    (book / "story" / "參照" / "約束.co.md").write_text(
+    (book / "story" / "參照" / "裁決流.co.md").write_text(
         "- 幕002（arc01）· 少年 · 位置：" + "字" * 300 + "\n", encoding="utf-8"
     )
     assert [f.kind for f in bloated_fact_lines(book)] == ["事實行肥大"]
@@ -292,7 +292,7 @@ def test_append_log_no_longer_exempt_from_line_length(tmp_path):
 def test_file_size_exemption_for_append_logs_survives(tmp_path):
     """行長受管，但**檔案大小**仍不受管（有投影工具可切片）。"""
     book = _book(tmp_path)
-    (book / "story" / "參照" / "約束.co.md").write_text(
+    (book / "story" / "參照" / "裁決流.co.md").write_text(
         "".join(f"- 幕{i:03d}（arc01）· 少年 · 位置：走到某處\n" for i in range(400)),
         encoding="utf-8",
     )

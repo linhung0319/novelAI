@@ -7,7 +7,8 @@ from dataclasses import replace
 from pathlib import Path
 
 from .beats import BeatLookupError, find_beat
-from .constraints import active_at
+from .chapters import covering_chapter, load_chapter_meta
+from .constraints import CONSTRAINT_SECTION, active_at
 from .fold import (
     KIND_CONSTRAINT,
     KINDS,
@@ -18,9 +19,10 @@ from .fold import (
     parse_spine,
     project,
 )
+from .objects import KINDS as OBJECT_KINDS, OBJECT_DIRNAME, objects_dir
 from .ops import SET_DIMENSIONS, render
 from .refs import anchor_hits, entity_refs
-from .sources import CONSTRAINT_TABLE, collect_constraints, collect_events, lint
+from .sources import collect_constraints, collect_events, lint, lint_report
 
 _ASOF_RE = re.compile(r"^幕(\d+)（(arc[^）]+)）$")
 
@@ -35,8 +37,8 @@ def _force_utf8() -> None:
 
 
 _SOURCE_DESC = {
-    "chapters": "衍生自章 delta＋約束表",
-    "legacy": "衍生自舊格式單檔事實流",
+    "chapters": "衍生自章 delta＋物件檔的約束",
+    "legacy": "含舊格式單檔事實流的行（逐行判世代）",
 }
 
 
@@ -208,9 +210,11 @@ def main(argv: list[str] | None = None) -> int:
     try:
         events, mode = collect_events(args.book, orphans=notes)
         if mode == "legacy":
-            print(
-                "（此書仍是 2026-07-26 前的單檔事實流；新書走 章 delta＋約束表）",
-                file=sys.stderr,
+            legacy_lines = sum(1 for e in events if e.legacy)
+            notes.append(
+                f"本書仍有 2026-07-26 前的單檔事實流（{legacy_lines} 行走舊格式、"
+                f"{len(events) - legacy_lines} 行走章 delta）。"
+                "**世代是逐行判的**：舊格式那些行的集合維度不套操作串，其餘檢查照跑"
             )
         spine = parse_spine(spine_path.read_text(encoding="utf-8"))
         slots = project(
@@ -220,20 +224,22 @@ def main(argv: list[str] | None = None) -> int:
             target_arc,
             kinds=kinds,
             active_only=args.active_only,
-            # 舊格式書的知識前沿是自由 prose，折不成集合——只有新格式走集合維度。
-            set_dims=frozenset() if mode == "legacy" else SET_DIMENSIONS,
+            # 集合維度只套在新格式的行上，那個判斷在 fold 裡逐行做（見 GEN_LEGACY）。
+            set_dims=SET_DIMENSIONS,
         )
         # 約束走規則表、不走 fold——它是一條一列的登記表，不是事件流
-        # （見 constraints.py）。舊格式書的約束仍在 events 裡，這裡自然回空。
+        # （見 constraints.py）。它住各支物件檔的「## 不得寫成什麼」。
         if kinds is None or KIND_CONSTRAINT in kinds:
+            constraints = collect_constraints(args.book)
             slots += active_at(
-                collect_constraints(args.book),
+                constraints,
                 spine,
                 target_beat,
                 target_arc,
-                origin=CONSTRAINT_TABLE,
+                origin="",  # 每條約束自帶它的物件檔，見 Constraint.to_slot
                 notes=notes,
             )
+            notes += _release_due(args.book, constraints, spine)
     except FileNotFoundError as e:
         print(f"找不到檔案：{e}", file=sys.stderr)
         return 1
@@ -258,6 +264,31 @@ def main(argv: list[str] | None = None) -> int:
         end="",
     )
     return 0
+
+
+def _release_due(book: Path, constraints: list, spine: dict[str, int]) -> list[str]:
+    """`解除於` 指向的幕已經寫成正文了 → 提示作者確認該解除了。
+
+    **這是 E2 第六個永久盲點目前唯一的補償機制。** 約束刻意沒有「狀態」欄（狀態由
+    `解除於` 導出，比照 `裁決流` 那個沒人維護的狀態欄不踩第二次），代價是「一條該
+    解除的約束沒被解除」沒有任何東西會撞到它——`fact-project` 會忠實地繼續回報它、
+    `write` 會忠實地繼續遵守它。至少在它的解除點已經成為既成正文時吭一聲。
+    """
+    metas = load_chapter_meta(book)
+    if not metas:
+        return []
+    out: list[str] = []
+    for c in constraints:
+        if c.until is None or c.until.arc not in spine:
+            continue
+        stem = covering_chapter(metas, c.until.arc, c.until.beat)
+        if stem:
+            out.append(
+                f"約束〔{c.name}〕· {c.entity} 的「解除於」{c.until} 已經寫成正文"
+                f"（{stem}）——確認它真的解除了；還要繼續守就把那一格往後改"
+                f"（{c.origin}）"
+            )
+    return out
 
 
 def _narrow_propositions(
@@ -332,6 +363,11 @@ def refs_main(argv: list[str] | None = None) -> int:
     g = ap.add_mutually_exclusive_group(required=True)
     g.add_argument("--entity", help="掃各章 delta 的實體欄（結構化欄位，精確）")
     g.add_argument("--anchor", help="錨名，如 信物的形制。拿它登記過的值 grep 全書正文")
+    g.add_argument(
+        "--constraint",
+        help="約束名。列出它的射程、射程內已寫成的章、那些章提到該實體的地方"
+        "——改／解除一條約束之前要看的就是這個",
+    )
     ap.add_argument("--after", default=None, help="只看這個位置之後的，如 幕021（arc01）")
     ap.add_argument(
         "--was",
@@ -373,6 +409,9 @@ def refs_main(argv: list[str] | None = None) -> int:
         print(_format_entity_refs(args.entity, found), end="")
         return 0
 
+    if args.constraint:
+        return _constraint_refs_main(args, events, spine)
+
     token = f"錨〔{args.anchor.strip('〔〕')}〕"
     values = [e.content for e in events if e.token == token]
     if not values and not args.was:
@@ -381,6 +420,115 @@ def refs_main(argv: list[str] | None = None) -> int:
     values += [v for v in (args.was or []) if v not in values]
     print(_format_anchor_hits(token, values, anchor_hits(args.book, values)), end="")
     return 0
+
+
+def _constraint_refs_main(
+    args: argparse.Namespace, events: list[Event], spine: dict[str, int]
+) -> int:
+    """一條約束的下游依賴。
+
+    **為什麼需要這支。** `設計原則.md` E3 明說約束不會自癒（它只被讀、不被再寫，
+    沒有東西會撞到它），E4 明說「以後會發現」要成立的前提是有反向索引——兩條原則
+    同時指名約束，而 `fact-refs` 原本只有 `--entity` 與 `--anchor` 兩條路。於是
+    「改了一條約束的射程」之後，**已經按舊射程寫下去的正文沒有任何工具找得出來**。
+
+    約束的「不得寫成 X」本身不會逐字出現在正文裡（它是負向的），所以查法不是 grep
+    那句話，是：射程 → 射程內已寫成的章 → 那些章裡它管的那個實體出現在哪。
+    """
+    name = args.constraint.strip("〔〕")
+    constraints = collect_constraints(args.book)
+    picked = [c for c in constraints if c.name == name]
+    if not picked:
+        known = "、".join(sorted({c.name for c in constraints})) or "（一條都沒有）"
+        print(
+            f"查無約束〔{name}〕——名字是不是打錯了？全書現有：{known}",
+            file=sys.stderr,
+        )
+        return 1
+
+    metas = load_chapter_meta(args.book)
+    lines: list[str] = []
+    for c in picked:
+        lines += [
+            f"## 約束〔{c.name}〕· {c.entity} 的下游依賴（候選，交 LLM 複判）",
+            "",
+            f"- 不得寫成：{c.content}",
+            f"- 射程：{c.since or '全書'} → {c.until or '（尚未解除）'}"
+            f"　←{c.origin}",
+            "",
+        ]
+        in_range = sorted(
+            (m for m in metas.values() if _meta_in_scope(m, c, spine)),
+            key=lambda m: m.stem,
+        )
+        lines.append(f"射程內已寫成的章（{len(in_range)} 支）：")
+        if not in_range:
+            lines.append("- （無——這條約束還沒有任何既成正文受它管）")
+        for m in in_range:
+            lines.append(
+                f"- {m.stem}　幕{m.first_beat:03d}–幕{m.last_beat:03d}（{m.arc}）"
+            )
+        hits = [
+            h
+            for h in anchor_hits(args.book, [c.entity])
+            if any(h.chapter == m.stem for m in in_range)
+        ]
+        lines += ["", f"射程內正文提到「{c.entity}」的地方："]
+        if not hits:
+            lines.append("- （無字面命中——實體名可能在正文裡是別的稱呼）")
+        for h in hits:
+            lines.append(f"- {h.chapter}　「{h.term}」×{h.count}")
+        deltas = [
+            e
+            for e in events
+            if c.entity in e.entity and _event_in_scope(e, c, spine)
+        ]
+        lines += ["", f"射程內動到「{c.entity}」的 delta（{len(deltas)} 筆）："]
+        if not deltas:
+            lines.append("- （無）")
+        for e in deltas:
+            lines.append(
+                f"- {e.origin}　幕{e.beat:03d}（{e.arc}）　{e.token}：{e.content[:50]}"
+            )
+        lines.append("")
+    print("\n".join(lines).rstrip() + "\n", end="")
+    return 0
+
+
+def _rank(spine: dict[str, int], arc: str, beat: int) -> tuple[int, int] | None:
+    return (spine[arc], beat) if arc in spine else None
+
+
+def _event_in_scope(e: Event, c, spine: dict[str, int]) -> bool:
+    pos = _rank(spine, e.arc, e.beat)
+    if pos is None:
+        return False
+    if c.since is not None:
+        since = _rank(spine, c.since.arc, c.since.beat)
+        if since is None or pos < since:
+            return False
+    if c.until is not None:
+        until = _rank(spine, c.until.arc, c.until.beat)
+        if until is not None and pos >= until:
+            return False
+    return True
+
+
+def _meta_in_scope(meta, c, spine: dict[str, int]) -> bool:
+    """這一章有任何一幕落在約束射程內嗎（章是幕區間，不是單點）。"""
+    if meta.first_beat is None or meta.arc not in spine:
+        return False
+    lo = (spine[meta.arc], meta.first_beat)
+    hi = (spine[meta.arc], meta.last_beat)
+    if c.since is not None:
+        since = _rank(spine, c.since.arc, c.since.beat)
+        if since is None or hi < since:
+            return False
+    if c.until is not None:
+        until = _rank(spine, c.until.arc, c.until.beat)
+        if until is not None and lo >= until:
+            return False
+    return True
 
 
 def _format_entity_refs(entity: str, refs: list) -> str:
@@ -413,27 +561,85 @@ def _format_anchor_hits(token: str, values: list[str], hits: list) -> str:
 
 
 def lint_main(argv: list[str] | None = None) -> int:
-    """`fact-lint`：驗全書事實信封行的格式與落點，一次報完所有問題。
+    """`fact-lint`：驗全書事實信封行與物件檔的格式與落點，一次報完所有問題。
 
     與 `derived-sync validate` 分工：那支管 `.ai.md` 的**結構**（front-matter、
-    節枚舉），本支管**事實信封行**。各自擁有自己那份格式的唯一真相。
+    節枚舉），本支管**事實信封行與物件檔**。各自擁有自己那份格式的唯一真相。
+
+    **一律先印檢查範圍**（`設計原則.md` E2）：只回答「發現幾個問題」的檢查器，
+    在它自己被關掉的時候會印「乾淨」——實測就這樣讓 206 個問題報 0。
     """
     ap = argparse.ArgumentParser(
-        description="事實信封行格式閘門：驗 chapters/chNNNN.ai.md 的「## 本章事實」"
-        "與 story/參照/約束.md，一次報完所有壞行與落錯地方的類型。"
+        description="事實軸格式閘門：驗 chapters/chNNNN.ai.md 的「## 本章事實」"
+        f"與 story/{OBJECT_DIRNAME}/<名>.md，一次報完所有壞行與落錯地方的類型。"
+        "輸出一律含「我檢查了幾筆」。"
     )
     ap.add_argument("--book", required=True, type=Path, help="書資料夾路徑")
     args = ap.parse_args(argv)
     _force_utf8()
 
-    problems = lint(args.book)
+    problems, stats = lint_report(args.book)
+    return _print_lint(problems, stats, "事實信封行與物件檔格式乾淨。")
+
+
+def _print_lint(problems: list[str], stats, clean_msg: str) -> int:
+    print(stats.render())
+    for n in stats.notes:
+        print(f"（資訊）{n}")
+    for h in stats.hints:
+        print(f"（提示）{h}")
     if not problems:
-        print("事實信封行格式乾淨。")
+        print(clean_msg)
         return 0
     print(f"發現 {len(problems)} 個問題：", file=sys.stderr)
     for p in problems:
         print(f"  [x] {p}", file=sys.stderr)
     return 1
+
+
+def object_lint_main(argv: list[str] | None = None) -> int:
+    """`object-lint`：物件軸的聚焦入口。
+
+    跑的是 `fact-lint` 的同一組檢查（同一份真相，不是第二套），只是把輸出收斂到
+    物件檔那幾類，讓 `character`／`worldbuild` 這些**只動物件檔**的 skill 有一個
+    對得上自己動作的閘門。要一次看全部就跑 `fact-lint`；`fact-project` 執行前的
+    自檢也涵蓋這些，所以漏跑本支不會讓壞物件檔溜進投影。
+    """
+    ap = argparse.ArgumentParser(
+        description=f"物件軸格式閘門：驗 story/{OBJECT_DIRNAME}/<名>.md 的檔名、"
+        f"型別（封閉七型 {'／'.join(OBJECT_KINDS)}）、節枚舉、內容測試、"
+        f"「## {CONSTRAINT_SECTION}」的約束表、以及揭示層級指向的收點存不存在。"
+    )
+    ap.add_argument("--book", required=True, type=Path, help="書資料夾路徑")
+    ap.add_argument(
+        "--all",
+        action="store_true",
+        help="連事實信封行的問題一起印（＝等同 fact-lint）",
+    )
+    args = ap.parse_args(argv)
+    _force_utf8()
+
+    problems, stats = lint_report(args.book)
+    if not args.all:
+        problems = [p for p in problems if _is_object_problem(p)]
+    d = objects_dir(args.book)
+    if not d.is_dir():
+        print(f"（資訊）{d} 不存在——這本書還沒有任何物件檔")
+    return _print_lint(problems, stats, "物件檔格式乾淨。")
+
+
+def _is_object_problem(problem: str) -> bool:
+    """這個問題是物件軸的嗎（供 `object-lint` 收斂輸出）。
+
+    比對**開頭**而不是「有沒有出現」——每個問題訊息都以它的位置起頭（物件檔的是
+    `物件/<名>.md…`、近似名的是 `引用名〔…`）。用 `in` 會把純化違規全撈進來，
+    因為它們的**修法提示**裡就寫著「排除線屬 story/物件/<實體>.md」。
+    """
+    return (
+        problem.startswith(f"{OBJECT_DIRNAME}/")
+        or problem.startswith("引用名〔")
+        or "落點已廢除" in problem  # 約束的舊落點還在＝物件軸的遷移待辦
+    )
 
 
 if __name__ == "__main__":

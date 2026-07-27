@@ -44,7 +44,14 @@ class BeatContext:
 
 
 def _entity_vocabulary(book: Path) -> list[str]:
-    """設定層檔名／目錄名＝權威實體名（源是唯一真實來源）。"""
+    """權威實體名＝設定層檔名／目錄名 **∪ 物件檔名**（源是唯一真實來源）。
+
+    **為什麼一定要含物件檔**：約束住 `story/物件/<實體>.md`，而它的「實體」就是檔名
+    （C1）。一個只以物件檔存在的實體（例如作者替某配角立了排除線，但還沒替他寫
+    `設定/角色/<名>.md`）若不在詞彙表裡，`--for-beat` 就會把它的約束**靜默篩掉**
+    ——實測過這個洞：`同伴` 的排除線整條從投影裡消失，而 `write` 會理直氣壯地違反它。
+    漏一條排除線比多給一點 context 嚴重得多。
+    """
     names: list[str] = []
     for kind in ("角色", "世界觀"):
         d = book / "story" / "設定" / kind
@@ -58,6 +65,11 @@ def _entity_vocabulary(book: Path) -> list[str]:
                 and not entry.name.endswith(".ai.md")
                 and not entry.name.startswith("_")
             ):
+                names.append(entry.stem)
+    objects = book / "story" / "物件"
+    if objects.is_dir():
+        for entry in sorted(objects.glob("*.md")):
+            if not entry.stem.startswith(("_", ".")) and entry.stem not in names:
                 names.append(entry.stem)
     return names
 

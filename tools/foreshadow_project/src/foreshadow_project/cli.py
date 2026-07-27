@@ -64,12 +64,30 @@ def format_report(rep: Report, threads: list[Thread], title: str) -> str:
         for v in rep.violations:
             lines.append(f"- [{v.kind}] {v.arc} 第 {v.lineno} 行：{v.detail}")
 
+    lines += ["", _reveal_summary(rep)]
+    for ice, why in rep.ice_resolved + rep.ice_pending:
+        lines.append(f"- {ice.file.name} 第 {ice.lineno} 行：{why}")
     if rep.ice_suspect:
-        lines += ["", "### 🧊 指向不存在的伏筆名（可疑點）"]
-        for ice in rep.ice_suspect:
-            lines.append(f"- {ice.file.name} 第 {ice.lineno} 行 → 收[[伏筆:{ice.target}]]")
+        lines += ["", "### 揭示層級無法解析（可疑點）"]
+        for ice, why in rep.ice_suspect:
+            lines.append(f"- {ice.file.name} 第 {ice.lineno} 行 `{ice.raw}`：{why}")
 
     return "\n".join(lines).rstrip() + "\n"
+
+
+def _reveal_summary(rep: Report) -> str:
+    """**掃到 N 處／解析 N 處／無法解析 N 處。**
+
+    這一行是本工具最貴的一課換來的（`設計原則.md` E2）：舊版只印可疑點，而「可疑點」
+    是從**已解析的**標記裡挑出來的——於是 92 處出現、91 處連標記都不算時，它印的是
+    「0 條為可疑點」exit 0。一個檢查器必須能回答「我檢查了幾筆」，不能只回答
+    「我發現幾個問題」。**0 處也要印**，那本身就是訊息。
+    """
+    return (
+        f"### 揭示層級：掃到 {rep.ice_scanned} 處／"
+        f"解析 {len(rep.ice_resolved)} 處／待落幕 {len(rep.ice_pending)} 處／"
+        f"**無法解析 {rep.ice_unparsed} 處**"
+    )
 
 
 def main(argv: list[str] | None = None) -> int:

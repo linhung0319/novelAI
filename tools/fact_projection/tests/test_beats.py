@@ -29,7 +29,9 @@ ARC01 = """\
 
 
 def _ch(facts: str) -> str:
-    return "---\nk: v\n---\n## 本章事實\n" + facts
+    return (
+        "---\n對應幕: [幕001, 幕030]\n所屬arc: arc01\n---\n## 本章事實\n" + facts
+    )
 
 
 def _book(tmp_path, chapters: dict[str, str] | None = None, entities=("少年", "同伴")):
@@ -41,10 +43,14 @@ def _book(tmp_path, chapters: dict[str, str] | None = None, entities=("少年", 
     (book / "story" / "幕綱" / "arc01.md").write_text(ARC01, encoding="utf-8")
     for name in entities:
         (book / "story" / "設定" / "角色" / f"{name}.md").write_text("略\n", encoding="utf-8")
-    # 「主宰目的」用 🧊 水下標記登記（尚未落到任何一幕的伏筆欄——那是合法狀態，
-    # 見 共同約定.md 六「揭示點還不存在」）
-    (book / "story" / "設定" / "角色" / "少年.ai.md").write_text(
-        "## 水下\n- 那個東西要什麼（🧊 水下｜揭示於 收[[伏筆:主宰目的]]）\n",
+    # 「主宰目的」由**物件檔**登記（2026-07-27 起揭示層級只住這裡；原本住設定層
+    # `.ai.md` 的 🧊 標記，那是「不可重生的裁決住在會被重生的檔裡」）。它尚未落到
+    # 任何一幕的伏筆欄——arc02 還沒拆，那是合法狀態（共同約定.md 六）。
+    (book / "story" / "物件").mkdir(parents=True)
+    (book / "story" / "物件" / "主宰目的.md").write_text(
+        "---\n型別: 伏筆\n揭示層級: 水下｜揭示於 收[[伏筆:主宰目的]]\n---\n"
+        "## 是什麼\n那個東西要什麼。\n\n"
+        "## 為什麼存在\n作者拍板：這條線撐到全書收束才揭。\n",
         encoding="utf-8",
     )
     for name, body in (chapters or {}).items():
@@ -55,6 +61,24 @@ def _book(tmp_path, chapters: dict[str, str] | None = None, entities=("少年", 
 
 
 # ------------------------------------------------------------ 定位
+
+def test_object_files_are_authoritative_entity_names_too(tmp_path):
+    """一個**只以物件檔存在**的實體，它的約束不得被 `--for-beat` 靜默篩掉。
+
+    實測過這個洞：作者替某配角立了排除線（住 `story/物件/<名>.md`）但還沒替他寫
+    `設定/角色/<名>.md`，於是詞彙表沒有他 → `--for-beat` 把整條排除線篩掉 →
+    `write` 理直氣壯地違反它，而沒有任何東西會報。**漏一條排除線比多給 context 嚴重。**
+    """
+    book = _book(tmp_path, entities=("少年",))  # 同伴刻意沒有設定源檔
+    (book / "story" / "物件" / "同伴.md").write_text(
+        "---\n型別: 角色\n---\n## 不得寫成什麼\n"
+        "| 約束名 | 不得寫成 | 生效自 | 解除於 |\n|---|---|---|---|\n"
+        "| 不得先於少年識破信物 | 只當是尋常舊物 | 全書 | — |\n",
+        encoding="utf-8",
+    )
+    ctx = find_beat(book, 2)
+    assert ctx.entities == ["少年", "同伴"]  # 依角色欄出現序
+
 
 def test_finds_beat_and_derives_entities(tmp_path):
     ctx = find_beat(_book(tmp_path), 2)

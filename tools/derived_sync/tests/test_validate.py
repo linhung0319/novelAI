@@ -26,7 +26,9 @@ def test_classify_chapters_and_settings(tmp_path):
 
 def test_enum_picks_rollup_variant():
     assert enum_for("章節", "ch0001") == ("本章事實", "待裁決回饋")
-    assert enum_for("章節", "_index") == ("章節索引", "章末狀態快照")
+    # 「章末狀態快照」2026-07-27 刪除：無產生器、無檢查器的僵屍規格，
+    # 要人眼可讀的章末切片跑 `fact-project --as-of`，不落檔。
+    assert enum_for("章節", "_index") == ("章節索引",)
     assert enum_for("風格", "風格") is None  # 未定義枚舉 → 只查 front-matter
 
 
@@ -65,7 +67,7 @@ def test_stray_section_in_chapter(tmp_path):
         {"chapters/ch0001.ai.md": GOOD_FM + "## 本章事實\n- 甲\n## 硬事實\n- 乙\n"},
     )
     (p,) = validate_file(book, book / "chapters" / "ch0001.ai.md")
-    assert "硬事實" in p.detail and "約束.md" in p.hint
+    assert "硬事實" in p.detail and "story/物件/<名>.md" in p.hint
 
 
 def test_annotated_section_title_is_allowed(tmp_path):
