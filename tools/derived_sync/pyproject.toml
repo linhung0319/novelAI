@@ -7,6 +7,11 @@ dependencies = []
 
 [project.scripts]
 derived-sync = "derived_sync.cli:main"
+# 世界觀軸格式閘門：驗 front-matter 收斂後的欄語意、伏筆歸一、rollup 兩欄視圖、
+# 幕綱檔名引用。與 `derived-sync validate` **同套件**——世界觀 .ai.md 的格式真相
+# 只有一份（validate 管所有 .ai.md 共通的結構，這支管世界觀專屬的欄語意）。
+# 先例：object-lint 是 fact-lint 的聚焦入口、ch-lint 與 beat-lint 同套件。
+world-lint = "derived_sync.cli:world_lint_main"
 
 [dependency-groups]
 dev = ["pytest>=8"]

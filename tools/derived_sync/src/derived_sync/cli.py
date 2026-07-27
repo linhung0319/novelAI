@@ -7,6 +7,7 @@ from pathlib import Path
 from .core import check_book, content_hash, source_digest_for_derived, stamp
 from .sentinel import run as run_sentinel
 from .validate import validate_report
+from .world_lint import lint_book as world_lint_book
 
 _MARK = {
     "fresh": "[ok]  ",
@@ -83,6 +84,26 @@ def _cmd_validate(args: argparse.Namespace) -> int:
     return 1
 
 
+def _cmd_world_lint(args: argparse.Namespace) -> int:
+    """世界觀軸的格式閘門。與 `validate` 分開跑、分開計。
+
+    `validate` 問「每支 `.ai.md` 的共通形狀對不對」；這支問「世界觀那幾欄的**語意**
+    對不對」——`主題` ≡ 檔名、伏筆名在 registry 裡、rollup 的兩欄視圖 ≡ 資料夾、
+    背景維度是封閉七維、幕綱的檔名引用不懸空。
+    """
+    problems, stats = world_lint_book(args.book)
+    print(stats.render())
+    if not problems:
+        print("世界觀軸格式合規。")
+        return 0
+    for p in problems:
+        rel = p.path.relative_to(args.book) if p.path.is_relative_to(args.book) else p.path
+        print(f"[x] {rel}  {p.detail}")
+        print(f"       {p.hint}")
+    print(f"\n合計 {len(problems)} 個格式問題。", file=sys.stderr)
+    return 1
+
+
 def _cmd_stamp(args: argparse.Namespace) -> int:
     digest = stamp(args.derived, on=args.date)
     print(f"已封章 {args.derived.name}：generated-from={digest}")
@@ -118,6 +139,13 @@ def main(argv: list[str] | None = None) -> int:
     p_validate.add_argument("--book", required=True, type=Path, help="書資料夾路徑")
     p_validate.set_defaults(func=_cmd_validate)
 
+    p_world = sub.add_parser(
+        "world-lint",
+        help="驗世界觀軸（front-matter 欄語意＋rollup 視圖＋伏筆歸一＋檔名引用）",
+    )
+    p_world.add_argument("--book", required=True, type=Path, help="書資料夾路徑")
+    p_world.set_defaults(func=_cmd_world_lint)
+
     p_stamp = sub.add_parser("stamp", help="重生某 .ai.md 後，把源 hash 封回其 front-matter")
     p_stamp.add_argument("derived", type=Path, help="欲封章的 .ai.md 路徑")
     p_stamp.add_argument("--date", default=None, help="generated-at 日期（預設今天）")
@@ -131,6 +159,30 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
     try:
         return args.func(args)
+    except (FileNotFoundError, ValueError) as e:
+        print(f"錯誤：{e}", file=sys.stderr)
+        return 1
+
+
+def world_lint_main(argv: list[str] | None = None) -> int:
+    """`world-lint` 的獨立入口（同套件、自己一個指令）。
+
+    與 `derived-sync world-lint` 完全等價。分成獨立指令的先例：`object-lint` 是
+    `fact-lint` 的聚焦入口、`ch-lint` 與 `beat-lint` 同套件——**新增一個要記得跑的
+    閘門，就是新增一個會被忘記的觸發時機**，所以它掛在寫它的那支 skill
+    （`worldbuild`／`develop`）的落檔步驟上，指令名要短到不必查。
+    """
+    ap = argparse.ArgumentParser(
+        description="世界觀軸格式閘門：驗 <主題>.ai.md 的 front-matter 欄語意"
+        "（`主題` ≡ 檔名、已廢除的欄、伏筆名在 registry 裡）、"
+        "`_總覽.ai.md` 的核心規則索引 ≡ 資料夾與背景維度封閉七維、"
+        "以及幕綱裡的檔名引用不懸空。零 LLM、可覆算。"
+    )
+    ap.add_argument("--book", required=True, type=Path, help="書資料夾路徑")
+    _force_utf8()
+    args = ap.parse_args(argv)
+    try:
+        return _cmd_world_lint(args)
     except (FileNotFoundError, ValueError) as e:
         print(f"錯誤：{e}", file=sys.stderr)
         return 1

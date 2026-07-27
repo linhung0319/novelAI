@@ -21,6 +21,17 @@ SOURCE_BYTES = 25000  # 源：單檔（或單一角色目錄總和）絕對上�
 DERIVED_BYTES = 12000  # 衍生 `.ai.md`：無切片工具，且應是源的壓縮，故更嚴（約 4000 漢字）
 LINE_CHARS = 2000  # 綜合檔單行（單一表格 cell）字元數
 ROLLUP_LINE_CHARS = 400  # rollup 一列＝一行摘要，比綜合檔嚴得多（schema 說「一行需求」）
+# 設定層**非 rollup** 檔的單行（2026-07-27 功能 05 補上）。分析段落天生比 rollup 的
+# 一列長（「限制與代價」那種一條就是一段），所以不套 400；但也不能沒有門檻——實測
+# `江湖勢力.ai.md` 單行 1,155 字元（rollup 門檻的 2.9×）一聲沒吭地長了八次重生。
+#
+# **兩個門檻皆取自實測分佈的空隙，樣本 n=4（一世之尊四支世界觀主題），是暫定值**：
+#   衍生最長行 671／690／1,072／1,155 → 800 落在 690 與 1,072 之間
+#   源檔最長行 372／375／430／575     → 600 落在 430 與 575 之上的空隙
+# 取法與 `beat_sheet_density` 的 2,500 一致（「兩群之間的空隙」）。**第二本書有設定層
+# 之後要重取**——n=4 的分佈不足以定一個跨書門檻，見 `世界觀.schema.md`「單行長度」。
+SETTINGS_DERIVED_LINE_CHARS = 800
+SETTINGS_SOURCE_LINE_CHARS = 600
 # 事實行量的是**內容欄**（信封第四欄），與 `fact-lint` 同一把尺，只是門檻更早：
 # 哨兵 120（≈1.6× 健康均值）先示警，`fact-lint` 200 才擋。
 FACT_LINE_CHARS = 120
@@ -195,11 +206,15 @@ def unsliceable_derived(book: Path, limit: int = DERIVED_BYTES) -> list[Finding]
 
 
 def long_lines(
-    book: Path, limit: int = LINE_CHARS, rollup_limit: int = ROLLUP_LINE_CHARS
+    book: Path,
+    limit: int = LINE_CHARS,
+    rollup_limit: int = ROLLUP_LINE_CHARS,
+    settings_derived_limit: int = SETTINGS_DERIVED_LINE_CHARS,
+    settings_source_limit: int = SETTINGS_SOURCE_LINE_CHARS,
 ) -> list[Finding]:
     """單行過長＝狀態格／表格 cell 被當事件日誌用。
 
-    掃三處，門檻不同：
+    掃五處，門檻不同：
     - `story/參照/` 的綜合檔（就緒儀表／結構）→ `limit`。參照值：一世之尊
       就緒儀表最長單一 cell 約 10,000 字元（≈24KB）。
     - 設定層 rollup（`_index.ai.md`／`_總覽.ai.md`）→ `rollup_limit`。schema 說
@@ -209,8 +224,28 @@ def long_lines(
       與設定層 rollup 同一把尺。它是同一種病在另一支檔上復發：實測最長單行
       2,235 字元（門檻的 5.6×）、備註欄每列 196 B 長到 781 B，而三個目標集
       **恰好都不含 `chapters/`**，於是 `check` 印「0 個需處理」。
+    - **設定層非 rollup 的衍生檔 `<實體>.ai.md`（2026-07-27 功能 05 補上）**
+      → `settings_derived_limit`（800）。
+    - **設定層的源檔 `<實體>.md`／`<名>/<切面>.md`（同輪補上）**
+      → `settings_source_limit`（600）。源檔的行長不受「自由源不限單行長度」
+      豁免的理由見下。
 
     事實流／裁決流是 append log，有投影工具、且天生一行一筆——不受此限。
+
+    **為什麼後兩組在 2026-07-27 前完全靜音**：這是同一個根因的**第五次**——
+    `sentinel.py` 四支函式各自手寫路徑清單，於是每加一種受管檔就漏一次
+    （03 漏的是 `chapters/`）。證據這不是刻意豁免：同輪 `unsliceable_derived`
+    早就在掃 `story/設定/<kind>/*.ai.md` 的**大小**，只有行長那一份漏了它。
+    實測代價：`江湖勢力.ai.md` 1,155 字元、`修煉體系.ai.md` 1,072 字元的單行
+    無人吭聲，而 `_總覽.ai.md`（同一個資料夾、只因檔名以 `_` 開頭）一直在報。
+    要不要有一份統一的「這本書有哪些受管檔」交功能 14。
+
+    **為什麼源檔也管行長**：`共同約定.md` 零 的表格寫「自由源·單行長度不限」，
+    那條講的是**格式自由**（自由源沒有欄位，所以沒有「欄位溢位」）。但一個
+    600 字元的 bullet 仍然是登記表被當 log 用的信號——實測 `修煉體系.md:124`
+    是 759 字元的單行，內含三個日期的翻案沿革（「2026-07-22 作者明示當時不拍…
+    2026-07-23 已依此形式拍下第一卷」）。那些沿革屬 `story/參照/裁決流.md`。
+    門檻比衍生鬆（600 vs 800）是因為源檔是人寫的散文、本來就該更短。
     """
     out: list[Finding] = []
     targets: list[tuple[Path, int]] = []
@@ -224,12 +259,35 @@ def long_lines(
         ]
     for kind in SETTINGS_KINDS:
         d = book / "story" / "設定" / kind
-        if d.is_dir():
-            targets += [(p, rollup_limit) for p in sorted(d.glob(f"_*{AI_SUFFIX}"))]
+        if not d.is_dir():
+            continue
+        targets += [(p, rollup_limit) for p in sorted(d.glob(f"_*{AI_SUFFIX}"))]
+        # 非 rollup 的衍生與源。**用 rglob 吃到角色的目錄形態**（`<名>/<切面>.md`）
+        # ——單檔形態與目錄形態的行長是同一件事，不該因為源升級成目錄就靜音。
+        for p in sorted(d.rglob("*.md")):
+            if p.name.startswith("_"):
+                continue
+            if p.name.endswith(AI_SUFFIX):
+                targets.append((p, settings_derived_limit))
+            else:
+                targets.append((p, settings_source_limit))
     chapters = book / "chapters"
     if chapters.is_dir():
         targets += [(p, rollup_limit) for p in sorted(chapters.glob(f"_*{AI_SUFFIX}"))]
 
+    # 設定層非 rollup 檔的病徵不是「表格 cell」而是「一條分析／一個 bullet 長成
+    # 一份沿革」，所以 hint 分開寫。**兩種 hint 都提 `story/參照/裁決流.md`**——
+    # 那是 `missing_destinations` 的鉤子，把它拿掉等於讓這些筆數不再檢查目的地。
+    settings_hint = (
+        "一條分析／一個 bullet 不該裝一份沿革：拍板理由與翻案史屬 story/參照/裁決流.md、"
+        "下游硬約束屬 story/物件/<名>.md 的「## 不得寫成什麼」。"
+        "門檻取自 n=4 的實測空隙（衍生 800／源 600），是暫定值"
+    )
+    cell_hint = (
+        "狀態格／rollup 一列只報摘要；沿革與裁決記錄屬 story/參照/裁決流.md，"
+        "不該住在表格 cell 裡"
+    )
+    settings_limits = {settings_derived_limit, settings_source_limit}
     for p, limit in targets:
         worst = 0
         worst_no = 0
@@ -245,7 +303,7 @@ def long_lines(
                     kind="狀態格過長",
                     path=p,
                     detail=f"{count} 行超過 {limit} 字（最長 {worst} 字，第 {worst_no} 行）",
-                    hint="狀態格／rollup 一列只報摘要；沿革與裁決記錄屬 story/參照/裁決流.md，不該住在表格 cell 裡",
+                    hint=settings_hint if limit in settings_limits else cell_hint,
                 )
             )
     return out

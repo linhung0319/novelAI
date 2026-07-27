@@ -236,6 +236,56 @@ def test_rollup_row_has_tighter_limit(tmp_path):
     assert len(findings) == 1 and findings[0].path.name == "_index.ai.md"
 
 
+# ---- 設定層非 rollup 檔（2026-07-27 功能 05 補上；在此之前完全靜音） ----
+
+def test_settings_derived_long_line_fires(tmp_path):
+    """`<主題>.ai.md` 的一條分析長成一份沿革。實測一世之尊 1,155 字元、
+    而同資料夾的 `_總覽.ai.md`（只因檔名以 `_` 開頭）一直在報。"""
+    book = _book(tmp_path)
+    d = book / "story" / "設定" / "世界觀"
+    d.mkdir(parents=True)
+    (d / "修煉體系.ai.md").write_text(
+        "## 限制與代價\n- 上限＝" + "沿" * 900 + "\n短短一行\n", encoding="utf-8"
+    )
+    findings = long_lines(book)
+    assert len(findings) == 1 and findings[0].path.name == "修煉體系.ai.md"
+    assert "800" in findings[0].detail
+    # 目的地鉤子：hint 少了「裁決流」這幾個字，missing_destinations 就不再檢查它
+    assert "story/參照/裁決流.md" in findings[0].hint
+
+
+def test_settings_derived_line_under_threshold_is_clean(tmp_path):
+    """分析段落天生比 rollup 的一列長——690 字元的「限制與代價」不該被報，
+    否則 rollup 的 400 就是新的警報疲勞來源（抉擇 5 駁回選項 A 的理由）。"""
+    book = _book(tmp_path)
+    d = book / "story" / "設定" / "世界觀"
+    d.mkdir(parents=True)
+    (d / "少林.ai.md").write_text("## 影響力\n" + "析" * 690 + "\n", encoding="utf-8")
+    assert long_lines(book) == []
+
+
+def test_settings_source_has_own_threshold(tmp_path):
+    """源檔的 600 比衍生的 800 嚴：它是人寫的散文，本來就該更短。
+    實測 `修煉體系.md:124` 是 759 字元的單一 bullet，內含三個日期的翻案沿革。"""
+    book = _book(tmp_path)
+    d = book / "story" / "設定" / "世界觀"
+    d.mkdir(parents=True)
+    (d / "修煉體系.md").write_text("- 2026-07-22 作者明示" + "沿" * 700 + "\n", encoding="utf-8")
+    findings = long_lines(book)
+    assert len(findings) == 1 and findings[0].path.name == "修煉體系.md"
+    assert "600" in findings[0].detail
+
+
+def test_settings_dir_form_source_facets_are_scanned(tmp_path):
+    """角色升級成目錄形態之後行長不該靜音——那會是第六次漏檔。"""
+    book = _book(tmp_path)
+    d = book / "story" / "設定" / "角色" / "孟奇"
+    d.mkdir(parents=True)
+    (d / "來歷.md").write_text("- " + "沿" * 700 + "\n", encoding="utf-8")
+    findings = long_lines(book)
+    assert len(findings) == 1 and findings[0].path.name == "來歷.md"
+
+
 def test_append_log_exempt_from_long_lines(tmp_path):
     """事實流／裁決流有投影工具，不受行長規範（新舊檔名都算）。"""
     book = _book(tmp_path)

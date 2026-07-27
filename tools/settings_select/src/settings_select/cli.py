@@ -61,7 +61,40 @@ def format_selection(
     for kind in sel.unknown_dir:
         lines += ["", f"※ 找不到 story/設定/{kind}/ 目錄"]
 
+    lines += _coverage_lines(sel)
     return "\n".join(lines).rstrip() + "\n"
+
+
+def _coverage_lines(sel: Selection) -> list[str]:
+    """**我在這個 arc 上命中幾筆、命中的依據是什麼**（`設計原則.md` D2／E2）。
+
+    2026-07-27（功能 05 抉擇 2 D）新增。一律印、**0 也印**——「命中 0 筆」本身
+    就是最有用的那一筆訊息（實測教訓：只回答「找到什麼」的工具，在它自己失效時
+    印的是一份看起來正常的結果）。
+
+    `僅因檔名` 那個數字是這一行存在的理由：世界觀的 selector 比對的是檔名字串，
+    所以幕綱散文裡的 `見 \\`X.ai.md\\`` 註腳會讓那支檔被選中，而幕本身可能根本
+    沒在講那個主題。02 要把那些註腳從八欄清掉，清完命中就會掉——**先讓數字可見，
+    再決定選擇器怎麼修**（抉擇 2 的 A／C 刻意延後，等這一行量出數字再判）。
+    """
+    fn_only = [b for b in sel.world_basis if b.filename_only]
+    out = [
+        "",
+        "### 覆蓋率（0 也印）",
+        f"掃 {sel.beat_count} 幕；角色命中 {sel.char_count} 筆；"
+        f"世界觀命中 {len(sel.world_basis)} 筆，其中 {len(fn_only)} 筆僅因檔名被引用",
+    ]
+    for b in sorted(sel.world_basis, key=lambda x: (not x.filename_only, x.name)):
+        tag = "　※僅因檔名" if b.filename_only else ""
+        out.append(f"- {b.name}　檔名引用 {b.by_filename} 次／裸提及 {b.bare} 次{tag}")
+    if fn_only:
+        out.append(
+            "> ※「僅因檔名」＝這個主題之所以被選中，只因為幕綱散文寫了 "
+            "`X.ai.md` 這類引用，幕的內文沒有一處真的提到它。"
+            "那些引用一旦從幕綱八欄清掉（02 的目標），這幾筆會靜默地從選取結果消失"
+            "——選擇器怎麼修見 `功能報告/05-設定層-世界觀.md` 抉擇 2（A／C 刻意延後）。"
+        )
+    return out
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -182,3 +182,57 @@ def test_entities_skip_derived_and_index_files(tmp_path):
     (book / "story" / "設定" / "角色" / "_index.ai.md").write_text("x", encoding="utf-8")
     names = {e.name for e in load_entities(book)}
     assert names == {"少年", "老僕", "同伴", "反派", "山門", "海國"}
+
+
+# ---------------------------------------------------------------- 覆蓋率（功能 05 抉擇 2 D）
+
+def test_coverage_counts_are_always_produced(tmp_path):
+    """0 也要有——「命中 0 筆」本身就是最有用的那一筆訊息（E2）。"""
+    sel = select(_book(tmp_path), "arc09")
+    # 少年／老僕／同伴——三個都出現在幕的「角色」欄（同伴 是幕802 的括號註解）；
+    # 反派 只在檔尾設計註，不屬任何幕
+    assert sel.char_count == 3
+    assert [b.name for b in sel.world_basis] == ["山門"]  # 海國 沒被提到 → 不在清單
+
+
+def test_world_hit_by_bare_mention_is_not_filename_only(tmp_path):
+    """`山門` 在幕802 的時空欄裸提及 → 這一筆是真的在講它。"""
+    sel = select(_book(tmp_path), "arc09")
+    b = sel.world_basis[0]
+    assert b.bare >= 1 and b.by_filename == 0 and not b.filename_only
+
+
+def test_world_hit_only_via_filename_reference_is_flagged(tmp_path):
+    r"""實測一世之尊 4 個主題裡 3 個是這一格：命中的是註腳、不是內容。
+
+    02 把 `見 \`X.ai.md\`` 從八欄清掉的那天，這一筆會靜默地消失——所以它必須
+    在數字上先看得見（抉擇 2 D）。
+    """
+    book = _book(tmp_path)
+    arc = (book / "story" / "幕綱" / "arc09.md").read_text(encoding="utf-8")
+    arc = arc.replace(
+        "- 結果：只得自己上山",
+        "- 結果：只得自己上山（規則見 `海國.ai.md`）",
+    )
+    (book / "story" / "幕綱" / "arc09.md").write_text(arc, encoding="utf-8")
+    sel = select(book, "arc09")
+    hit = {b.name: b for b in sel.world_basis}
+    assert hit["海國"].by_filename == 1 and hit["海國"].bare == 0
+    assert hit["海國"].filename_only
+    assert not hit["山門"].filename_only
+
+
+def test_coverage_does_not_change_what_gets_selected(tmp_path):
+    """抉擇 2 D 的字面：**只量，不改選取行為。**"""
+    book = _book(tmp_path)
+    sel = select(book, "arc09")
+    world = [h.entity.name for h in sel.selected if h.entity.kind == "世界觀"]
+    assert world == ["山門"]
+    # 命中依據只是註解，不是過濾條件——僅因檔名的那一筆照樣要被選進來
+    arc = (book / "story" / "幕綱" / "arc09.md").read_text(encoding="utf-8")
+    (book / "story" / "幕綱" / "arc09.md").write_text(
+        arc.replace("- 衝突：問不出來", "- 衝突：問不出來（見 `海國.ai.md`）"),
+        encoding="utf-8",
+    )
+    sel2 = select(book, "arc09")
+    assert {h.entity.name for h in sel2.selected if h.entity.kind == "世界觀"} == {"山門", "海國"}

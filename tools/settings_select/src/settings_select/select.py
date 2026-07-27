@@ -170,6 +170,31 @@ class Hit:
     beats: tuple[int, ...]
 
 
+@dataclass(frozen=True)
+class WorldBasis:
+    """一個世界觀主題**為什麼**被選中：靠檔名引用，還是靠內容裡的裸提及。
+
+    2026-07-27（功能 05 抉擇 2 D）新增。**只量、不改選取行為。**
+
+    診斷出來的病：世界觀那一側的 selector 是「拿檔名去掃全幕文字」，而實測
+    一世之尊 4 個主題裡 3 個的裸提及率是 **0**——它們全靠幕綱散文寫了
+    `見 \\`X.ai.md\\`` 這類**檔名引用**才被命中。也就是說命中的不是內容，是註腳。
+
+    為什麼這一格必須印出來：02 明文要把設計註／檔名引用從幕綱八欄清出去。
+    **那個目標達成之日，就是 3/4 個世界觀主題從選取結果消失之日**，而
+    `settings-select` 會印一份格式完全正常、不含任何警告的結果，`write` 就在
+    缺三份核心規則的情況下動筆（`設計原則.md` E2 最後一格：守衛回報正常的假陰性）。
+    """
+
+    name: str
+    by_filename: int  # `<名>.ai.md`／`<名>.md` 這類引用的出現次數
+    bare: int  # 其餘（真的在講這個主題）
+
+    @property
+    def filename_only(self) -> bool:
+        return self.bare == 0
+
+
 @dataclass
 class Selection:
     arc: str
@@ -177,6 +202,8 @@ class Selection:
     selected: list[Hit]  # 角色欄命中（角色）＋全幕文字命中（世界觀）→ 要讀
     mentioned_only: list[Hit]  # 只在角色欄以外出現的角色 → 不讀，報成可疑點
     unknown_dir: list[str]  # 設定層缺目錄的提示
+    char_count: int = 0  # 角色命中幾筆（覆蓋率行用，0 也印）
+    world_basis: list[WorldBasis] = field(default_factory=list)  # 世界觀的命中依據
 
 
 def _hits(
@@ -191,6 +218,35 @@ def _hits(
                 if beat_no not in found[e.name]:
                     found[e.name].append(beat_no)
     return found
+
+
+def _world_basis(
+    entities: list[Entity], names: list[str], probes: list[tuple[int, str]]
+) -> list[WorldBasis]:
+    """對每個命中的世界觀主題，分類它每一處出現是「檔名引用」還是「裸提及」。
+
+    判準是**位置**而非語意：命中處後面緊接 `.ai.md`／`.md` ＝ 檔名引用。這與
+    `derived_sync/validate.py` 的 blockquote 位置判準同一個取法——語意判準
+    （「這句是在講這個主題還是在指路」）需要讀懂中文，而那正是 `prose-metrics`
+    的關鍵詞分類被駁回的形狀。
+    """
+    by_name = {e.name: e for e in entities}
+    out: list[WorldBasis] = []
+    for n in names:
+        if n not in by_name:
+            continue
+        fn = bare = 0
+        for _, text in probes:
+            start = 0
+            while (i := text.find(n, start)) != -1:
+                tail = text[i + len(n) : i + len(n) + 6]
+                if tail.startswith(".ai.md") or tail.startswith(".md"):
+                    fn += 1
+                else:
+                    bare += 1
+                start = i + len(n)
+        out.append(WorldBasis(name=n, by_filename=fn, bare=bare))
+    return out
 
 
 def parse_facets(spec: str | None) -> tuple[str, ...] | None:
@@ -261,4 +317,6 @@ def select(
         selected=selected,
         mentioned_only=mentioned_only,
         unknown_dir=missing_dirs,
+        char_count=len(char_hits),
+        world_basis=_world_basis(worlds, list(world_hits), world_probes),
     )
