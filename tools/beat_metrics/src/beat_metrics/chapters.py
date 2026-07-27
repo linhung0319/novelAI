@@ -60,6 +60,17 @@ REQUIRED_KEYS = ("對應幕", "所屬arc", "POV", "基調參照", "風格", "狀
 POV_SUBKEYS = ("角色", "人稱", "距離")
 STATUS_VALUES = ("草稿", "已定稿")
 
+# `風格` 欄指向的檔住這裡（`風格.schema.md`「檔案佈局」）。
+# 2026-07-27（功能 07 抉擇 6 A）新增**目的地存在性**檢查：在此之前 93/93 章都寫
+# `風格.ai.md`，而**沒有任何一行驗那支檔在不在**——這一欄非空（上面 `REQUIRED_KEYS`）
+# 與 `_index` 視圖一致（`_lint_index`）都驗過了，唯獨箭頭指向的東西沒人看。
+# 它是 `設計原則.md` E1「目的地承諾」推論的第 4 個實例（前三：幕綱設計註→裁決流、
+# `derived-sync` 的 `missing_destinations`、`decision-lint` 兩處）。
+# **為什麼值得補**：schema 的多世界 forward-compat（`風格/主世界.md`）0 本書用過，
+# 那條路徑一旦有人走，93 章的指標會同時落空而零報告——同一行的既有註解記著完全
+# 同型的教訓（「沒有任何工具實作那個 fallback」）。成本 3 行。
+STYLE_DIR = ("story", "設定", "風格")
+
 INDEX_NAME = "_index.ai.md"
 INDEX_SECTION = "章節索引"
 INDEX_COLUMNS = ("章", "對應幕", "所屬 arc", "POV", "風格", "狀態", "備註")
@@ -145,6 +156,8 @@ class ChLintStats:
     rows_checked: int = 0
     rows_mismatch: int = 0
     normalize_candidates: int = 0
+    style_refs: int = 0
+    style_refs_dangling: int = 0
     notes: list[str] = field(default_factory=list)
     hints: list[str] = field(default_factory=list)
 
@@ -157,7 +170,9 @@ class ChLintStats:
             f"（{self.beats_mismatch} 章不一致）、"
             f"{self.anchors + self.transitions} 個錨點幕號"
             f"（{self.unknown_beats} 個對不到 registry）、"
-            f"{self.rows_checked} 列章序六欄（{self.rows_mismatch} 列不一致）；\n"
+            f"{self.rows_checked} 列章序六欄（{self.rows_mismatch} 列不一致）、"
+            f"{self.style_refs} 個 `風格` 欄指向的檔"
+            f"（{self.style_refs_dangling} 個不存在）；\n"
             f"          非標準錨點寫法 {self.normalize_candidates} 筆。"
         )
 
@@ -408,6 +423,8 @@ def lint_report(book: Path) -> tuple[list[str], ChLintStats]:
     by_stem = {s.stem: s for s in sources}
     loose_forms: list[str] = []
     same_pairs: list[str] = []
+    style_dir = book.joinpath(*STYLE_DIR)
+    dangling_style: dict[str, list[str]] = {}
     for meta in metas:
         where = meta.path.name
         missing = [k for k in REQUIRED_KEYS if not meta.keys.get(k, "").strip()]
@@ -430,6 +447,16 @@ def lint_report(book: Path) -> tuple[list[str], ChLintStats]:
                     f"{where}：`POV` 缺子欄 {'、'.join(lack)}"
                     f"（格式 `{{ 角色: X, 人稱: Y, 距離: Z }}`）"
                 )
+
+        # 第 11 項：`風格` 欄指向的檔存在（E1 目的地承諾，2026-07-27 功能 07）。
+        # 聚合成一行——93 章寫同一個檔名，逐章報就是 93 行同型雜訊（03 拍板的判準：
+        # 病因與修法完全相同時聚合）。
+        style_ref = meta.keys.get("風格", "").strip().strip("`").strip()
+        if style_ref:
+            stats.style_refs += 1
+            if not (style_dir / style_ref).is_file():
+                stats.style_refs_dangling += 1
+                dangling_style.setdefault(style_ref, []).append(meta.stem)
 
         if meta.beats_form == "unparsed" and meta.beats_raw:
             problems.append(
@@ -490,6 +517,11 @@ def lint_report(book: Path) -> tuple[list[str], ChLintStats]:
         problems.append(
             f"chapters/：{len(loose_forms)} 支章衍生檔的 `對應幕` 不是標準寫法"
             f"（`[幕N]` 或 `[幕N, 幕M]`）：{_fmt_list(loose_forms)}"
+        )
+    for ref, stems in sorted(dangling_style.items()):
+        problems.append(
+            f"chapters/：{len(stems)} 支章衍生檔的 `風格: {ref}` 指向不存在的檔"
+            f"（找不到 `{'/'.join(STYLE_DIR)}/{ref}`）：{_fmt_list(stems)}"
         )
 
     # ---- 8／9／10：`_index.ai.md`

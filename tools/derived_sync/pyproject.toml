@@ -16,6 +16,10 @@ world-lint = "derived_sync.cli:world_lint_main"
 # 不得是佔位、front-matter 收斂後的欄語意、rollup 視圖 ≡ 各檔 front-matter。
 # 與 `world-lint` 同套件同理由——角色 .ai.md 的格式真相只有一份。
 char-lint = "derived_sync.cli:char_lint_main"
+# 風格軸格式閘門：五個 front-matter 欄的值**可不可核對**（`可用句式` 的顆粒度
+# token ＋阿拉伯數字 ＋不得全落最粗一級）、`基調參照` ≡ 摘要衍生檔、禁用詞正文
+# 掃描。它的取值者是 LLM 不是程式——依 2026-07-27 改寫後的 A4，那更需要 lint。
+style-lint = "derived_sync.cli:style_lint_main"
 
 [dependency-groups]
 dev = ["pytest>=8"]

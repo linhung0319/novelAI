@@ -58,6 +58,16 @@ DERIVED_SECTIONS: dict[str, tuple[str, ...]] = {
         "升格哨兵彙總",
         "素材出處",
     ),
+    # 結構定義/風格.schema.md
+    # 2026-07-27（功能 07 抉擇 5 B）**空 tuple ＝最嚴的一種枚舉：不得有任何 `##` 節**。
+    # 風格衍生檔的本體四節（腔調／時代・文化色／句式與節奏偏好／修辭天花板）實測是
+    # 源檔四節的**同長度改寫**（正規化後 2,059 vs 2,022 字元＝1.02×，8-gram 雙向重疊
+    # 30%）——角色與世界觀的衍生本體是**新表述**（散文→四象限／限制與代價分析），
+    # 風格的不是。真正的產出全在 front-matter 五欄（由 `style-lint` 守），所以本體
+    # 廢除，腔調散文的唯一落點是源 `風格.md`，下游改讀「源散文＋衍生五欄」
+    #（形狀照抄 `settings_select.Entity.read_paths` 對角色早就在做的兩邊都讀）。
+    # 既有書那四節現在會被報成枚舉外——**那是預期的**（同移除 `🧊 水下` 時）。
+    "風格": (),
     # 結構定義/章節.schema.md
     "章節": ("本章事實",),
     # 2026-07-27 移除 `章末狀態快照`：它是僵屍規格——schema 定義了、本枚舉允許了、
@@ -210,20 +220,30 @@ def validate_file(
 
     kind = classify(book, p)
     allowed = enum_for(kind, p.name[: -len(AI_SUFFIX)]) if kind else None
+    # **`is not None` 不是 truthiness**：空 tuple 是一個合法的枚舉（`風格` ＝「不得有
+    # 任何 `##` 節」，功能 07），而 `if allowed:` 會把它當成「沒有枚舉」——於是那支檔
+    # 被算進 `fm_only`、stray 檢查整個跳過，**而輸出看起來完全正常**。
     if not _is_declarative(p):
-        if allowed:
+        if allowed is not None:
             st.enumerated += 1
         else:
             st.fm_only += 1
-    if allowed:
+    if allowed is not None:
         stray = stray_sections(body, allowed)
         if stray:
             shown = "、".join(stray[:4]) + ("…" if len(stray) > 4 else "")
+            scope = (
+                f"{kind} 衍生檔**不得有任何 `##` 節**"
+                "（2026-07-27 功能 07：本體是源檔的同長度改寫，"
+                "**腔調散文的唯一落點是源 `風格.md`**，衍生檔只留 front-matter 五欄）"
+                if not allowed
+                else f"{kind} 衍生檔只留 schema 定義的節（{'／'.join(allowed)}）"
+            )
             out.append(
                 Problem(
                     p,
                     f"{len(stray)} 個枚舉外的節：{shown}",
-                    f"{kind} 衍生檔只留 schema 定義的節（{'／'.join(allowed)}）；"
+                    f"{scope}；"
                     "正文釘死的事實屬該章「## 本章事實」、"
                     "下游硬約束與揭示層級屬 story/物件/<名>.md、"
                     "待裁決回饋屬 story/參照/待裁決.md、"

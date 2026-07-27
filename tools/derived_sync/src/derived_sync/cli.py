@@ -7,6 +7,7 @@ from pathlib import Path
 from .char_lint import lint_book as char_lint_book
 from .core import check_book, content_hash, source_digest_for_derived, stamp
 from .sentinel import run as run_sentinel
+from .style_lint import lint_book as style_lint_book
 from .validate import validate_report
 from .world_lint import lint_book as world_lint_book
 
@@ -126,6 +127,34 @@ def _cmd_char_lint(args: argparse.Namespace) -> int:
     return 1
 
 
+def _cmd_style_lint(args: argparse.Namespace) -> int:
+    """風格軸的格式閘門。與 `validate`／`world-lint`／`char-lint` 分開跑、分開計。
+
+    `validate` 問「每支 `.ai.md` 的共通形狀對不對」；這支問風格軸專屬的一件事——
+    **那五個 front-matter 欄裡的值，能不能真的被拿去核對**。它們的消費者是 LLM
+    不是程式（`write`／`write-test`／`revise` 逐欄指名），而 LLM 讀壞格式會安靜地
+    讀錯（`設計原則.md` A4 2026-07-27 改寫後的那一句）。
+
+    **禁用詞的正文掃描是提示、不是判定**：命中不計入問題數、不影響 exit code
+    ——「掃到即候選命中」是 schema 的原話，複判交 `write-test`。
+    """
+    problems, stats = style_lint_book(args.book)
+    print(stats.render())
+    if stats.notes:
+        print("\n--- 禁用詞候選（提示，交 `write-test` 複判；不計入問題數）---")
+        for n in stats.notes:
+            print(f"[?]    {n}")
+    if not problems:
+        print("風格軸格式合規。")
+        return 0
+    for p in problems:
+        rel = p.path.relative_to(args.book) if p.path.is_relative_to(args.book) else p.path
+        print(f"[x] {rel}  {p.detail}")
+        print(f"       {p.hint}")
+    print(f"\n合計 {len(problems)} 個格式問題。", file=sys.stderr)
+    return 1
+
+
 def _cmd_stamp(args: argparse.Namespace) -> int:
     digest = stamp(args.derived, on=args.date)
     print(f"已封章 {args.derived.name}：generated-from={digest}")
@@ -174,6 +203,13 @@ def main(argv: list[str] | None = None) -> int:
     )
     p_char.add_argument("--book", required=True, type=Path, help="書資料夾路徑")
     p_char.set_defaults(func=_cmd_char_lint)
+
+    p_style = sub.add_parser(
+        "style-lint",
+        help="驗風格軸（五個 front-matter 欄的值可不可核對＋禁用詞正文掃描）",
+    )
+    p_style.add_argument("--book", required=True, type=Path, help="書資料夾路徑")
+    p_style.set_defaults(func=_cmd_style_lint)
 
     p_stamp = sub.add_parser("stamp", help="重生某 .ai.md 後，把源 hash 封回其 front-matter")
     p_stamp.add_argument("derived", type=Path, help="欲封章的 .ai.md 路徑")
@@ -238,6 +274,31 @@ def char_lint_main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
     try:
         return _cmd_char_lint(args)
+    except (FileNotFoundError, ValueError) as e:
+        print(f"錯誤：{e}", file=sys.stderr)
+        return 1
+
+
+def style_lint_main(argv: list[str] | None = None) -> int:
+    """`style-lint` 的獨立入口（同套件、自己一個指令）。
+
+    與 `derived-sync style-lint` 完全等價。理由同 `world_lint_main`／`char_lint_main`：
+    **新增一個要記得跑的閘門，就是新增一個會被忘記的觸發時機**——而這一支的觸發
+    時機是硬的：`develop` 落檔前**必跑**（抉擇 1 B），`可用句式` 那三小條有命中就
+    停下回問作者、不得直接封章。指令名要短到不必查。
+    """
+    ap = argparse.ArgumentParser(
+        description="風格軸格式閘門：`風格.ai.md` 的五個 front-matter 欄"
+        "（`禁用詞表` entry 可字面掃／`稱謂系統` 形狀／**`可用句式` 的顆粒度 token"
+        "＋阿拉伯數字＋不得全落最粗一級**／`語域` 半形括號／`基調參照` ≡ "
+        "`00-摘要.ai.md` 的 `基調`），另順帶掃正文的字面禁用詞"
+        "（只印覆蓋率與候選，不做 pass/fail）。零 LLM、可覆算。"
+    )
+    ap.add_argument("--book", required=True, type=Path, help="書資料夾路徑")
+    _force_utf8()
+    args = ap.parse_args(argv)
+    try:
+        return _cmd_style_lint(args)
     except (FileNotFoundError, ValueError) as e:
         print(f"錯誤：{e}", file=sys.stderr)
         return 1

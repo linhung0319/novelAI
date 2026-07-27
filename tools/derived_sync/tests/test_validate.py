@@ -1,7 +1,13 @@
 """`.ai.md` 格式閘門。"""
 
 from derived_sync.cli import main
-from derived_sync.validate import classify, enum_for, validate_book, validate_file
+from derived_sync.validate import (
+    ValidateStats,
+    classify,
+    enum_for,
+    validate_book,
+    validate_file,
+)
 
 GOOD_FM = "---\ngenerated-from: abc123\ngenerated-at: 2026-07-26\n---\n"
 
@@ -31,7 +37,12 @@ def test_enum_picks_rollup_variant():
     # 「章末狀態快照」2026-07-27 刪除：無產生器、無檢查器的僵屍規格，
     # 要人眼可讀的章末切片跑 `fact-project --as-of`，不落檔。
     assert enum_for("章節", "_index") == ("章節索引",)
-    assert enum_for("風格", "風格") is None  # 未定義枚舉 → 只查 front-matter
+    # 2026-07-27（功能 07）`風格` ＝**空 tuple，那是一個枚舉不是「沒有枚舉」**：
+    # 衍生檔只留 front-matter 五欄，開任何 `##` 節就報。**判斷要用 `is not None`**
+    # ——寫成 `if allowed:` 的話它會退回「只驗 front-matter」而輸出看起來完全正常。
+    assert enum_for("風格", "風格") == ()
+    assert enum_for("風格", "風格") is not None
+    assert enum_for("摘要", "00-摘要") is None  # 仍未定義 → 只查 front-matter（功能 08）
 
 
 # ------------------------------------------------------------ front-matter
@@ -168,18 +179,42 @@ def test_coverage_line_printed_even_when_clean(tmp_path, capsys):
 
 
 def test_coverage_line_names_the_files_with_no_enum(tmp_path, capsys):
-    """風格／摘要根本不在 `DERIVED_SECTIONS` 裡——節枚舉對它們是空頭承諾。
-    不分開印，那個缺口永遠看不出來（→ 功能 07／08）。"""
+    """某些產物根本不在 `DERIVED_SECTIONS` 裡——節枚舉對它們是空頭承諾。
+    不分開印，那個缺口永遠看不出來。**2026-07-27 功能 07 補上 `風格`，剩 `摘要`**
+    （→ 功能 08）。"""
     book = _book(
         tmp_path,
         {
-            "story/設定/風格/風格.ai.md": GOOD_FM + "## 腔調\n- a\n",
+            "story/00-摘要.ai.md": GOOD_FM + "## 高概念\n- a\n",
             "chapters/ch0001.ai.md": GOOD_FM + "## 本章事實\n- 甲\n",
         },
     )
     main(["validate", "--book", str(book)])
     out = capsys.readouterr().out
     assert "1 支套節枚舉" in out and "1 支只驗 front-matter" in out
+
+
+# ------------------------------------------------------------ 空 tuple 枚舉（風格）
+
+def test_style_derived_must_not_have_any_section(tmp_path):
+    """`DERIVED_SECTIONS["風格"]` ＝空 tuple：**有任何 `##` 節就報**（功能 07 抉擇 5 B）。
+
+    本體四節實測是源檔的同長度改寫（1.02×、8-gram 重疊 30%），腔調散文的唯一
+    落點是源 `風格.md`。
+    """
+    book = _book(tmp_path, {"story/設定/風格/風格.ai.md": GOOD_FM + "## 腔調\n端莊。\n"})
+    (p,) = validate_file(book, book / "story" / "設定" / "風格" / "風格.ai.md")
+    assert "1 個枚舉外的節：腔調" in p.detail
+    assert "不得有任何 `##` 節" in p.hint
+
+
+def test_style_derived_with_only_frontmatter_is_clean(tmp_path):
+    """乾淨那一面：只有 front-matter 的風格衍生檔不報，而且**算進 `enumerated`**
+    ——空 tuple 是一個枚舉，不是「沒有枚舉」。"""
+    book = _book(tmp_path, {"story/設定/風格/風格.ai.md": GOOD_FM})
+    stats = ValidateStats()
+    assert validate_file(book, book / "story" / "設定" / "風格" / "風格.ai.md", stats) == []
+    assert stats.enumerated == 1 and stats.fm_only == 0
 
 
 # ------------------------------------------------------------ CLI

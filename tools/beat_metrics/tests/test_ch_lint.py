@@ -83,8 +83,19 @@ generated-at: 2026-07-27
 """
 
 
-def _book(tmp_path, chapters=None, index_rows=None, arcs=None):
-    """造一本最小的書。`chapters` ＝ {stem: (正文, 對應幕, arc)}。"""
+def _book(tmp_path, chapters=None, index_rows=None, arcs=None, style=True):
+    """造一本最小的書。`chapters` ＝ {stem: (正文, 對應幕, arc)}。
+
+    `style=False` 造一本**沒有風格檔**的書——那是第 11 項（`風格` 欄的目的地
+    存在性，2026-07-27 功能 07）要抓的狀態。
+    """
+    if style:
+        d_style = tmp_path / "story" / "設定" / "風格"
+        d_style.mkdir(parents=True)
+        (d_style / "風格.ai.md").write_text(
+            "---\ngenerated-from: sty\ngenerated-at: 2026-07-27\n語域: 書面·古典\n---\n",
+            encoding="utf-8",
+        )
     beats = tmp_path / "story" / "幕綱"
     beats.mkdir(parents=True)
     (beats / "_index.md").write_text(INDEX, encoding="utf-8")
@@ -327,6 +338,30 @@ def test_missing_required_keys(tmp_path):
     )
     problems, _ = lint_report(book)
     assert _only(problems, "front-matter 缺 風格")
+
+
+def test_style_reference_must_point_at_an_existing_file(tmp_path):
+    """第 11 項（2026-07-27 功能 07 抉擇 6 A）：`風格` 欄指向的檔要真的在。
+
+    **schema 的多世界 forward-compat（`風格/主世界.md`）0 本書用過**，那條路徑
+    一旦有人走，全書每一章的指標會同時落空——而在這一項之前**零報告**：
+    `REQUIRED_KEYS` 只驗它非空、`_index` 只驗兩邊寫得一樣。
+    """
+    book = _book(tmp_path, dict(CLEAN), style=False)
+    problems, stats = lint_report(book)
+    (msg,) = _only(problems, "指向不存在的檔")
+    assert "2 支章衍生檔的 `風格: 風格.ai.md`" in msg  # 聚合成一行，不是 2 行
+    assert stats.style_refs == 2
+    assert stats.style_refs_dangling == 2
+
+
+def test_style_reference_is_counted_even_when_clean(tmp_path):
+    """**0 也印**：「93 個 `風格` 欄指向的檔（0 個不存在）」才是可用的訊息。"""
+    problems, stats = lint_report(_book(tmp_path, dict(CLEAN)))
+    assert _only(problems, "指向不存在的檔") == []
+    assert stats.style_refs == 2
+    assert stats.style_refs_dangling == 0
+    assert "2 個 `風格` 欄指向的檔（0 個不存在）" in stats.render()
 
 
 def test_status_must_be_enumerated(tmp_path):
