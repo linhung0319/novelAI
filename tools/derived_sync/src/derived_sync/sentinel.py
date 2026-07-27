@@ -135,6 +135,27 @@ def oversized_sources(book: Path, limit: int = SOURCE_BYTES) -> list[Finding]:
     return out
 
 
+def _derived_targets(book: Path) -> list[tuple[Path, str]]:
+    """所有受管的衍生 `.ai.md` ＋ 它套哪份節枚舉。
+
+    **2026-07-27（功能 03）補上 `chapters/`。** 在此之前這裡只掃 `story/設定/<kind>`，
+    於是 50,782 B 的 `chapters/_index.ai.md`（門檻的 4.2×）完全靜音，而
+    `derived-sync check` 印「**0 個需處理**」——`設計原則.md` E2 最後一格（守衛回報
+    正常的假陰性）。證據這不是刻意豁免：同檔的 `bloated_fact_lines` 早就在掃
+    `chapters/ch*.ai.md`，**是三個目標集各自手寫路徑清單時漏了一個資料夾**
+    （要不要有一份統一的「這本書有哪些受管檔」交功能 14）。
+    """
+    out: list[tuple[Path, str]] = []
+    for kind in SETTINGS_KINDS:
+        d = book / "story" / "設定" / kind
+        if d.is_dir():
+            out += [(p, kind) for p in sorted(d.glob(f"*{AI_SUFFIX}"))]
+    chapters = book / "chapters"
+    if chapters.is_dir():
+        out += [(p, "章節") for p in sorted(chapters.glob(f"*{AI_SUFFIX}"))]
+    return out
+
+
 def unsliceable_derived(book: Path, limit: int = DERIVED_BYTES) -> list[Finding]:
     """衍生 `.ai.md` 沒有任何切片工具，故不享有「可以很大」的豁免。
 
@@ -146,34 +167,30 @@ def unsliceable_derived(book: Path, limit: int = DERIVED_BYTES) -> list[Finding]
     2. **超過門檻**——衍生應是源的壓縮，比源檔門檻更嚴。
     """
     out: list[Finding] = []
-    for kind in SETTINGS_KINDS:
-        d = book / "story" / "設定" / kind
-        if not d.is_dir():
-            continue
-        for p in sorted(d.glob(f"*{AI_SUFFIX}")):
-            text = p.read_text(encoding="utf-8")
-            size = len(text.encode("utf-8"))
-            allowed = enum_for(kind, p.name[: -len(AI_SUFFIX)])
-            stray = stray_sections(text, allowed) if allowed else []
-            if stray:
-                shown = "、".join(stray[:4]) + ("…" if len(stray) > 4 else "")
-                out.append(
-                    Finding(
-                        kind="衍生檔不可切片",
-                        path=p,
-                        detail=f"{size} B，{len(stray)} 個枚舉外的節：{shown}",
-                        hint="正文釘死的事實（錨）屬該章 chNNNN.ai.md 的「## 本章事實」；下游硬約束與揭示層級屬 story/物件/<名>.md；裁決理由屬 裁決流.co.md。衍生檔只留 schema 定義的節",
-                    )
+    for p, kind in _derived_targets(book):
+        text = p.read_text(encoding="utf-8")
+        size = len(text.encode("utf-8"))
+        allowed = enum_for(kind, p.name[: -len(AI_SUFFIX)])
+        stray = stray_sections(text, allowed) if allowed else []
+        if stray:
+            shown = "、".join(stray[:4]) + ("…" if len(stray) > 4 else "")
+            out.append(
+                Finding(
+                    kind="衍生檔不可切片",
+                    path=p,
+                    detail=f"{size} B，{len(stray)} 個枚舉外的節：{shown}",
+                    hint="正文釘死的事實（錨）屬該章 chNNNN.ai.md 的「## 本章事實」；下游硬約束與揭示層級屬 story/物件/<名>.md；裁決理由屬 裁決流.co.md。衍生檔只留 schema 定義的節",
                 )
-            elif size > limit:
-                out.append(
-                    Finding(
-                        kind="衍生檔不可切片",
-                        path=p,
-                        detail=f"{size} B（建議 ≤{limit}）",
-                        hint="衍生檔無切片工具、又該是源的壓縮；過大代表塞了不屬於它的東西（見 共同約定.md 零 資格條款）",
-                    )
+            )
+        elif size > limit:
+            out.append(
+                Finding(
+                    kind="衍生檔不可切片",
+                    path=p,
+                    detail=f"{size} B（建議 ≤{limit}）",
+                    hint="衍生檔無切片工具、又該是源的壓縮；過大代表塞了不屬於它的東西（見 共同約定.md 零 資格條款）",
                 )
+            )
     return out
 
 
@@ -182,12 +199,16 @@ def long_lines(
 ) -> list[Finding]:
     """單行過長＝狀態格／表格 cell 被當事件日誌用。
 
-    掃兩處，門檻不同：
+    掃三處，門檻不同：
     - `story/參照/` 的綜合檔（就緒儀表／結構）→ `limit`。參照值：一世之尊
       就緒儀表最長單一 cell 約 10,000 字元（≈24KB）。
     - 設定層 rollup（`_index.ai.md`／`_總覽.ai.md`）→ `rollup_limit`。schema 說
       那一欄是「一行需求」，實測被寫成 800–1000 字元的整段補厚紀錄，等於讓
       rollup 變成第二份真相。
+    - **`chapters/_index.ai.md`（2026-07-27 功能 03 補上）** → 同 `rollup_limit`，
+      與設定層 rollup 同一把尺。它是同一種病在另一支檔上復發：實測最長單行
+      2,235 字元（門檻的 5.6×）、備註欄每列 196 B 長到 781 B，而三個目標集
+      **恰好都不含 `chapters/`**，於是 `check` 印「0 個需處理」。
 
     事實流／裁決流是 append log，有投影工具、且天生一行一筆——不受此限。
     """
@@ -205,6 +226,9 @@ def long_lines(
         d = book / "story" / "設定" / kind
         if d.is_dir():
             targets += [(p, rollup_limit) for p in sorted(d.glob(f"_*{AI_SUFFIX}"))]
+    chapters = book / "chapters"
+    if chapters.is_dir():
+        targets += [(p, rollup_limit) for p in sorted(chapters.glob(f"_*{AI_SUFFIX}"))]
 
     for p, limit in targets:
         worst = 0

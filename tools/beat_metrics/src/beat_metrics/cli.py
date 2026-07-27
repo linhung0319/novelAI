@@ -4,6 +4,7 @@ import argparse
 import sys
 from pathlib import Path
 
+from .chapters import lint_report as ch_lint_report
 from .lint import lint_report
 from .motif import ArcMotif, Finding, detect, measure
 from .playability import HOLLOW_SHARE_CAP, RUN_CAP, ArcPlayability, analyse
@@ -182,6 +183,52 @@ def lint_main(argv: list[str] | None = None) -> int:
         print(f"（提示）{h}")
     if not problems:
         print(CLEAN)
+        return 0
+    print(f"發現 {len(problems)} 個問題：", file=sys.stderr)
+    for p in problems:
+        print(f"  [x] {p}", file=sys.stderr)
+    return 1
+
+
+CH_CLEAN = "正文層格式乾淨（幕錨點／對應幕／front-matter／章序視圖）"
+
+
+def ch_lint_main(argv: list[str] | None = None) -> int:
+    """正文層格式閘門。輸出契約與 `lint_main` 完全相同（同套件、兩個指令）。
+
+    **為什麼不併成一個 `beat-lint`**（作者拍板抉擇 1 B 之下的實作選擇）：
+    `write`／`revise` 落檔後要驗的是正文層，把幕綱那邊 15 條與它無關的問題一起噴出來
+    只會讓人學會忽略輸出。先例是 `object-lint`——它跑 `fact-lint` 的同一組檢查、
+    只印物件檔那幾類。**解析層仍然只有一份**（`structure.parse_book` 的幕號 registry），
+    那才是抉擇 1 B 要的東西。
+    """
+    ap = argparse.ArgumentParser(
+        description="正文層格式閘門（零 LLM、可覆算）：幕錨點的幕號存在／章內單調／"
+        "一幕不跨章／過渡錨點兩端／人性寫法正規化候選、`對應幕` ≡ 正文錨點集合、"
+        "章衍生檔 front-matter 六鍵、`_index.ai.md` 的視圖一致性與備註欄。"
+        "守的是「人破結構」那一側（`設計原則.md` B1），與 `beat-lint`／"
+        "`derived-sync validate` 同類；內容好壞交 `write-test`，漂移統計交 `prose-metrics`。",
+    )
+    ap.add_argument("--book", required=True, type=Path, help="書資料夾路徑（含 chapters/）")
+    args = ap.parse_args(argv)
+
+    _force_utf8()
+    try:
+        problems, stats = ch_lint_report(args.book)
+    except ScanError as e:
+        print(f"掃描錯誤：{e}", file=sys.stderr)
+        return 1
+    except OSError as e:
+        print(f"讀取失敗：{e}", file=sys.stderr)
+        return 1
+
+    print(stats.render())
+    for n in stats.notes:
+        print(f"（資訊）{n}")
+    for h in stats.hints:
+        print(f"（提示）{h}")
+    if not problems:
+        print(CH_CLEAN)
         return 0
     print(f"發現 {len(problems)} 個問題：", file=sys.stderr)
     for p in problems:

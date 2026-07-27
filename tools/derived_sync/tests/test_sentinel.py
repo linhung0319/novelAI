@@ -154,6 +154,69 @@ def test_unknown_kind_derived_only_size_checked(tmp_path):
     assert unsliceable_derived(book) == []
 
 
+# ------------------------------------------------- chapters/（2026-07-27 功能 03 補）
+#
+# 在此之前這三個目標集**恰好都不含 `chapters/`**，於是 50,782 B 的
+# `chapters/_index.ai.md`（門檻的 4.2×）與 2,235 字元的單行完全靜音，
+# 而 `derived-sync check` 印「0 個需處理」——`設計原則.md` E2 最後一格。
+# 證據這不是刻意豁免：`bloated_fact_lines` 早就在掃 `chapters/ch*.ai.md`。
+
+def test_chapter_index_size_is_measured(tmp_path):
+    book = _book(tmp_path)
+    d = book / "chapters"
+    d.mkdir()
+    (d / "_index.ai.md").write_text("## 章節索引\n" + "| 甲 |\n" * 3000, encoding="utf-8")
+    findings = unsliceable_derived(book)
+    assert len(findings) == 1 and findings[0].path.name == "_index.ai.md"
+    assert findings[0].kind == "衍生檔不可切片"
+
+
+def test_chapter_index_stray_section_fires(tmp_path):
+    """`章末狀態快照` 是僵屍規格（schema 2026-07-27 刪掉、從來沒有產生器）。"""
+    book = _book(tmp_path)
+    d = book / "chapters"
+    d.mkdir()
+    (d / "_index.ai.md").write_text(
+        "## 章節索引\n| ch0001 |\n## 章末狀態快照\n殘骸\n", encoding="utf-8"
+    )
+    findings = unsliceable_derived(book)
+    assert len(findings) == 1 and "章末狀態快照" in findings[0].detail
+
+
+def test_chapter_derived_uses_the_chapter_enum(tmp_path):
+    book = _book(tmp_path)
+    d = book / "chapters"
+    d.mkdir()
+    (d / "ch0001.ai.md").write_text("---\n對應幕: [幕001]\n---\n## 本章事實\n- x\n", encoding="utf-8")
+    assert unsliceable_derived(book) == []
+    (d / "ch0002.ai.md").write_text("---\n---\n## 反派備註\nx\n", encoding="utf-8")
+    findings = unsliceable_derived(book)
+    assert len(findings) == 1 and findings[0].path.name == "ch0002.ai.md"
+
+
+def test_chapter_index_row_uses_the_rollup_line_limit(tmp_path):
+    """備註欄與設定層 rollup 同一把尺（400），不是綜合檔的 2000。"""
+    book = _book(tmp_path)
+    d = book / "chapters"
+    d.mkdir()
+    (d / "_index.ai.md").write_text(
+        "## 章節索引\n| ch0001 | 幕001 | arc01 | 甲 | 風格 | 草稿 | " + "註" * 800 + " |\n",
+        encoding="utf-8",
+    )
+    findings = long_lines(book)
+    assert len(findings) == 1 and findings[0].path.name == "_index.ai.md"
+    assert findings[0].kind == "狀態格過長"
+
+
+def test_chapter_prose_sources_are_not_line_limited(tmp_path):
+    """正文源是人管·源，段落想多長就多長——只有 rollup 那支受行長管。"""
+    book = _book(tmp_path)
+    d = book / "chapters"
+    d.mkdir()
+    (d / "ch0001.md").write_text("他" * 3000 + "\n", encoding="utf-8")
+    assert long_lines(book) == []
+
+
 # ---------------------------------------------------------------- 長行
 
 def test_long_line_fires_on_status_cell(tmp_path):

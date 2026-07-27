@@ -4,6 +4,7 @@ import argparse
 import sys
 from pathlib import Path
 
+from .density import Density, measure as measure_density, render as render_density
 from .drift import GroupStat, detect, summarize
 from .exposition import (
     Candidate,
@@ -133,6 +134,7 @@ def format_report(
     rhythm_stats: list[RhythmStat],
     rhythm_findings,
     corpus: tuple[RhythmStat, RhythmStat, str] | None = None,
+    density: Density | None = None,
 ) -> str:
     lines = [f"## {title}（{len(chapters)} 章；零 LLM、可覆算）", ""]
     if per_chapter:
@@ -150,6 +152,11 @@ def format_report(
         lines.append("- " + _stat_line(s))
     if base:
         lines += ["", "- " + _stat_line(base)]
+
+    # 章密度對照緊接在「分段」之後：它與上一節同屬篇幅這條軸，只是判準不同
+    # （上面相對本書前段、這裡對照 schema 的參考體例）。**不進可疑點**。
+    if density is not None:
+        lines += [""] + render_density(density)
 
     lines += ["", "### 解說段（R4·段落級）"]
     for e in expo_stats:
@@ -267,6 +274,9 @@ def main(argv: list[str] | None = None) -> int:
             title = f"{args.plain_dir.name} 正文結構（對照語料）"
             plain = True
         rows = [chapter_metrics(c, vocab) for c in chapters]
+        # 對照語料沒有 `story/00-摘要.ai.md`，也沒有「這本書宣告了什麼」可對——
+        # 章密度對照只對書印。
+        density = measure_density(rows, args.book) if args.book else None
         expo_rows = [scan_chapter(c) for c in chapters]
         rhythm_rows = [scan_rhythm(c, drop_title=plain) for c in chapters]
         corpus = None
@@ -322,6 +332,7 @@ def main(argv: list[str] | None = None) -> int:
             rhythm_stats,
             rhythm_findings,
             corpus,
+            density,
         ),
         end="",
     )
