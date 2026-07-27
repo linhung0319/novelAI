@@ -5,6 +5,14 @@ from dataclasses import dataclass
 
 COLUMNS = ("日期", "來源", "標的", "裁決", "理由", "射程", "狀態")
 
+# `story/參照/待裁決.md`：AI 的**觀察**（下游發現「根源在上游」的一句話）。
+# **刻意四欄、沒有 `狀態` 欄**——這張表只住待裁決的，狀態是恆真的。
+# 診斷輪實測舊設計那個只允許一個值的 `狀態` 欄：7 列平均 171 字元、最長 440、
+# 佔整列 61%，人的裁決被塞進 AI 那一筆的最後一格（同一個病徵的第三個案例，
+# 前兩個是 `chapters/_index.ai.md` 備註欄與 `幕綱/_index.md` arc 概覽）。
+# **離開＝刪列**，理由 append 進 `裁決流.md`。
+PENDING_COLUMNS = ("日期", "來源", "標的", "發現")
+
 STATUS_ACTIVE = "生效中"
 STATUS_EXPIRED = "已過射程"
 STATUS_PROMOTED = "已升為通則"
@@ -98,26 +106,7 @@ def strip_html_comments(lines: list[str]) -> list[tuple[int, str]]:
 def parse_decisions(text: str) -> list[Decision]:
     """讀裁決流表格。非表格行（標題、引言、HTML 註解）跳過；壞行報錯、不靜默丟。"""
     out: list[Decision] = []
-    seen_header = False
-    for i, raw in strip_html_comments(text.splitlines()):
-        line = raw.strip()
-        if not line.startswith("|"):
-            continue
-        if _SEP_RE.match(line):
-            continue
-        cells = _cells(line)
-        if not seen_header:
-            # 第一列表格必須是表頭，用它確認欄序沒被改過
-            if tuple(cells) != COLUMNS:
-                raise ParseError(
-                    f"第 {i} 行表頭欄位不符：得到 {cells}，應為 {list(COLUMNS)}"
-                )
-            seen_header = True
-            continue
-        if len(cells) != len(COLUMNS):
-            raise ParseError(
-                f"第 {i} 行欄數 {len(cells)}，應為 {len(COLUMNS)}：{raw!r}"
-            )
+    for cells, i in _parse_table(text, COLUMNS, ""):
         date, source, target, ruling, rationale, scope, status = cells
         if not _DATE_RE.match(date):
             raise ParseError(f"第 {i} 行日期格式須為 YYYY-MM-DD，得到 {date!r}")
@@ -140,6 +129,75 @@ def parse_decisions(text: str) -> list[Decision]:
     return out
 
 
+@dataclass(frozen=True)
+class Pending:
+    """`待裁決.md` 的一列＝一則**觀察**（決定權在 AI），不是一項裁決。
+
+    兩者拆開是 Q0／Q1 的直接後果：「觀察」是 AI 的、「裁決」是人的，一列混兩種
+    決定權就該拆成兩筆。它們共用 `標的` 選擇器，所以查詢層合流；但落在兩支檔。
+    """
+
+    date: str
+    source: str
+    target: str
+    finding: str
+    lineno: int
+
+
+def _parse_table(
+    text: str, columns: tuple[str, ...], what: str
+) -> list[tuple[list[str], int]]:
+    """讀一張固定欄的 markdown 表，回傳 [(cells, 行號)]。
+
+    非表格行（標題、引言、HTML 註解）跳過；**壞行報錯、不靜默丟**。
+    `裁決流` 與 `待裁決` 共用這一份——兩張表的差別只有欄名清單。
+    """
+    out: list[tuple[list[str], int]] = []
+    seen_header = False
+    for i, raw in strip_html_comments(text.splitlines()):
+        line = raw.strip()
+        if not line.startswith("|"):
+            continue
+        if _SEP_RE.match(line):
+            continue
+        cells = _cells(line)
+        if not seen_header:
+            # 第一列表格必須是表頭，用它確認欄序沒被改過
+            if tuple(cells) != columns:
+                raise ParseError(
+                    f"第 {i} 行{what}表頭欄位不符：得到 {cells}，應為 {list(columns)}"
+                )
+            seen_header = True
+            continue
+        if len(cells) != len(columns):
+            raise ParseError(
+                f"第 {i} 行欄數 {len(cells)}，應為 {len(columns)}：{raw!r}"
+            )
+        out.append((cells, i))
+    return out
+
+
+def parse_pending(text: str) -> list[Pending]:
+    """讀待裁決表。表頭多一欄（尤其是 `狀態`）會在這裡當場炸。"""
+    out: list[Pending] = []
+    for cells, lineno in _parse_table(text, PENDING_COLUMNS, "待裁決"):
+        date, source, target, finding = cells
+        if not _DATE_RE.match(date):
+            raise ParseError(f"第 {lineno} 行日期格式須為 YYYY-MM-DD，得到 {date!r}")
+        out.append(
+            Pending(
+                date=date, source=source, target=target, finding=finding, lineno=lineno
+            )
+        )
+    return out
+
+
+def select_pending(rows: list[Pending], target: str | None = None) -> list[Pending]:
+    if not target:
+        return rows
+    return [q for q in rows if target_matches(q.target, target)]
+
+
 def _segments(path: str) -> list[str]:
     """正規化成路徑分段：去掉 `.md`／`.ai.md`／`.co.md` 與頭尾斜線。"""
     p = path.strip().strip("/")
@@ -148,6 +206,15 @@ def _segments(path: str) -> list[str]:
             p = p[: -len(suffix)]
             break
     return [s for s in p.split("/") if s]
+
+
+def target_matches(row_target: str, query: str) -> bool:
+    """標的比對的**字串核心**，`裁決流` 與 `待裁決` 共用（兩張表同一個選擇器）。"""
+    if row_target.strip() == TARGET_ALL:
+        return True
+    a, b = _segments(row_target), _segments(query)
+    shorter, longer = (a, b) if len(a) <= len(b) else (b, a)
+    return longer[: len(shorter)] == shorter
 
 
 def matches_target(decision: Decision, target: str) -> bool:
@@ -161,11 +228,7 @@ def matches_target(decision: Decision, target: str) -> bool:
       會重新爭論一次已經定案的事。
     - **假陽性**：`設定/角色/真` 會命中 `真觀`／`真慧`／`真應`。
     """
-    if decision.target == TARGET_ALL:
-        return True
-    a, b = _segments(decision.target), _segments(target)
-    shorter, longer = (a, b) if len(a) <= len(b) else (b, a)
-    return longer[: len(shorter)] == shorter
+    return target_matches(decision.target, target)
 
 
 def select(

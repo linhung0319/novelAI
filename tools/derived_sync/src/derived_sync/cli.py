@@ -6,7 +6,7 @@ from pathlib import Path
 
 from .core import check_book, content_hash, source_digest_for_derived, stamp
 from .sentinel import run as run_sentinel
-from .validate import validate_book
+from .validate import validate_report
 
 _MARK = {
     "fresh": "[ok]  ",
@@ -68,13 +68,16 @@ def _cmd_validate(args: argparse.Namespace) -> int:
 
     與新鮮度分開跑、分開計——`check` 問「內容過期沒」，`validate` 問「形狀對不對」。
     """
-    problems = validate_book(args.book)
+    problems, stats = validate_report(args.book)
+    print(stats.render())
     if not problems:
         print("所有 .ai.md 格式合規。")
         return 0
     for p in problems:
         rel = p.path.relative_to(args.book) if p.path.is_relative_to(args.book) else p.path
-        print(f"[x] {rel}  {p.detail}")
+        # 整本聚合的問題（裁決 blockquote）path 就是書本身
+        label = "（全書聚合）" if str(rel) == "." else str(rel)
+        print(f"[x] {label}  {p.detail}")
         print(f"       {p.hint}")
     print(f"\n合計 {len(problems)} 個格式問題。", file=sys.stderr)
     return 1

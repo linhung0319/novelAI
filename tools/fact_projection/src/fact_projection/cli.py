@@ -19,7 +19,12 @@ from .fold import (
     parse_spine,
     project,
 )
-from .objects import KINDS as OBJECT_KINDS, OBJECT_DIRNAME, objects_dir
+from .objects import (
+    KINDS as OBJECT_KINDS,
+    OBJECT_DIRNAME,
+    POLICY_NAME,
+    objects_dir,
+)
 from .ops import SET_DIMENSIONS, render
 from .refs import anchor_hits, entity_refs
 from .sources import collect_constraints, collect_events, lint, lint_report
@@ -50,6 +55,16 @@ def format_projection(
     mode: str = "chapters",
     exclusions: list[str] | None = None,
 ) -> str:
+    # 書級方針**先抽出來，在實體過濾之前**。它們的實體是 `全書`，而 `--for-beat`
+    # 的實體集是從幕綱的「角色」欄導出的——**沒有任何一幕的角色欄會是「全書」**，
+    # 所以不先抽走，方針會被下面那道過濾靜默吃掉。
+    #
+    # 這正是抉擇 4 B（書級方針住 `story/物件/全書.md`）成立的必要條件：那個選項的
+    # 決定性優點是「方針會自動被載入，不必有人記得查」，而在補上這一節之前**它是
+    # 假的**。同一個形狀的先例是 arc 排除線（功能 02）：落點留在原處，載入靠查詢
+    # 層合流（`設計原則.md` F2 第四格）。
+    policies = [s for s in slots if s.entity == POLICY_NAME]
+    slots = [s for s in slots if s.entity != POLICY_NAME]
     if entities:
         wanted = set(entities)
         # 關係型 slot 是 `A↔B`，任一端命中就要留。用完全相等比對會讓 `關係` 這一
@@ -87,6 +102,16 @@ def format_projection(
     lines.append(f"### 本 arc 排除線（{target_arc} 承諾區·射程＝本 arc）")
     lines += [f"- 不得發生：{x}" for x in (exclusions or [])] or [
         "（無——該 arc 承諾區沒有「不得發生」條目）"
+    ]
+
+    # 書級方針（射程＝全書、不綁實體）。**一律印這一節（0 條也印）**——
+    # 「這本書沒有書級方針」與「沒有人去讀書級方針」是兩件事。
+    lines.append("")
+    lines.append(
+        f"### 全書方針（射程＝全書·{OBJECT_DIRNAME}/{POLICY_NAME}.md）"
+    )
+    lines += [f"- {s.token}：{s.content}" for s in policies] or [
+        f"（無——這本書沒有 {OBJECT_DIRNAME}/{POLICY_NAME}.md，或該檔沒有生效中的方針）"
     ]
     return "\n".join(lines).rstrip() + "\n"
 

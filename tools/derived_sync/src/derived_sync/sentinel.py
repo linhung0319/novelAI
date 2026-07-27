@@ -179,7 +179,7 @@ def unsliceable_derived(book: Path, limit: int = DERIVED_BYTES) -> list[Finding]
                     kind="衍生檔不可切片",
                     path=p,
                     detail=f"{size} B，{len(stray)} 個枚舉外的節：{shown}",
-                    hint="正文釘死的事實（錨）屬該章 chNNNN.ai.md 的「## 本章事實」；下游硬約束與揭示層級屬 story/物件/<名>.md；裁決理由屬 裁決流.co.md。衍生檔只留 schema 定義的節",
+                    hint="正文釘死的事實（錨）屬該章 chNNNN.ai.md 的「## 本章事實」；下游硬約束與揭示層級屬 story/物件/<名>.md；待裁決回饋屬 story/參照/待裁決.md；裁決理由屬 story/參照/裁決流.md。衍生檔只留 schema 定義的節",
                 )
             )
         elif size > limit:
@@ -245,7 +245,7 @@ def long_lines(
                     kind="狀態格過長",
                     path=p,
                     detail=f"{count} 行超過 {limit} 字（最長 {worst} 字，第 {worst_no} 行）",
-                    hint="狀態格／rollup 一列只報摘要；沿革與裁決記錄屬 裁決流.md，不該住在表格 cell 裡",
+                    hint="狀態格／rollup 一列只報摘要；沿革與裁決記錄屬 story/參照/裁決流.md，不該住在表格 cell 裡",
                 )
             )
     return out
@@ -336,18 +336,63 @@ def bloated_fact_lines(
                     path=p,
                     detail=f"{len(paren_hits)} 行的括號註解佔比超過 {ratio:.0%}"
                     f"（最早在第 {paren_hits[0][0]} 行）",
-                    hint="伏筆埋／收屬幕綱、裁決理由屬 裁決流.co.md、"
+                    hint="伏筆埋／收屬幕綱、裁決理由屬 story/參照/裁決流.md、"
                     "下游排除線屬 story/物件/<實體>.md 的「## 不得寫成什麼」",
                 )
             )
     return out
 
 
+# 各 hint 指定的搬移目的地。舊名一併吃（既有書不必為改名動書內檔）。
+DESTINATIONS: dict[str, tuple[str, ...]] = {
+    "story/參照/裁決流.md": ("story/參照/裁決流.md", "story/參照/裁決流.co.md"),
+    "story/參照/待裁決.md": ("story/參照/待裁決.md",),
+    "story/物件/": ("story/物件",),
+}
+
+
+def missing_destinations(book: Path, findings: list[Finding]) -> list[Finding]:
+    """**每一個「搬去 X」的建議，發建議前先檢查 X 在不在**（`設計原則.md` E1 新推論）。
+
+    實測一世之尊：`derived-sync check` 的 229 行輸出裡有 37 行叫人把東西搬進
+    `裁決流`，而那本書**沒有那支檔**。它不是假陰性（守衛確實在報），也不是單純的
+    警報疲勞（建議本身沒錯）——**它是「報得沒錯但照做會失敗」**：箭頭指向空氣，
+    而箭頭本身格式完全合法。三種都導致人不看，機制不同（→ 功能 14）。
+
+    形狀複製自 `beat_metrics/lint.py` 的設計註目的地檢查（02 重構輪）。**工具間
+    零相依（所有 tools/*/pyproject.toml 皆 dependencies = []），故複製而非 import**
+    ——這是第 7 份同類複製（spine 4、伏筆 regex 3），該不該收斂交功能 14。
+
+    **只在真的有內容要搬時才報**：沒有任何 hint 命中某個目的地，就不提它。
+    一支乾淨的書不該因為「你沒有裁決流」而被念。
+    """
+    out: list[Finding] = []
+    for label, candidates in DESTINATIONS.items():
+        hits = [f for f in findings if label in f.hint]
+        if not hits:
+            continue
+        if any((book / c).exists() for c in candidates):
+            continue
+        kinds = "、".join(sorted({f.kind for f in hits}))
+        out.append(
+            Finding(
+                kind="目的地不存在",
+                path=book / label,
+                detail=f"{len(hits)} 筆建議要搬進 `{label}`，但這本書沒有它（{kinds}）",
+                hint=f"照 `書本模板/{label}` 的骨架先建一支；"
+                "搬移工作流是斷的時候，那些內容不會消失，只會繼續寄生在原地"
+                "（實測：理由滲進幕綱八欄、行動欄從 76 字/幕 長到 513 字/幕）",
+            )
+        )
+    return out
+
+
 def run(book: Path) -> list[Finding]:
-    return (
+    findings = (
         beat_sheet_density(book)
         + oversized_sources(book)
         + unsliceable_derived(book)
         + long_lines(book)
         + bloated_fact_lines(book)
     )
+    return findings + missing_destinations(book, findings)

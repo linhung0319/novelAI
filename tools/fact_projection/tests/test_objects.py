@@ -8,6 +8,8 @@ import pytest
 from fact_projection.cli import object_lint_main
 from fact_projection.objects import (
     KINDS,
+    POLICY_KIND,
+    POLICY_NAME,
     check_near_miss,
     check_objects,
     check_reveal_targets,
@@ -53,8 +55,20 @@ def _obj(front: str = "型別: 伏筆", body: str = "## 為什麼存在\n作者�
 
 # ------------------------------------------------------------ 型別
 
-def test_kinds_are_the_closed_seven():
-    assert KINDS == ("伏筆", "道具", "角色", "關係", "組織", "地點", "設定規則")
+def test_kinds_are_the_closed_eight():
+    """七型是 2026-07-27 功能 01 拍板的；第八型 `方針` 同日功能 04 新增——
+    那是「要第八型＝停下來問作者」這條規則**第一次被執行**（作者拍板）。
+    這個 assert 是枚舉的閘門：要第九型也一樣，停下來問。"""
+    assert KINDS == (
+        "伏筆",
+        "道具",
+        "角色",
+        "關係",
+        "組織",
+        "地點",
+        "設定規則",
+        "方針",
+    )
 
 
 def test_multiple_kinds_first_is_primary(tmp_path):
@@ -302,3 +316,48 @@ def test_object_lint_says_so_when_there_is_no_object_dir(tmp_path, capsys):
     object_lint_main(["--book", str(book)])
     out = capsys.readouterr().out
     assert "0 支物件檔" in out and "還沒有任何物件檔" in out
+
+
+# ------------------------------------------------- 第八型 `方針`（2026-07-27 功能 04）
+#
+# 書級方針（「這本書不寫感情線」）射程＝全書、不綁任何實體，依改寫後的 F2
+# 「跟著它的射程」需要一個**每次都會被無條件載入**的落點。它進物件軸是為了拿到
+# 約束表與 `fact-project --for-beat` 的載入路徑。
+
+POLICY_BODY = "## 為什麼存在\n作者拍板的全書通則。\n"
+
+
+def test_policy_object_is_legal(tmp_path):
+    book = _book(tmp_path, {f"{POLICY_NAME}.md": _obj(f"型別: {POLICY_KIND}", POLICY_BODY)})
+    (o,) = load_objects(book)
+    assert o.kinds == (POLICY_KIND,)
+    assert check_objects([o]) == []
+
+
+def test_policy_kind_is_bound_to_the_reserved_filename(tmp_path):
+    """沒有這條，「方針」會退化成第二個約束軸：誰都能開一支方針檔，
+    而 `--for-beat` 只無條件印 `全書` 那一支，其餘會**靜默不被載入**。"""
+    book = _book(tmp_path, {"孟奇.md": _obj(f"型別: {POLICY_KIND}", POLICY_BODY)})
+    (problem,) = check_objects(load_objects(book))
+    assert "檔名不是" in problem and POLICY_NAME in problem
+
+
+def test_reserved_filename_requires_the_policy_kind(tmp_path):
+    book = _book(tmp_path, {f"{POLICY_NAME}.md": _obj("型別: 設定規則", POLICY_BODY)})
+    (problem,) = check_objects(load_objects(book))
+    assert POLICY_KIND in problem
+
+
+def test_policy_must_not_carry_a_reveal_level(tmp_path):
+    """方針不是「具名＋隨劇情推進會變狀態」的東西（G1），沒有「何時向讀者揭」
+    可言——容忍它會讓 `foreshadow-project` 去解析一個永遠不會有收點的指標。"""
+    book = _book(
+        tmp_path,
+        {
+            f"{POLICY_NAME}.md": _obj(
+                f"型別: {POLICY_KIND}\n揭示層級: 水下｜跨集留白", POLICY_BODY
+            )
+        },
+    )
+    assert any("不得有" in p for p in check_objects(load_objects(book)))
+

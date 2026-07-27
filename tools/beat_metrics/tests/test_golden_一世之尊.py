@@ -72,7 +72,7 @@ def test_the_case_book_is_still_red():
     assert len(problems) == 15, f"預期 15 個問題，得到 {len(problems)}"
     assert sum("缺「## 本 arc 承諾」分區" in p for p in problems) == 10
     assert sum("疑似同一條伏筆的兩個名字" in p for p in problems) == 4
-    assert sum("裁決流.co.md` 不存在" in p for p in problems) == 1
+    assert sum("裁決流.md` 不存在" in p for p in problems) == 1
 
 
 def test_the_clean_baseline_is_also_pinned():

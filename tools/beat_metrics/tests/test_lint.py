@@ -229,7 +229,7 @@ def test_design_note_without_destination(tmp_path):
     arc = ARC02 + "\n## 設計註（下游不抄）\n\n母題論證：這一段的骨是對帳。\n"
     book = _book(tmp_path, arc01=ARC01, arc02=arc)
     problems, _ = lint_report(book)
-    assert _only(problems, "裁決流.co.md` 不存在"), problems
+    assert _only(problems, "裁決流.md` 不存在"), problems
 
     ref = book / "story" / "參照"
     ref.mkdir(parents=True)

@@ -41,10 +41,18 @@ from .fold import FoldError
 
 OBJECT_DIRNAME = "物件"
 
-# 封閉七型（作者 2026-07-27 拍板）。要第八型＝停下來問作者，不是自己加一個
-# ——比照 B3「開新節／加新欄一律經 AI＋作者核可」。多值以 `、` 分隔，**第一個是主型別**
-# （實測需求：`小玉佛來歷` 同時是伏筆與道具，分子目錄會逼它選邊站）。
-KINDS = ("伏筆", "道具", "角色", "關係", "組織", "地點", "設定規則")
+# 封閉八型（七型為作者 2026-07-27 拍板；第八型 `方針` 同日經**停下來問作者**後新增，
+# 那正是「要第八型＝停下來問作者」這條規則第一次被執行）。多值以 `、` 分隔，
+# **第一個是主型別**（實測需求：`小玉佛來歷` 同時是伏筆與道具，分子目錄會逼它選邊站）。
+KINDS = ("伏筆", "道具", "角色", "關係", "組織", "地點", "設定規則", "方針")
+
+# `方針` ＝ 射程全書、不綁任何實體的作者通則（「這本書不寫感情線」）。它與其餘
+# 七型不同：那七型都是「具名 ＋ 隨劇情推進會變狀態」的東西（G1），而方針**自己
+# 就是規則**、沒有狀態。它進物件軸是為了拿到約束表與 `fact-project` 的載入路徑
+# （F2 新判準：射程綁全書 → 需要一個每次都會被無條件載入的落點）。
+# **綁定檔名 `全書`**：這一型只有一個合法住址，否則「方針」會變成第二個約束軸。
+POLICY_KIND = "方針"
+POLICY_NAME = "全書"
 
 KEY_KIND = "型別"
 KEY_REVEAL = "揭示層級"
@@ -244,22 +252,45 @@ def check_objects(objs: list[ObjectFile]) -> list[str]:
         if not o.kinds:
             problems.append(
                 f"{o.origin}：front-matter 缺 `{KEY_KIND}`"
-                f"（封閉七型：{'／'.join(KINDS)}；多型以 `、` 分隔，第一個是主型別）"
+                f"（封閉八型：{'／'.join(KINDS)}；多型以 `、` 分隔，第一個是主型別）"
             )
         for k in o.kinds:
             if k not in KINDS:
                 problems.append(
                     f"{o.origin}：`{KEY_KIND}` 有 `{k}`，不在封閉枚舉內"
-                    f"（{'／'.join(KINDS)}）。真的需要第八型＝停下來問作者，"
+                    f"（{'／'.join(KINDS)}）。真的需要第九型＝停下來問作者，"
                     "別自己加一個（投影按型別 fold 要靠這個枚舉）"
                 )
+        # `方針` ⇔ 檔名 `全書` 雙向綁定。方針射程＝全書、不綁實體，所以它只有一個
+        # 合法住址；沒有這條，「方針」會退化成第二個約束軸（誰都能開一支方針檔，
+        # 而 `--for-beat` 只無條件載入 `全書` 那一支，其餘會靜默不被載入）。
+        if POLICY_KIND in o.kinds and o.name != POLICY_NAME:
+            problems.append(
+                f"{o.origin}：`{KEY_KIND}` 是 `{POLICY_KIND}`，但檔名不是 "
+                f"`{POLICY_NAME}.md`——書級方針射程＝全書、不綁任何實體，"
+                f"只有 `{OBJECT_DIRNAME}/{POLICY_NAME}.md` 這一個落點"
+                f"（`fact-project --for-beat` 也只無條件印那一支）。"
+                f"綁單一實體的排除線該寫進該實體自己的物件檔"
+            )
+        if o.name == POLICY_NAME and POLICY_KIND not in o.kinds:
+            problems.append(
+                f"{o.origin}：檔名是 `{POLICY_NAME}` 但 `{KEY_KIND}` 沒有 "
+                f"`{POLICY_KIND}`——這支檔是書級方針的保留落點"
+            )
+        # 方針不是「具名＋隨劇情推進會變狀態」的東西（G1），沒有「何時向讀者揭」
+        # 可言；容忍它會讓 `foreshadow-project` 去解析一個永遠不會有收點的指標。
+        if POLICY_KIND in o.kinds and o.underwater:
+            problems.append(
+                f"{o.origin}：方針檔不得有 `{KEY_REVEAL}`——"
+                f"方針是作者的創作通則，不是會被揭示的故事內容"
+            )
         stray = [s for s in o.sections if s not in SECTIONS]
         if stray:
             problems.append(
                 f"{o.origin}：{len(stray)} 個枚舉外的節：{'、'.join(stray[:4])}"
                 f"{'…' if len(stray) > 4 else ''}"
                 f"（物件檔只有 {'／'.join(SECTIONS)} 三節；狀態變化屬該章 delta、"
-                "埋／收屬幕綱、裁決理由屬 裁決流.co.md）"
+                "埋／收屬幕綱、裁決理由屬 story/參照/裁決流.md）"
             )
         # 抉擇 3 B 的內容測試，可執行化：兩節都空＝這個物件沒有故事可寫，
         # 它不該有檔（G4）——只有狀態沒有故事的東西只以 delta 存在就好。

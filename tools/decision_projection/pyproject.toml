@@ -7,6 +7,10 @@ dependencies = []
 
 [project.scripts]
 decision-project = "decision_projection.cli:main"
+# 格式閘門與查詢器分成兩個指令、同一份解析層（先例：`object-lint` 是 `fact-lint`
+# 的聚焦入口、`ch-lint` 與 `beat-lint` 同套件）。查詢器不是閘門：不查的時候格式
+# 錯不會被發現，而 `write` 依設計不查裁決流。
+decision-lint = "decision_projection.cli:lint_main"
 
 [dependency-groups]
 dev = ["pytest>=8"]

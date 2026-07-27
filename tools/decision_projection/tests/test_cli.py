@@ -11,7 +11,7 @@ STREAM = """\
 """
 
 
-def _make_book(tmp_path, body=STREAM, name="裁決流.co.md"):
+def _make_book(tmp_path, body=STREAM, name="裁決流.md"):
     book = tmp_path / "book"
     (book / "story" / "參照").mkdir(parents=True)
     (book / "story" / "參照" / name).write_text(body, encoding="utf-8")
@@ -19,16 +19,18 @@ def _make_book(tmp_path, body=STREAM, name="裁決流.co.md"):
 
 
 def test_legacy_name_still_resolves(tmp_path):
-    """既有書不必為改名動書內檔（比照 就緒儀表.md / .ai.md 雙吃）。"""
-    book = _make_book(tmp_path, name="裁決流.md")
-    assert resolve_stream(book).name == "裁決流.md"
+    """`.co.md` 這個檔類 2026-07-27 廢除（功能 04，依 `設計原則.md` A4），
+    但既有書不必為改名動書內檔（比照 就緒儀表.md / .ai.md 雙吃）。"""
+    book = _make_book(tmp_path, name="裁決流.co.md")
+    assert resolve_stream(book).name == "裁決流.co.md"
     assert main(["--book", str(book)]) == 0
 
 
 def test_new_name_wins_when_both_exist(tmp_path):
+    """新舊並存時取新名。**2026-07-27 前這個優先序是相反的**（`.co.md` 贏）。"""
     book = _make_book(tmp_path)
-    (book / "story" / "參照" / "裁決流.md").write_text("# 舊檔\n", encoding="utf-8")
-    assert resolve_stream(book).name == "裁決流.co.md"
+    (book / "story" / "參照" / "裁決流.co.md").write_text("# 舊檔\n", encoding="utf-8")
+    assert resolve_stream(book).name == "裁決流.md"
 
 
 def test_main_prints_all(tmp_path, capsys):
@@ -132,3 +134,59 @@ def test_missing_target_path_is_reported_as_info(tmp_path, capsys):
     book = _make_book(tmp_path)
     main(["--book", str(book)])
     assert "在書內找不到" in capsys.readouterr().err
+
+
+# ------------------------------------------------- 待裁決那一節（2026-07-27 功能 04）
+#
+# 兩軸共用 `標的` 選擇器，所以查一次就同時看到「還沒裁決的」與「已經裁決過的」。
+# 抉擇 2 A 把回饋集中成一支檔之後，「消化前先看回饋」本來會變成一個新的
+# 「有人記得跑」的步驟——合流進既有查詢，它就不是新步驟，是既有步驟多吐一節。
+
+PENDING = (
+    "| 日期 | 來源 | 標的 | 發現 |\n"
+    "|------|------|------|------|\n"
+    "| 2026-07-25 | write-test 測試9 | 設定/角色/少年/核心.md | 其「需要」中段就被滿足 |\n"
+    "| 2026-07-26 | beat-test 測試4 | 設定/世界觀/魔法.md | 規則不夠用 |\n"
+)
+
+
+def test_pending_section_printed_even_when_empty(tmp_path, capsys):
+    """**0 列也印。**「這個標的沒有待裁決」與「沒有人去讀待裁決」是兩件事。"""
+    book = _make_book(tmp_path)
+    main(["--book", str(book)])
+    out = capsys.readouterr().out
+    assert "## 待裁決" in out and "沒有待裁決的回饋" in out
+
+
+def test_pending_rows_are_listed(tmp_path, capsys):
+    book = _make_book(tmp_path)
+    (book / "story" / "參照" / "待裁決.md").write_text(PENDING, encoding="utf-8")
+    main(["--book", str(book)])
+    out = capsys.readouterr().out
+    assert "其「需要」中段就被滿足" in out and "規則不夠用" in out
+
+
+def test_pending_shares_the_target_selector(tmp_path, capsys):
+    """給切面也命中管整個角色的列（路徑分段雙向前綴），與裁決流同一套。"""
+    book = _make_book(tmp_path)
+    (book / "story" / "參照" / "待裁決.md").write_text(PENDING, encoding="utf-8")
+    main(["--book", str(book), "--target", "設定/角色/少年/"])
+    out = capsys.readouterr().out
+    assert "其「需要」中段就被滿足" in out and "規則不夠用" not in out
+
+
+def test_coverage_line_separates_scanned_from_matched(tmp_path, capsys):
+    """修掉 V2：空表／被註解吞掉的表，與「真的沒有相關裁決」曾經**逐字相同**。"""
+    book = _make_book(tmp_path)
+    (book / "story" / "參照" / "待裁決.md").write_text(PENDING, encoding="utf-8")
+    main(["--book", str(book), "--target", "設定/角色/少年/"])
+    out = capsys.readouterr().out
+    assert "掃描了 2 列裁決／命中 1 列" in out
+    assert "待裁決 2 列／命中 1 列" in out
+
+
+def test_coverage_line_on_an_empty_stream(tmp_path, capsys):
+    book = _make_book(tmp_path, body="# 裁決流\n\n（還沒有任何裁決）\n")
+    main(["--book", str(book)])
+    out = capsys.readouterr().out
+    assert "掃描了 0 列裁決／命中 0 列" in out

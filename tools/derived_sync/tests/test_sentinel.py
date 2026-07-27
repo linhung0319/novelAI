@@ -14,7 +14,6 @@ LEGAL_CHAR_AI = (
     "## 預期弧線\n盲目 → 挫折\n"
     "## 馬斯洛層次\n安全\n"
     "## 對衝關係\n與反派對撞\n"
-    "## 待裁決回饋\n| 日期 | 來源 |\n"
 )
 
 
@@ -115,10 +114,10 @@ def test_stray_section_fires_regardless_of_size(tmp_path):
 
 
 def test_section_title_may_carry_a_suffix_note(tmp_path):
-    """「## 待裁決回饋（2 筆）」不算枚舉外——比對的是開頭。"""
+    """「## 對衝關係（2 筆）」不算枚舉外——比對的是開頭。"""
     book = _book(tmp_path)
     (book / "story" / "設定" / "角色" / "少年.ai.md").write_text(
-        LEGAL_CHAR_AI.replace("## 待裁決回饋", "## 待裁決回饋（2 筆）"), encoding="utf-8"
+        LEGAL_CHAR_AI.replace("## 對衝關係", "## 對衝關係（2 筆）"), encoding="utf-8"
     )
     assert unsliceable_derived(book) == []
 
@@ -265,11 +264,54 @@ def test_run_aggregates_all_four(tmp_path):
     )
     (book / "story" / "參照" / "結構.md").write_text("巨" * 5000 + "\n", encoding="utf-8")
     kinds = {f.kind for f in run(book)}
-    assert kinds == {"幕綱肥大", "源檔肥大", "衍生檔不可切片", "狀態格過長"}
+    # 這本 fixture 沒有裁決流，而上面四項的 hint 都叫人往那裡搬 → 第五類必然觸發。
+    assert kinds == {
+        "幕綱肥大",
+        "源檔肥大",
+        "衍生檔不可切片",
+        "狀態格過長",
+        "目的地不存在",
+    }
 
 
 def test_missing_dirs_do_not_crash(tmp_path):
     assert run(tmp_path / "nonexistent") == []
+
+
+# ------------------------------------------------ 目的地存在性（E1 新推論）
+
+def test_destination_reported_when_hints_point_at_a_missing_file(tmp_path):
+    """**箭頭指向空氣**：實測一世之尊 229 行輸出裡有 37 行叫人搬進裁決流，
+    而那本書沒有那支檔。它不是假陰性也不是單純的警報疲勞——是「報得沒錯但
+    照做會失敗」。"""
+    book = _book(tmp_path)
+    (book / "story" / "幕綱" / "arc09.md").write_text(_beats(5, 3000), encoding="utf-8")
+    findings = [f for f in run(book) if f.kind == "目的地不存在"]
+    assert len(findings) == 1
+    assert "story/參照/裁決流.md" in findings[0].detail
+    assert "幕綱肥大" in findings[0].detail
+
+
+def test_destination_silent_when_it_exists(tmp_path):
+    book = _book(tmp_path)
+    (book / "story" / "幕綱" / "arc09.md").write_text(_beats(5, 3000), encoding="utf-8")
+    (book / "story" / "參照" / "裁決流.md").write_text("# 裁決流\n", encoding="utf-8")
+    assert [f for f in run(book) if f.kind == "目的地不存在"] == []
+
+
+def test_legacy_destination_name_still_counts(tmp_path):
+    """既有書仍是 `裁決流.co.md`（2026-07-27 前建的）——不該叫它再建一支。"""
+    book = _book(tmp_path)
+    (book / "story" / "幕綱" / "arc09.md").write_text(_beats(5, 3000), encoding="utf-8")
+    (book / "story" / "參照" / "裁決流.co.md").write_text("# 裁決流\n", encoding="utf-8")
+    assert [f for f in run(book) if f.kind == "目的地不存在"] == []
+
+
+def test_no_content_to_move_means_no_nagging(tmp_path):
+    """**只在真的有內容要搬時才報。** 一支乾淨的書不該因為「你沒有裁決流」被念
+    ——那就是製造下一個沒人看的警報。"""
+    book = _book(tmp_path)
+    assert [f for f in run(book) if f.kind == "目的地不存在"] == []
 
 
 def test_declarative_files_scanned_under_both_namings(tmp_path):
@@ -333,7 +375,9 @@ def test_smuggled_design_notes_are_reported(tmp_path):
 
 
 def test_feedback_section_lines_are_not_facts(tmp_path):
-    """「## 待裁決回饋」底下也是 `- ` 開頭，不得被當成事實行誤報。"""
+    """`## 本章事實` 區塊**外**的 `- ` 開頭行不得被當成事實行誤報。
+    （2026-07-27 前的實例是「## 待裁決回饋」，那個節已搬去 story/參照/待裁決.md；
+    這條防禦仍然要在——任何枚舉外的節都可能有 `- ` 開頭的行。）"""
     book = _chapters(
         tmp_path,
         ch0001="---\nk: v\n---\n## 待裁決回饋\n- 幕002（arc01）· 少年 · 位置："

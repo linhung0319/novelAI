@@ -44,9 +44,10 @@ _SPINE_RE = re.compile(r"全書順序：(.+)$")
 # 名字尾巴的括註：`寺裡那個開門的人（真觀）` → base `寺裡那個開門的人`。
 _TRAILING_PAREN_RE = re.compile(r"^(.+?)\s*[（(][^（()）]*[)）]\s*$")
 
-# 設計註的搬移目的地（`幕綱.schema.md`「設計註要搬走」）。舊名 `裁決流.md` 也吃
-# （`裁決流.schema.md:6`：2026-07-27 前的書可能仍是舊名）。
-DECISION_LOG = ("裁決流.co.md", "裁決流.md")
+# 設計註的搬移目的地（`幕綱.schema.md`「設計註要搬走」）。
+# 2026-07-27（功能 04）`.co.md` 這個檔類廢除，正名 `裁決流.md`；舊名也吃
+# （`裁決流.schema.md` 沿革：更早的書可能仍是 `.co.md`）。
+DECISION_LOG = ("裁決流.md", "裁決流.co.md")
 
 
 @dataclass
@@ -252,7 +253,7 @@ def lint_report(book: Path) -> tuple[list[str], LintStats]:
 
     # ---- 目的地存在性（E1 新推論：遷移承諾的終點要有守衛）
     #
-    # schema 三處＋`beat-sheet` 一處命令「設計註落檔時搬進 story/參照/裁決流.co.md」，
+    # schema 三處＋`beat-sheet` 一處命令「設計註落檔時搬進 story/參照/裁決流.md」，
     # 但**沒有人驗過那支檔在不在**。實測一世之尊：arc11 有 6,050 B 的設計註、
     # 全書沒有裁決流——搬移工作流是斷的，於是「為什麼」只好滲進八欄，行動欄從
     # 76 字/幕 長到 513 字/幕。箭頭指向空氣，而箭頭本身格式完全合法。
@@ -263,7 +264,7 @@ def lint_report(book: Path) -> tuple[list[str], LintStats]:
             listed = "、".join(f"{a.arc}.md（{a.design_note_lines} 行）" for a in with_notes)
             problems.append(
                 f"story/參照/：{listed}有「## 設計註」，但搬移目的地 "
-                f"`裁決流.co.md` 不存在——`幕綱.schema.md`「設計註要搬走」指定的"
+                f"`裁決流.md` 不存在——`幕綱.schema.md`「設計註要搬走」指定的"
                 f"終點在這本書裡沒有落地，設計註無處可搬只會繼續滲進八欄"
             )
 

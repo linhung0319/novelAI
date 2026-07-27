@@ -298,7 +298,7 @@ def check_delta_purity(events: list[Event]) -> list[str]:
             problems.append(
                 f"{where}括號內註解佔 {paren / len(content):.0%}"
                 f"（上限 {PAREN_RATIO:.0%}）：疑似夾帶設計註。"
-                "伏筆埋／收屬幕綱、裁決理由屬 裁決流.co.md、"
+                "伏筆埋／收屬幕綱、裁決理由屬 story/參照/裁決流.md、"
                 f"下游排除線屬 story/{OBJECT_DIRNAME}/<實體>.md 的"
                 f"「## {CONSTRAINT_SECTION}」"
             )
@@ -307,7 +307,7 @@ def check_delta_purity(events: list[Event]) -> list[str]:
             problems.append(
                 f"{where}內容欄出現「{hit.group()}」：那是排除線／裁決理由的語彙。"
                 f"排除線屬 story/{OBJECT_DIRNAME}/<實體>.md 的"
-                f"「## {CONSTRAINT_SECTION}」，理由屬 story/參照/裁決流.co.md"
+                f"「## {CONSTRAINT_SECTION}」，理由屬 story/參照/裁決流.md"
             )
     return problems
 
