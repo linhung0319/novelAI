@@ -12,6 +12,10 @@ derived-sync = "derived_sync.cli:main"
 # 只有一份（validate 管所有 .ai.md 共通的結構，這支管世界觀專屬的欄語意）。
 # 先例：object-lint 是 fact-lint 的聚焦入口、ch-lint 與 beat-lint 同套件。
 world-lint = "derived_sync.cli:world_lint_main"
+# 角色軸格式閘門：源側存在性（「源有衍生無」`check` 在定義上掃不到）、必填節
+# 不得是佔位、front-matter 收斂後的欄語意、rollup 視圖 ≡ 各檔 front-matter。
+# 與 `world-lint` 同套件同理由——角色 .ai.md 的格式真相只有一份。
+char-lint = "derived_sync.cli:char_lint_main"
 
 [dependency-groups]
 dev = ["pytest>=8"]

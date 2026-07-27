@@ -69,20 +69,34 @@ def load_entities(book: Path) -> list[Entity]:
 
     刻意**不解析幕綱「角色」欄的中文文法**（分隔符有 、／· 、還有括號註解、法號別名），
     改以此詞彙表對幕綱文字做比對——方向正確（設定檔定義詞彙），且對標點風格免疫。
+
+    **`<名>.md` 與 `<名>/` 並存時以目錄為準、跳過單檔**（2026-07-27 功能 06）：
+    在此之前兩者會各建一個 Entity，於是同一個角色在 `by_name` 裡互相覆蓋，
+    而覆蓋的方向取決於 `iterdir` 的排序——結果是**目錄形態的切面永遠選不到**。
+    `角色.schema.md` 已明訂兩種形態不得並存（升級是搬移：`git mv <名>.md
+    <名>/核心.md`），**報並存是 `char-lint` 的事**；這裡只保證選取結果是
+    deterministic 的，不靜默地二選一。
     """
     entities: list[Entity] = []
     for kind in ("角色", "世界觀"):
         d = book / "story" / "設定" / kind
         if not d.is_dir():
             continue
+        dir_names = {
+            p.name for p in d.iterdir() if p.is_dir() and not p.name.startswith("_")
+        }
         for entry in sorted(d.iterdir()):
             if entry.is_dir():  # 目錄形態
+                if entry.name.startswith("_"):
+                    continue
                 name = entry.name
             elif (
                 entry.suffix == ".md"
                 and not entry.name.endswith(".ai.md")
                 and not entry.name.startswith("_")
             ):
+                if entry.stem in dir_names:
+                    continue  # 並存：目錄為準（見 docstring）
                 name = entry.stem
             else:
                 continue
@@ -203,6 +217,7 @@ class Selection:
     mentioned_only: list[Hit]  # 只在角色欄以外出現的角色 → 不讀，報成可疑點
     unknown_dir: list[str]  # 設定層缺目錄的提示
     char_count: int = 0  # 角色命中幾筆（覆蓋率行用，0 也印）
+    char_hollow: list[str] = field(default_factory=list)  # 命中但衍生檔是空的
     world_basis: list[WorldBasis] = field(default_factory=list)  # 世界觀的命中依據
 
 
@@ -247,6 +262,68 @@ def _world_basis(
                 start = i + len(n)
         out.append(WorldBasis(name=n, by_filename=fn, bare=bare))
     return out
+
+
+# ---------------------------------------------------------------- 空殼偵測
+# `設計原則.md` E2 的可執行推論（2026-07-27 功能 06 補）：**覆蓋率行要能回答
+# 「命中的筆數裡，有幾筆是空的」。** 「命中 N 筆」與「N 筆裡有 M 筆是佔位」是
+# 兩個數字，只印前一個等於用命中率冒充可用率。
+#
+# 實測：本工具對 arc02 印「角色命中 7 筆」——依據正確（幕綱的角色欄）、數字正確，
+# 而其中 4 筆是四個必填節全為佔位字串的空殼檔，`beat-test` 測試4 就拿它當基準。
+# 三支守衛（`check` 報 fresh／`validate` 只驗結構／本工具只管選取）各自都沒做錯。
+#
+# **這是 `char-lint` 佔位偵測的第 2 份實作**（工具間零相依，所有
+# `tools/*/pyproject.toml` 皆 `dependencies = []`，故複製而非 import）→ 功能 14。
+# 判準與那一份一致：**形狀，不是詞表**——值為空，或值整個就是一段括號註記
+# （`（源檔未載，待跑 character 補）`）＝它是註記不是內容。
+_CHAR_REQUIRED_SECTIONS = ("需求四象限", "預期弧線")
+_H2_RE = re.compile(r"^##\s+(.+?)\s*$")
+_BULLET_RE = re.compile(r"^[-*+]\s+")
+_PLACEHOLDER_RE = re.compile(r"[（(][^（()）]*[)）]")
+
+
+def _slot_value(line: str) -> str | None:
+    s = line.strip()
+    if not s or s.startswith((">", "|", "#")):
+        return None
+    s = _BULLET_RE.sub("", s).strip()
+    if not s:
+        return None
+    depth = 0
+    for i, ch in enumerate(s):
+        if ch in "（(":
+            depth += 1
+        elif ch in ")）":
+            depth = max(0, depth - 1)
+        elif ch in "：:" and depth == 0:
+            return s[i + 1 :].strip()
+    return s
+
+
+def is_hollow(entity: Entity) -> bool:
+    """這個角色的衍生檔缺失，或它的必填節整節都是佔位。"""
+    if entity.kind != "角色":
+        return False
+    if entity.derived is None or not entity.derived.is_file():
+        return True
+    text = entity.derived.read_text(encoding="utf-8").replace("\r\n", "\n")
+    for title in _CHAR_REQUIRED_SECTIONS:
+        values: list[str] = []
+        found = inside = False
+        for raw in text.split("\n"):
+            m = _H2_RE.match(raw.strip())
+            if m:
+                inside = m.group(1).strip().startswith(title)
+                found = found or inside
+                continue
+            if inside and (v := _slot_value(raw)) is not None:
+                values.append(v)
+        if not found or not values:
+            return True
+        if all(not v or _PLACEHOLDER_RE.fullmatch(v) for v in values):
+            return True
+    return False
 
 
 def parse_facets(spec: str | None) -> tuple[str, ...] | None:
@@ -318,5 +395,6 @@ def select(
         mentioned_only=mentioned_only,
         unknown_dir=missing_dirs,
         char_count=len(char_hits),
+        char_hollow=sorted(n for n in char_hits if is_hollow(by_name[n])),
         world_basis=_world_basis(worlds, list(world_hits), world_probes),
     )

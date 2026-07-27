@@ -56,25 +56,73 @@ def _split_frontmatter(text: str) -> tuple[list[str] | None, str]:
     return None, text  # 未封閉 → 視為無 front-matter
 
 
+def _dir_digest(d: Path) -> tuple[str, int]:
+    """一個**目錄形態源**的 digest：其下所有 `*.md` 的『檔名:內容hash』排序後再 hash。
+
+    回傳 (digest, 切面數)。與 rollup 的取法**刻意是同一個**——「一組檔當成一個源」
+    在這個系統裡只有一種算法，兩份會漂移。
+
+    **2026-07-27（功能 06）新增。** 在此之前 `角色.schema.md` 寫著「rollup 的
+    digest 對目錄形態取其下所有切面檔的集合」，而那是一條**零實作的承諾**：
+    `<名>/` 底下的切面檔既不在非 rollup 那一支的 `d / f"{stem}.md"` 裡，也不在
+    rollup 那一支的 `d.glob("*.md")`（不遞迴）裡。實測後果是目錄形態**整個是壞的**
+    ——`check` 把 `<名>.ai.md` 報成 `orphan`、`stamp` 直接 raise、改動某個切面
+    不會讓 rollup 變 stale。0/24 實測所以從沒撞到；功能 06 把升級改成哨兵驅動
+    （並讓「有秘密就開 `水下.md`」與大小脫鉤）之後，第一支升級的角色就會撞上。
+    """
+    parts = [
+        f"{src.name}:{content_hash(src.read_text(encoding='utf-8'))}"
+        for src in sorted(d.glob("*.md"))
+        if _is_source(src)
+    ]
+    return content_hash("\n".join(parts)), len(parts)
+
+
 def source_digest_for_derived(derived: Path) -> tuple[str, str]:
     """回傳 (digest, 來源描述)。
-    _*.ai.md 為 rollup：digest = 同層所有源 *.md 的『檔名:內容hash』排序後再 hash。
-    其餘 X.ai.md：源 = 同層 X.md，digest = 該源內容 hash；源缺失回傳 ("", 說明)。"""
+    _*.ai.md 為 rollup：digest = 同層所有源（`X.md` 與**目錄形態** `X/`）的
+    『名稱:內容hash』排序後再 hash。
+    其餘 X.ai.md：源 = 同層 `X.md`，或**目錄形態** `X/` 的切面集合；
+    兩者皆缺回傳 ("", 說明)。"""
     d = derived.parent
     if _is_declarative(derived):
         return "", "（宣告式綜合檔·無單一源·不走 hash）"
     if _is_rollup(derived):
-        parts = [
-            f"{src.name}:{content_hash(src.read_text(encoding='utf-8'))}"
+        # (排序鍵, 那一行)。**排序鍵是名稱**，不是整行——用整行排會讓
+        # digest 依賴 hash 值的字典序，那是無語意的差異（既有書的 digest
+        # 也會因此變動）。既有行為＝按檔名排，這裡照舊。
+        entries: list[tuple[str, str]] = [
+            (src.name, f"{src.name}:{content_hash(src.read_text(encoding='utf-8'))}")
             for src in sorted(d.glob("*.md"))
             if _is_source(src)
         ]
-        return content_hash("\n".join(parts)), f"（rollup：{len(parts)} 個同層源檔）"
+        # 目錄形態的源也是這一層的源（角色升級成 `<名>/<切面>.md` 之後）。
+        # 漏掉它 ＝ 升級一個角色、或改動它的某個切面，rollup 都不會變 stale
+        # ——而 rollup 的那一列正是要從它重生的。
+        dirs = 0
+        for sub in sorted(d.iterdir()):
+            if not sub.is_dir() or sub.name.startswith("_"):
+                continue
+            sub_digest, facets = _dir_digest(sub)
+            if not facets:
+                continue
+            entries.append((f"{sub.name}/", f"{sub.name}/:{sub_digest}"))
+            dirs += 1
+        parts = [line for _, line in sorted(entries, key=lambda kv: kv[0])]
+        desc = f"（rollup：{len(parts)} 個同層源"
+        desc += f"，含 {dirs} 個目錄形態）" if dirs else "檔）"
+        return content_hash("\n".join(parts)), desc
     stem = derived.name[: -len(AI_SUFFIX)]
     src = d / f"{stem}.md"
-    if not src.exists():
-        return "", f"（找不到源檔 {src.name}）"
-    return content_hash(src.read_text(encoding="utf-8")), src.name
+    if src.exists():
+        return content_hash(src.read_text(encoding="utf-8")), src.name
+    src_dir = d / stem
+    if src_dir.is_dir():
+        digest, facets = _dir_digest(src_dir)
+        if facets:
+            return digest, f"{stem}/（目錄形態：{facets} 個切面）"
+        return "", f"（目錄形態 {stem}/ 底下沒有任何切面 .md）"
+    return "", f"（找不到源檔 {src.name}，也沒有目錄形態 {stem}/）"
 
 
 def read_generated_from(derived: Path) -> str | None:

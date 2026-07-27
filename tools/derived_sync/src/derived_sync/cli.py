@@ -4,6 +4,7 @@ import argparse
 import sys
 from pathlib import Path
 
+from .char_lint import lint_book as char_lint_book
 from .core import check_book, content_hash, source_digest_for_derived, stamp
 from .sentinel import run as run_sentinel
 from .validate import validate_report
@@ -104,6 +105,27 @@ def _cmd_world_lint(args: argparse.Namespace) -> int:
     return 1
 
 
+def _cmd_char_lint(args: argparse.Namespace) -> int:
+    """角色軸的格式閘門。與 `validate`／`world-lint` 分開跑、分開計。
+
+    `validate` 問「每支 `.ai.md` 的共通形狀對不對」；這支問角色軸專屬的四件事——
+    **每支源有沒有衍生檔**（從源側掃，`check` 在定義上看不到這一格）、**必填節
+    是不是佔位**（`check` 對空殼檔報 fresh 且報得沒錯）、留下的四個 front-matter
+    欄的語意、rollup 視圖 ≡ 各檔 front-matter。
+    """
+    problems, stats = char_lint_book(args.book)
+    print(stats.render())
+    if not problems:
+        print("角色軸格式合規。")
+        return 0
+    for p in problems:
+        rel = p.path.relative_to(args.book) if p.path.is_relative_to(args.book) else p.path
+        print(f"[x] {rel}  {p.detail}")
+        print(f"       {p.hint}")
+    print(f"\n合計 {len(problems)} 個格式問題。", file=sys.stderr)
+    return 1
+
+
 def _cmd_stamp(args: argparse.Namespace) -> int:
     digest = stamp(args.derived, on=args.date)
     print(f"已封章 {args.derived.name}：generated-from={digest}")
@@ -146,6 +168,13 @@ def main(argv: list[str] | None = None) -> int:
     p_world.add_argument("--book", required=True, type=Path, help="書資料夾路徑")
     p_world.set_defaults(func=_cmd_world_lint)
 
+    p_char = sub.add_parser(
+        "char-lint",
+        help="驗角色軸（源側存在性＋必填節不得是佔位＋front-matter 欄語意＋rollup 視圖）",
+    )
+    p_char.add_argument("--book", required=True, type=Path, help="書資料夾路徑")
+    p_char.set_defaults(func=_cmd_char_lint)
+
     p_stamp = sub.add_parser("stamp", help="重生某 .ai.md 後，把源 hash 封回其 front-matter")
     p_stamp.add_argument("derived", type=Path, help="欲封章的 .ai.md 路徑")
     p_stamp.add_argument("--date", default=None, help="generated-at 日期（預設今天）")
@@ -183,6 +212,32 @@ def world_lint_main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
     try:
         return _cmd_world_lint(args)
+    except (FileNotFoundError, ValueError) as e:
+        print(f"錯誤：{e}", file=sys.stderr)
+        return 1
+
+
+def char_lint_main(argv: list[str] | None = None) -> int:
+    """`char-lint` 的獨立入口（同套件、自己一個指令）。
+
+    與 `derived-sync char-lint` 完全等價。理由同 `world_lint_main`：**新增一個
+    要記得跑的閘門，就是新增一個會被忘記的觸發時機**，所以它掛在寫它的那支 skill
+    （`character`／`develop`／`organize`／`expand`）的落檔步驟上，指令名要短到
+    不必查。
+    """
+    ap = argparse.ArgumentParser(
+        description="角色軸格式閘門：**每支源檔都有衍生檔**（從源側掃，"
+        "`check` 在定義上看不到這一格）、必填節不得是佔位、"
+        "`<名>.ai.md` 的 front-matter 欄語意（已廢除的欄／`定位`·`暫定` 枚舉／"
+        "`所屬arc` 可解析／`伏筆` 命中既有 registry）、"
+        "`_index.ai.md` 的角色清單 ≡ 資料夾與各檔 front-matter、"
+        "單檔與目錄形態不得並存、幕綱角色欄的未知 token。零 LLM、可覆算。"
+    )
+    ap.add_argument("--book", required=True, type=Path, help="書資料夾路徑")
+    _force_utf8()
+    args = ap.parse_args(argv)
+    try:
+        return _cmd_char_lint(args)
     except (FileNotFoundError, ValueError) as e:
         print(f"錯誤：{e}", file=sys.stderr)
         return 1

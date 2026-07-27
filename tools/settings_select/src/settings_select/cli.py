@@ -76,14 +76,29 @@ def _coverage_lines(sel: Selection) -> list[str]:
     所以幕綱散文裡的 `見 \\`X.ai.md\\`` 註腳會讓那支檔被選中，而幕本身可能根本
     沒在講那個主題。02 要把那些註腳從八欄清掉，清完命中就會掉——**先讓數字可見，
     再決定選擇器怎麼修**（抉擇 2 的 A／C 刻意延後，等這一行量出數字再判）。
+
+    **`其中 M 筆是空殼` 是 2026-07-27（功能 06）補的，理由同一個形狀但更嚴重**：
+    `設計原則.md` E2 的新推論「覆蓋率行要能回答『命中的筆數裡，有幾筆是空的』」。
+    實測本工具對 arc02 印「角色命中 7 筆」——**依據正確、數字正確，而其中 4 筆
+    是四個必填節全為佔位字串的空殼檔**，`beat-test` 測試4 就拿它們當角色弧線的
+    基準。三支守衛（`check` 報 fresh、`validate` 只驗結構、本工具只管選取）
+    **各自都沒做錯**，合起來仍指向一份沒有內容的基準。只印命中率 ＝ 用命中率
+    冒充可用率。修法不在這裡（跑 `character` 補實），這一行只負責讓它可見。
     """
     fn_only = [b for b in sel.world_basis if b.filename_only]
     out = [
         "",
         "### 覆蓋率（0 也印）",
-        f"掃 {sel.beat_count} 幕；角色命中 {sel.char_count} 筆；"
+        f"掃 {sel.beat_count} 幕；角色命中 {sel.char_count} 筆，"
+        f"其中 {len(sel.char_hollow)} 筆是空殼（衍生檔缺失或必填節是佔位）；"
         f"世界觀命中 {len(sel.world_basis)} 筆，其中 {len(fn_only)} 筆僅因檔名被引用",
     ]
+    if sel.char_hollow:
+        out.append(
+            f"- 空殼角色：{'、'.join(sel.char_hollow)}"
+            "　※ 這幾筆被算進命中數，但 `需求四象限`／`預期弧線` 拿不到內容"
+            "——跑 `character` 補實（`char-lint --book <書>` 會逐項列出）"
+        )
     for b in sorted(sel.world_basis, key=lambda x: (not x.filename_only, x.name)):
         tag = "　※僅因檔名" if b.filename_only else ""
         out.append(f"- {b.name}　檔名引用 {b.by_filename} 次／裸提及 {b.bare} 次{tag}")

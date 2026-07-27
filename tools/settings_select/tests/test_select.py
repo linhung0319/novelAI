@@ -236,3 +236,63 @@ def test_coverage_does_not_change_what_gets_selected(tmp_path):
     )
     sel2 = select(book, "arc09")
     assert {h.entity.name for h in sel2.selected if h.entity.kind == "世界觀"} == {"山門", "海國"}
+
+
+# ---------------------------------------------------------------- 目錄形態並存
+# 2026-07-27（功能 06）。`角色.schema.md` 明訂 `<名>.md` 與 `<名>/` 不得並存
+# （報並存是 `char-lint` 的事）；這裡只保證選取結果是 deterministic 的——
+# 在此之前兩者會各建一個 Entity，在 `by_name` 裡互相覆蓋，而覆蓋方向取決於
+# `iterdir` 的排序，結果是**目錄形態的切面永遠選不到而輸出一切正常**。
+
+
+def test_coexisting_single_and_dir_form_yields_one_entity_dir_wins(tmp_path):
+    book = _book(tmp_path)
+    d = book / "story" / "設定" / "角色"
+    (d / "少年").mkdir()
+    (d / "少年" / "核心.md").write_text("他是誰", encoding="utf-8")
+    (d / "少年" / "水下.md").write_text("秘密", encoding="utf-8")
+    ents = [e for e in load_entities(book) if e.name == "少年"]
+    assert len(ents) == 1
+    assert ents[0].dir_form
+    # 水下是存取控制：預設不給
+    assert [p.name for p in ents[0].source_paths()] == ["核心.md"]
+    assert [p.name for p in ents[0].source_paths(include_underwater=True)] == [
+        "核心.md",
+        "水下.md",
+    ]
+
+
+# ---------------------------------------------------------------- 空殼覆蓋率
+# `設計原則.md` E2 新推論：覆蓋率行要能回答「命中的筆數裡，有幾筆是空的」。
+
+_FILLED = (
+    "---\n定位: 配角\n---\n"
+    "## 需求四象限\n- 期盼（動力）：活下去\n"
+    "## 預期弧線\n盲目 → 挫折 → 醒悟 → 滿足\n"
+)
+_HOLLOW = (
+    "---\n定位: 配角\n---\n"
+    "## 需求四象限\n- 期盼（動力）：（源檔未載，待跑 `character` 補）\n"
+    "## 預期弧線\n（源檔未載，待跑 `character` 補）\n"
+)
+
+
+def test_hollow_derived_files_are_counted_in_coverage(tmp_path):
+    book = _book(tmp_path)
+    d = book / "story" / "設定" / "角色"
+    (d / "少年.ai.md").write_text(_FILLED, encoding="utf-8")
+    (d / "老僕.ai.md").write_text(_HOLLOW, encoding="utf-8")
+    (d / "同伴.ai.md").unlink()  # 衍生檔缺失也算空殼
+    sel = select(book, "arc09")
+    assert sel.char_count == 3
+    assert sel.char_hollow == ["同伴", "老僕"]
+
+
+def test_no_hollow_when_all_filled(tmp_path):
+    book = _book(tmp_path)
+    d = book / "story" / "設定" / "角色"
+    for name in ("少年", "老僕", "同伴"):
+        (d / f"{name}.ai.md").write_text(_FILLED, encoding="utf-8")
+    sel = select(book, "arc09")
+    assert sel.char_count == 3
+    assert sel.char_hollow == []
