@@ -28,6 +28,11 @@ def test_classify_chapters_and_settings(tmp_path):
     assert classify(book, book / "chapters" / "ch0001.ai.md") == "章節"
     assert classify(book, book / "story/設定/角色/凱.ai.md") == "角色"
     assert classify(book, book / "story/參照/裁決流.md") is None
+    # 2026-07-27（功能 08）：摘要衍生檔住 `story/` 根目錄、不在任何 `<kind>`
+    # 資料夾裡——**那正是它一直被 `classify()` 漏掉的原因**（第七次同根因）。
+    assert classify(book, book / "story/00-摘要.ai.md") == "摘要"
+    # 源檔不歸這裡管（`.ai.md` 才有節枚舉）
+    assert classify(book, book / "story/00-摘要.md") is None
 
 
 def test_enum_picks_rollup_variant():
@@ -42,7 +47,9 @@ def test_enum_picks_rollup_variant():
     # ——寫成 `if allowed:` 的話它會退回「只驗 front-matter」而輸出看起來完全正常。
     assert enum_for("風格", "風格") == ()
     assert enum_for("風格", "風格") is not None
-    assert enum_for("摘要", "00-摘要") is None  # 仍未定義 → 只查 front-matter（功能 08）
+    # 2026-07-27（功能 08）摘要補上三節枚舉。**`fm_only` 從此該恆為 0**——
+    # 那一格現在是「有沒有新產物又沒登記枚舉」的哨兵，不是已知缺口的計數器。
+    assert enum_for("摘要", "00-摘要") == ("壓縮", "高概念", "取向定位分析")
 
 
 # ------------------------------------------------------------ front-matter
@@ -180,18 +187,54 @@ def test_coverage_line_printed_even_when_clean(tmp_path, capsys):
 
 def test_coverage_line_names_the_files_with_no_enum(tmp_path, capsys):
     """某些產物根本不在 `DERIVED_SECTIONS` 裡——節枚舉對它們是空頭承諾。
-    不分開印，那個缺口永遠看不出來。**2026-07-27 功能 07 補上 `風格`，剩 `摘要`**
-    （→ 功能 08）。"""
+    不分開印，那個缺口永遠看不出來。
+
+    **07 補上 `風格`、08 補上 `摘要` 之後 `fm_only` 該恆為 0**，所以這一格
+    現在守的是**下一個**沒登記枚舉的產物（這裡拿一支假的 `story/大綱/arc01.ai.md`
+    當代表）。這個測試不能因為現有缺口補完了就刪掉——刪掉等於把哨兵拆了。
+    """
     book = _book(
         tmp_path,
         {
-            "story/00-摘要.ai.md": GOOD_FM + "## 高概念\n- a\n",
+            "story/大綱/arc01.ai.md": GOOD_FM + "## 隨便一節\n- a\n",
             "chapters/ch0001.ai.md": GOOD_FM + "## 本章事實\n- 甲\n",
         },
     )
     main(["validate", "--book", str(book)])
     out = capsys.readouterr().out
     assert "1 支套節枚舉" in out and "1 支只驗 front-matter" in out
+
+
+# ------------------------------------------------------------ 摘要（功能 08）
+
+def test_summary_derived_stray_section_is_reported(tmp_path):
+    """04 從五處枚舉移除的 `## 待裁決回饋` 在摘要衍生檔裡活了下來——因為
+    `classify()` 認不得 `story/00-摘要.ai.md`，而 `validate` 把它算成
+    `fm_only` 裡一個匿名的數字。**守衛的掃描起點決定了它能看見什麼**（E2）。"""
+    book = _book(
+        tmp_path,
+        {
+            "story/00-摘要.ai.md": GOOD_FM
+            + "## 壓縮\n### 50 字\n一句話。\n## 待裁決回饋\n| 日期 | 來源 |\n"
+        },
+    )
+    (p,) = validate_file(book, book / "story" / "00-摘要.ai.md")
+    assert "1 個枚舉外的節：待裁決回饋" in p.detail
+    assert "待裁決回饋屬 story/參照/待裁決.md" in p.hint
+
+
+def test_summary_derived_with_schema_sections_is_clean(tmp_path):
+    """乾淨那一面：三節都在枚舉內就不報，而且**算進 `enumerated`**。"""
+    book = _book(
+        tmp_path,
+        {
+            "story/00-摘要.ai.md": GOOD_FM
+            + "## 壓縮\n### 50 字\n一句話。\n## 高概念\n- Look\n## 取向定位分析\n偏爽。\n"
+        },
+    )
+    stats = ValidateStats()
+    assert validate_file(book, book / "story" / "00-摘要.ai.md", stats) == []
+    assert stats.enumerated == 1 and stats.fm_only == 0
 
 
 # ------------------------------------------------------------ 空 tuple 枚舉（風格）

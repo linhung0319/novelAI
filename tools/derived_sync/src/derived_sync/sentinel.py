@@ -5,7 +5,15 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .core import AI_SUFFIX
-from .validate import SETTINGS_KINDS, enum_for, stray_sections
+from .validate import (
+    SETTINGS_KINDS,
+    SUMMARY_DERIVED,
+    SUMMARY_DIR,
+    SUMMARY_KIND,
+    SUMMARY_SOURCE,
+    enum_for,
+    stray_sections,
+)
 
 # 門檻皆為**建議值**（advisory），不是門檻式 pass/fail——呼應「AI 是審稿員不是門檻」。
 # 取值依據見各函式 docstring，全部可由 CLI 覆寫。
@@ -39,6 +47,24 @@ FACT_PAREN_RATIO = 0.40  # 括號內註解佔比（夾帶設計註的信號）
 FACT_PAREN_MIN_CHARS = 60
 
 _ARC_RE = re.compile(r"^arc[0-9A-Za-z]+$")
+
+
+def _summary_paths(book: Path) -> tuple[Path, Path]:
+    """摘要軸的兩支檔。路徑的唯一真相在 `validate.py`（見那裡的 `SUMMARY_*`）。
+
+    **2026-07-27（功能 08）補進本檔的三支目標集**。在此之前四支目標集
+    **0/4** 含它，於是源 15,656 B（門檻的 62.6%）、衍生 10,530 B（門檻的
+    **87.8%**）、源最長行 594、衍生最長行 626 **全部靜音**——而摘要的成長軸
+    是**裁決輪次**（源 10.6×／衍生 15.5×），`共同約定.md` 甚至明文把它列進
+    「本來就是單檔且有界」的豁免。
+
+    **這是「四份手寫路徑清單漏檔」的第六次**（03 補 `chapters/`、05 補設定層
+    衍生與源各一）。前五次漏的是資料夾，這次漏的是 `story/` 根目錄下的兩支檔
+    ——形狀相同，根因相同：每支函式各自手寫路徑。**根因不在本輪修**，
+    「這本書有哪些受管檔」的統一清單交功能 14。
+    """
+    d = book.joinpath(*SUMMARY_DIR)
+    return d / SUMMARY_SOURCE, d / SUMMARY_DERIVED
 _BEAT_HEAD_RE = re.compile(r"^##\s*幕(\d+)")
 _PAREN_RE = re.compile(r"（[^（）]*）")
 
@@ -154,6 +180,27 @@ def oversized_sources(book: Path, limit: int = SOURCE_BYTES) -> list[Finding]:
                         hint=hint,
                     )
                 )
+    # 摘要源（2026-07-27 功能 08 補上，見 `_summary_paths`）。**hint 與設定層不同**：
+    # 摘要沒有目錄形態、也沒有「拆主題」可拆——它一本書就是一份，所以搬完仍超標
+    # 時沒有第二步。實測它 51.4% 是裁決理由與已駁回方案、16.7% 是「臨場拍板」節
+    # （而其中一大半寫著「已定案／已鎖定」），也就是說**搬走就夠了**。
+    src, _ = _summary_paths(book)
+    if src.is_file():
+        size = _size(src)
+        if size > limit:
+            out.append(
+                Finding(
+                    kind="源檔肥大",
+                    path=src,
+                    detail=f"{size} B（建議 ≤{limit}）",
+                    hint="摘要**沒有拆檔這條路**（一本書一份、無目錄形態、無主題可拆），"
+                    "所以只有搬：**被捨棄的方案＋為什麼捨棄**屬 "
+                    "story/參照/裁決流.md（`標的`＝00-摘要.md）、"
+                    "真正未定的暫定屬 raw/、正文釘死的事實屬該章 chNNNN.ai.md 的"
+                    "「## 本章事實」。摘要是**唯一每支 skill 都無條件整檔讀的源檔**，"
+                    "所以它多一個字，全書每次落筆都多讀一個字",
+                )
+            )
     return out
 
 
@@ -175,6 +222,12 @@ def _derived_targets(book: Path) -> list[tuple[Path, str]]:
     chapters = book / "chapters"
     if chapters.is_dir():
         out += [(p, "章節") for p in sorted(chapters.glob(f"*{AI_SUFFIX}"))]
+    # **2026-07-27（功能 08）補上摘要衍生檔**——第六次補同一個根因（見 `_summary_paths`）。
+    # 實測 10,530 B ＝ `DERIVED_BYTES` 的 87.8%，而它還帶著 04 早就該搬走的
+    # `## 待裁決回饋`（818 字元）：**兩個觸發都成立而兩個都靜音**。
+    _, derived = _summary_paths(book)
+    if derived.is_file():
+        out.append((derived, SUMMARY_KIND))
     return out
 
 
@@ -240,6 +293,8 @@ def long_lines(
     - **設定層的源檔 `<實體>.md`／`<名>/<切面>.md`（同輪補上）**
       → `settings_source_limit`（600）。源檔的行長不受「自由源不限單行長度」
       豁免的理由見下。
+    - **`story/00-摘要.ai.md`／`00-摘要.md`（2026-07-27 功能 08 補上）**
+      → 沿用上面兩級（800／600），**不新造第五級門檻**。
 
     事實流／裁決流是 append log，有投影工具、且天生一行一筆——不受此限。
 
@@ -285,6 +340,16 @@ def long_lines(
     chapters = book / "chapters"
     if chapters.is_dir():
         targets += [(p, rollup_limit) for p in sorted(chapters.glob(f"_*{AI_SUFFIX}"))]
+    # **摘要兩支檔（2026-07-27 功能 08 補上）沿用設定層的兩級門檻**，不新造第五級：
+    # 衍生是分析段落（同 `<主題>.ai.md` 的「限制與代價」，天生比 rollup 的一列長）、
+    # 源是自由散文，性質與設定層那兩類相同。實測衍生最長行 626、源最長行 594
+    # ——**兩者都只差門檻一點點**，那正是要它們進目標集的理由，不是放它們走的理由。
+    # 另：`n=1` 的樣本不足以另立門檻（06 抉擇 5 A 已駁回「沒有空隙時硬定數字」）。
+    summary_src, summary_derived = _summary_paths(book)
+    if summary_derived.is_file():
+        targets.append((summary_derived, settings_derived_limit))
+    if summary_src.is_file():
+        targets.append((summary_src, settings_source_limit))
 
     # 設定層非 rollup 檔的病徵不是「表格 cell」而是「一條分析／一個 bullet 長成
     # 一份沿革」，所以 hint 分開寫。**兩種 hint 都提 `story/參照/裁決流.md`**——

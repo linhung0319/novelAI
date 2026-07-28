@@ -286,6 +286,62 @@ def test_settings_dir_form_source_facets_are_scanned(tmp_path):
     assert len(findings) == 1 and findings[0].path.name == "來歷.md"
 
 
+# ---------------------------------------------------------------- 摘要（功能 08）
+#
+# **四支目標集 0/4 含 `story/00-摘要.*`** 是「四份手寫路徑清單漏檔」的第六次
+# （03 補 `chapters/`、05 補設定層兩次）。前幾次漏的是資料夾，這次漏的是
+# `story/` 根目錄下的兩支檔——形狀相同。下面四支測試把三支目標集各釘一面。
+
+
+def test_summary_source_size_is_measured(tmp_path):
+    """實測一世之尊 15,656 B ＝門檻的 62.6%，而**沒有任何哨兵在量它**。"""
+    book = _book(tmp_path)
+    (book / "story" / "00-摘要.md").write_text("結" * 30000, encoding="utf-8")
+    findings = oversized_sources(book)
+    assert len(findings) == 1 and findings[0].path.name == "00-摘要.md"
+    # 摘要沒有目錄形態、也沒有主題可拆——hint 不該叫人拆檔
+    assert "沒有拆檔這條路" in findings[0].hint
+    assert "story/參照/裁決流.md" in findings[0].hint
+
+
+def test_summary_derived_size_is_measured(tmp_path):
+    """實測衍生 10,530 B ＝ `DERIVED_BYTES` 的 **87.8%**，越線那天不會有輸出。"""
+    book = _book(tmp_path)
+    (book / "story" / "00-摘要.ai.md").write_text(
+        "---\ngenerated-from: x\n---\n## 壓縮\n" + "壓" * 13000, encoding="utf-8"
+    )
+    findings = unsliceable_derived(book)
+    assert len(findings) == 1 and findings[0].path.name == "00-摘要.ai.md"
+
+
+def test_summary_derived_stray_section_fires_regardless_of_size(tmp_path):
+    """兩個觸發都成立而兩個都靜音過：`## 待裁決回饋` 是分類錯誤、不是體積問題。"""
+    book = _book(tmp_path)
+    (book / "story" / "00-摘要.ai.md").write_text(
+        "---\ngenerated-from: x\n---\n## 壓縮\n短。\n## 待裁決回饋\n| 日期 |\n",
+        encoding="utf-8",
+    )
+    (f,) = unsliceable_derived(book)
+    assert "待裁決回饋" in f.detail
+
+
+def test_summary_files_use_the_settings_line_limits(tmp_path):
+    """沿用設定層的 800／600，**不新造第五級**。實測衍生最長行 626、源 594
+    ——兩者都只差門檻一點點，那是要它們進目標集的理由，不是放行的理由。"""
+    book = _book(tmp_path)
+    story = book / "story"
+    # 626／594 ＝ 一世之尊的實測值：兩支都該過
+    (story / "00-摘要.ai.md").write_text("- " + "分" * 626 + "\n", encoding="utf-8")
+    (story / "00-摘要.md").write_text("- " + "散" * 594 + "\n", encoding="utf-8")
+    assert long_lines(book) == []
+    # 越線就報，而且各自套自己那一級
+    (story / "00-摘要.ai.md").write_text("- " + "分" * 900 + "\n", encoding="utf-8")
+    (story / "00-摘要.md").write_text("- " + "散" * 700 + "\n", encoding="utf-8")
+    found = {f.path.name: f.detail for f in long_lines(book)}
+    assert "800" in found["00-摘要.ai.md"]
+    assert "600" in found["00-摘要.md"]
+
+
 def test_append_log_exempt_from_long_lines(tmp_path):
     """事實流／裁決流有投影工具，不受行長規範（新舊檔名都算）。"""
     book = _book(tmp_path)

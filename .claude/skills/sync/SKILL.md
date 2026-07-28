@@ -26,7 +26,7 @@ description: 當作者說「我改了結局／題旨／世界觀／某段幕綱�
 ## 依賴鏈（判斷 stale 的依據）
 
 ```
-設定層（設定/{世界觀,角色,風格}/<實體>.md → <實體>.ai.md）＋ 00-摘要.md → 00-摘要.ai.md（粗層）
+設定層（設定/{世界觀,角色,風格}/<實體>.md → <實體>.ai.md）＋ 00-摘要.md → 00-摘要.ai.md（粗層；重生後跑 `summary-lint`）
    → 01-大綱.md ／ 大綱/arcNN.md（大綱層，作者利器·直改）
       → 幕綱/arcNN.md（幕綱層，作者利器·直改）
          → chapters/chNNNN.md → chNNNN.ai.md（正文層，經 chapters/_index.ai.md 的「對應幕」欄對映）

@@ -68,6 +68,15 @@ DERIVED_SECTIONS: dict[str, tuple[str, ...]] = {
     #（形狀照抄 `settings_select.Entity.read_paths` 對角色早就在做的兩邊都讀）。
     # 既有書那四節現在會被報成枚舉外——**那是預期的**（同移除 `🧊 水下` 時）。
     "風格": (),
+    # 結構定義/摘要.schema.md
+    # 2026-07-27（功能 08）補上。在此之前 `classify()` 只認得 `chapters/` 與
+    # `story/設定/<kind>/`，於是 `story/00-摘要.ai.md` 是全書**唯一**只驗
+    # front-matter 的那一支——而 04 從五處枚舉移除的 `## 待裁決回饋` 就在這裡
+    # 完好無損地活著（實測 818 字元、佔該檔 19.2%），`validate` 對它一聲不吭。
+    # 那不是漏網，是**掃描起點決定了守衛能看見什麼**（E2）：節枚舉對沒被
+    # `classify()` 認出來的檔是空頭承諾，而覆蓋率行只把它印成 `fm_only` 裡一個
+    # 匿名的數字。既有書那一節現在會被報成枚舉外——**那是預期的**。
+    "摘要": ("壓縮", "高概念", "取向定位分析"),
     # 結構定義/章節.schema.md
     "章節": ("本章事實",),
     # 2026-07-27 移除 `章末狀態快照`：它是僵屍規格——schema 定義了、本枚舉允許了、
@@ -77,6 +86,14 @@ DERIVED_SECTIONS: dict[str, tuple[str, ...]] = {
 }
 
 SETTINGS_KINDS = ("角色", "世界觀", "風格")
+
+# 摘要軸的兩支檔（`story/` 根目錄下，不在任何 `<kind>` 資料夾裡——這正是
+# `classify()` 一直看不見它的原因）。唯一真相放這裡，`sentinel` 與 `summary_lint`
+# 都從這裡取，免得再長出第七份手寫路徑清單。
+SUMMARY_DIR = ("story",)
+SUMMARY_SOURCE = "00-摘要.md"
+SUMMARY_DERIVED = "00-摘要.ai.md"
+SUMMARY_KIND = "摘要"
 
 REQUIRED_KEYS = ("generated-from", "generated-at")
 
@@ -136,6 +153,8 @@ def classify(book: Path, p: Path) -> str | None:
         return "章節"
     if rel[:2] == ("story", "設定") and len(rel) >= 3 and rel[2] in SETTINGS_KINDS:
         return rel[2]
+    if rel == SUMMARY_DIR + (SUMMARY_DERIVED,):
+        return SUMMARY_KIND
     return None
 
 
@@ -153,7 +172,11 @@ class ValidateStats:
     `設計原則.md` E2 的可執行推論。這支工具原本只印「所有 .ai.md 格式合規」——
     而它對**沒有節枚舉的產物**（風格／摘要，`DERIVED_SECTIONS` 裡根本沒有它們）
     只驗 front-matter，節枚舉是空頭承諾。不把 `enumerated`／`fm_only` 分開印，
-    那個缺口就永遠看不出來（→ 功能 07／08）。**0 也印。**
+    那個缺口就永遠看不出來。
+
+    **兩支都補完了**（風格＝功能 07 的空 tuple、摘要＝功能 08），所以現在
+    `fm_only` 應該恆為 0——**這一格從此是「有沒有新產物又沒登記節枚舉」的哨兵**，
+    不是一個已知缺口的計數器。**0 也印**：它印 0 才代表沒有第三支漏網的產物。
     """
 
     files: int = 0

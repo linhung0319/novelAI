@@ -20,6 +20,10 @@ char-lint = "derived_sync.cli:char_lint_main"
 # token ＋阿拉伯數字 ＋不得全落最粗一級）、`基調參照` ≡ 摘要衍生檔、禁用詞正文
 # 掃描。它的取值者是 LLM 不是程式——依 2026-07-27 改寫後的 A4，那更需要 lint。
 style-lint = "derived_sync.cli:style_lint_main"
+# 摘要軸格式閘門：**人稱落檔閘門**（封閉二值枚舉，schema 明訂「不得直接封章」
+# 而零實作——唯一的書填了非支援值、封了章、寫了 93 章）、基調的源↔衍生比對、
+# front-matter 收斂後的欄語意、幕號引用的目的地存在性。與前三支同套件同理由。
+summary-lint = "derived_sync.cli:summary_lint_main"
 
 [dependency-groups]
 dev = ["pytest>=8"]

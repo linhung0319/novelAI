@@ -8,6 +8,7 @@ from .char_lint import lint_book as char_lint_book
 from .core import check_book, content_hash, source_digest_for_derived, stamp
 from .sentinel import run as run_sentinel
 from .style_lint import lint_book as style_lint_book
+from .summary_lint import lint_book as summary_lint_book
 from .validate import validate_report
 from .world_lint import lint_book as world_lint_book
 
@@ -155,6 +156,37 @@ def _cmd_style_lint(args: argparse.Namespace) -> int:
     return 1
 
 
+def _cmd_summary_lint(args: argparse.Namespace) -> int:
+    """摘要軸的格式閘門。與 `validate` 及其他三支 lint 分開跑、分開計。
+
+    `validate` 問「每支 `.ai.md` 的共通形狀對不對」；這支問摘要軸專屬的三件事——
+    **人稱是不是系統支援值**（封閉二值枚舉、機械完全可判，而 schema 明訂「不得
+    直接封章」卻零實作，唯一的書填了非支援值並寫了 93 章）、**基調的抄本有沒有
+    跟正本漂移**（源 ↔ 衍生那條邊在 2026-07-27 之前零守衛，而 07 之後它會直接
+    進正文）、**那幾個機讀欄的值能不能被拿去用**（幕號引用懸不懸空、`POV` 抽不
+    抽得出來）。
+
+    **兩個源檔提示是提示、不是判定**：駁回語彙處數與「臨場拍板」節帶已定案字樣
+    的條數**不計入問題數、不影響 exit code**——那兩件事的切分線是語意判斷，
+    lint 守不住，本支只負責讓它可見。
+    """
+    problems, stats = summary_lint_book(args.book)
+    print(stats.render())
+    if stats.notes:
+        print("\n--- 源檔提示（切分交作者；不計入問題數）---")
+        for n in stats.notes:
+            print(f"[?]    {n}")
+    if not problems:
+        print("摘要軸格式合規。")
+        return 0
+    for p in problems:
+        rel = p.path.relative_to(args.book) if p.path.is_relative_to(args.book) else p.path
+        print(f"[x] {rel}  {p.detail}")
+        print(f"       {p.hint}")
+    print(f"\n合計 {len(problems)} 個格式問題。", file=sys.stderr)
+    return 1
+
+
 def _cmd_stamp(args: argparse.Namespace) -> int:
     digest = stamp(args.derived, on=args.date)
     print(f"已封章 {args.derived.name}：generated-from={digest}")
@@ -210,6 +242,13 @@ def main(argv: list[str] | None = None) -> int:
     )
     p_style.add_argument("--book", required=True, type=Path, help="書資料夾路徑")
     p_style.set_defaults(func=_cmd_style_lint)
+
+    p_summary = sub.add_parser(
+        "summary-lint",
+        help="驗摘要軸（人稱落檔閘門＋基調兩方比對＋front-matter 欄語意＋幕號引用）",
+    )
+    p_summary.add_argument("--book", required=True, type=Path, help="書資料夾路徑")
+    p_summary.set_defaults(func=_cmd_summary_lint)
 
     p_stamp = sub.add_parser("stamp", help="重生某 .ai.md 後，把源 hash 封回其 front-matter")
     p_stamp.add_argument("derived", type=Path, help="欲封章的 .ai.md 路徑")
@@ -299,6 +338,35 @@ def style_lint_main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
     try:
         return _cmd_style_lint(args)
+    except (FileNotFoundError, ValueError) as e:
+        print(f"錯誤：{e}", file=sys.stderr)
+        return 1
+
+
+def summary_lint_main(argv: list[str] | None = None) -> int:
+    """`summary-lint` 的獨立入口（同套件、自己一個指令）。
+
+    與 `derived-sync summary-lint` 完全等價。理由同前三支：**新增一個要記得跑的
+    閘門，就是新增一個會被忘記的觸發時機**——而這一支的觸發時機是硬的：
+    `develop`／`organize` 落檔前**必跑**，第 3 項（人稱）或第 7 項（基調達標線）
+    有命中就停下回問作者、不得封章。指令名要短到不必查。
+    """
+    ap = argparse.ArgumentParser(
+        description="摘要軸格式閘門：`00-摘要.ai.md` 的 front-matter 八鍵齊全、"
+        "**不得再有 `基調主從`／`終局`／`節奏檔位`**、"
+        "**`視角結構.人稱` ∈ 系統支援的二值枚舉**（落檔閘門，命中就停下回問作者）、"
+        "`POV` 抽得出來（`beat_metrics.load_pov` 的同一把尺）、"
+        "**`基調` ≡ 源 `00-摘要.md` 基調節首句**（跨源↔衍生比對）、"
+        "front-matter 裡的 `幕NNN`／`arcNN` 引用不懸空、"
+        "基調宣告寫得出單位與達標線（摘要或源 `風格.md` 兩邊至少一邊有）。"
+        "另印兩個源檔提示（駁回語彙／「臨場拍板」帶已定案字樣），"
+        "**只印、不擋**。零 LLM、可覆算。"
+    )
+    ap.add_argument("--book", required=True, type=Path, help="書資料夾路徑")
+    _force_utf8()
+    args = ap.parse_args(argv)
+    try:
+        return _cmd_summary_lint(args)
     except (FileNotFoundError, ValueError) as e:
         print(f"錯誤：{e}", file=sys.stderr)
         return 1
