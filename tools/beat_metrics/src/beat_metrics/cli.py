@@ -10,6 +10,7 @@ from .motif import ArcMotif, Finding, detect, measure
 from .outline import lint_report as outline_lint_report
 from .playability import HOLLOW_SHARE_CAP, RUN_CAP, ArcPlayability, analyse
 from .scan import ScanError, load_book, load_pov
+from .structure_project import project
 
 
 def _force_utf8() -> None:
@@ -237,7 +238,9 @@ def ch_lint_main(argv: list[str] | None = None) -> int:
     return 1
 
 
-OUTLINE_CLEAN = "大綱層格式乾淨（節枚舉／檔頭狀態／引用／伏筆意圖表／卷級方向／索引視圖）"
+OUTLINE_CLEAN = (
+    "大綱層格式乾淨（節枚舉／檔頭狀態／引用／伏筆意圖表／卷級方向／索引視圖／選用結構公式）"
+)
 
 
 def outline_lint_main(argv: list[str] | None = None) -> int:
@@ -253,7 +256,8 @@ def outline_lint_main(argv: list[str] | None = None) -> int:
         "`本 arc 伏筆狀態` 的三欄意圖表、卷級方向的卷 token 唯一與指路紀律、"
         "`幕NNN`／`chNNNN`／`arcNN` 引用不懸空、`[[伏筆:x]]` 命中 registry、"
         "`結局與題旨` 與 `本段收束與鉤子` 的形狀、`_index.md` 視圖 ≡ 資料夾、"
-        "檔內路徑的目的地存在。守的是「人破結構」那一側（`設計原則.md` B1），"
+        "檔內路徑的目的地存在、**`選用結構公式` 的公式名命中 `結構公式.md` registry "
+        "且 α 不記沿革**。守的是「人破結構」那一側（`設計原則.md` B1），"
         "與 `beat-lint`／`ch-lint` 同類；內容好壞交 `outline-test`。",
     )
     ap.add_argument("--book", required=True, type=Path, help="書資料夾路徑（含 story/）")
@@ -281,6 +285,42 @@ def outline_lint_main(argv: list[str] | None = None) -> int:
     for p in problems:
         print(f"  [x] {p}", file=sys.stderr)
     return 1
+
+
+def structure_project_main(argv: list[str] | None = None) -> int:
+    """結構軸投影。**它不是閘門**——一律 exit 0，可疑點交 `outline-test`／`beat-test` 判。
+
+    **第四個指令，同一份解析層**（作者拍板抉擇 3 A）：幕綱八欄的 `結構階段` 在
+    `scan.scan_arc()`、幕號 registry 與 spine 定序在 `scan.load_book()`、大綱檔與節內容在
+    `outline.load_files()`——**兩個輸入都已經在這個套件裡解析，零複製**。另開套件＝新增
+    第 8 份幕號集合實作（同 09 抉擇 1 B 對 `outline-lint` 的理由，逐字相同）。
+
+    它取代已廢除的 `story/參照/結構.ai.md`：那支檔的對應表實測 108/108 幕可從幕綱重算，
+    而它宣稱「無單一源檔可 hash」——`設計原則.md` A6 那個空訊號的唯一支柱，實測撐不住。
+    """
+    ap = argparse.ArgumentParser(
+        description="結構軸投影（零 LLM、可覆算）：大綱宣告的選用公式、幕綱 `結構階段` 欄"
+        "投影出的「階段 ↔ 幕」對應表、對照 `技巧知識庫/結構公式.md` registry 算出的"
+        "「缺哪個必要階段／階段序非遞增」，以及舊 `story/參照/結構.{md,ai.md}` 的殘留偵測。"
+        "**投影不是閘門**（一律 exit 0，不做 pass/fail）：格式那一側由 `outline-lint` "
+        "第 12 項守，內容好壞交 `outline-test` 測試4／`beat-test` 測試3。",
+    )
+    ap.add_argument("--book", required=True, type=Path, help="書資料夾路徑（含 story/）")
+    ap.add_argument("--arc", default=None, help="對應表只印這個 arc（覆蓋率仍看全書）")
+    args = ap.parse_args(argv)
+
+    _force_utf8()
+    try:
+        report, _stats = project(args.book, args.arc)
+    except ScanError as e:
+        print(f"掃描錯誤：{e}", file=sys.stderr)
+        return 1
+    except OSError as e:
+        print(f"讀取失敗：{e}", file=sys.stderr)
+        return 1
+
+    print(report, end="")
+    return 0
 
 
 if __name__ == "__main__":

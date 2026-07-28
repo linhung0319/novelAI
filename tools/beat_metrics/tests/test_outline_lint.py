@@ -9,11 +9,15 @@ from pathlib import Path
 
 import pytest
 from beat_metrics.outline import lint, lint_report
+from conftest import plant_package_root
 
 # ------------------------------------------------------------------ 語料建構
 
 
 def _book(tmp_path: Path) -> Path:
+    # **一定要種套件根**：不種的話 registry 回「未接」，第 12 項的 registry 那一半
+    # 靜靜地不跑而測試全綠（見 `conftest.plant_package_root` 的註解）。
+    plant_package_root(tmp_path)
     book = tmp_path / "書"
     (book / "story" / "大綱").mkdir(parents=True)
     (book / "story" / "幕綱").mkdir(parents=True)
@@ -52,7 +56,7 @@ SCOPED_OK = """# arc02 · 走出去
 > 範圍說明：本 arc 涵蓋一段。
 
 ## 選用結構公式（本 arc 適用）
-起。
+起承轉合套本 arc 一段（本段只走到「起」）。
 
 ## 本段全文（連續敘述）
 這一段的情節，牽到 [[伏筆:玉佛來歷]]。
@@ -407,3 +411,97 @@ def test_retired_dir_must_not_hold_a_volume_section(book: Path):
     _write(book, index=INDEX_OK + "- arc01：起 —— 狀態：已併入\n")
     problems = [p for p in lint(book) if "底下有 `## 卷級方向" in p]
     assert len(problems) == 1
+
+
+# ------------------------------------------------------------------ 第 12 項
+# `## 選用結構公式`（2026-07-28 功能 11）。它守的是本輪新增的兩條格式承諾：
+# 公式名要命中 `技巧知識庫/結構公式.md` 的 registry、α 條目不得記沿革。
+
+
+def test_missing_formula_section_is_reported(book: Path):
+    _write(book, full=FULL_OK.replace("## 選用結構公式\n起承轉合。\n\n", ""))
+    assert [p for p in lint(book) if "缺 `## 選用結構公式` 節" in p]
+
+
+def test_formula_section_present_is_not_reported(book: Path):
+    _write(book)
+    assert not [p for p in lint(book) if "選用結構公式" in p]
+
+
+def test_formula_name_must_hit_the_registry(book: Path):
+    """**這是第 12 項的核心那一條。** 宣告一套沒登記的公式 ＝ `structure-project`
+    查不到必要階段、集合差整節算不了，**而報表會印得完全正常**（E2 最後一格）。"""
+    _write(book, full=FULL_OK.replace("起承轉合。", "英雄之旅十二段。"))
+    problems = [p for p in lint(book) if "registry 裡的公式名" in p]
+    assert len(problems) == 1 and "三幕劇" in problems[0]  # hint 要列出 registry
+
+
+def test_registry_not_connected_means_the_check_is_skipped_not_passed(tmp_path: Path):
+    """**找不到套件根 ≠ 0 個問題。** 覆蓋率行要說出「registry 未接」，
+    否則「檢查過了、乾淨」與「檢查沒跑」印出來一模一樣。"""
+    book = tmp_path / "孤島" / "書"
+    (book / "story" / "大綱").mkdir(parents=True)
+    (book / "story" / "幕綱").mkdir(parents=True)
+    (book / "story" / "幕綱" / "_index.md").write_text(
+        "# 幕綱索引\n全書順序：arc01\n", encoding="utf-8"
+    )
+    (book / "story" / "幕綱" / "arc01.md").write_text("# arc01\n\n## 本 arc 承諾\n", encoding="utf-8")
+    (book / "story" / "01-大綱.md").write_text(
+        FULL_OK.replace("起承轉合。", "英雄之旅十二段。"), encoding="utf-8"
+    )
+    problems, stats = lint_report(book)
+    assert not stats.registry_connected
+    assert "registry **未接**" in stats.render()
+    assert not [p for p in problems if "registry 裡的公式名" in p]
+
+
+def test_alpha_bullet_must_not_carry_a_date(book: Path):
+    """α **只標「這裡是變形、變成什麼」**；沿革屬裁決流。舊 `結構.ai.md` 的檔頭
+    blockquote 就是這條規則零實作長出來的（111 → 6,323 字元＝57.0×）。"""
+    _write(
+        book,
+        full=FULL_OK.replace(
+            "起承轉合。",
+            "起承轉合。\n- **α（變形）**：轉與合同落在 arc04（2026-07-21 作者拍板）。",
+        ),
+    )
+    assert [p for p in lint(book) if "α 條目有 1 條帶日期" in p]
+
+
+def test_alpha_bullet_without_a_date_is_fine(book: Path):
+    _write(
+        book,
+        full=FULL_OK.replace(
+            "起承轉合。", "起承轉合。\n- **α（變形）**：轉與合同落在 arc04，非錯序。"
+        ),
+    )
+    assert not [p for p in lint(book) if "α 條目" in p]
+
+
+def test_registry_problems_surface_as_problems(tmp_path: Path):
+    """registry 自己壞掉（名稱重複）也要報——**它是 12 支大綱檔共用的那份真相**。"""
+    plant_package_root(
+        tmp_path,
+        knowledge=(
+            "# 結構公式\n\n## 二、起承轉合\n"
+            "<!-- 結構公式: 起承轉合 | 必要階段: 起,承,轉,合 -->\n"
+            "<!-- 結構公式: 起承轉合 | 必要階段: 起,承,轉 -->\n"
+        ),
+    )
+    book = tmp_path / "書"
+    (book / "story" / "大綱").mkdir(parents=True)
+    (book / "story" / "幕綱").mkdir(parents=True)
+    (book / "story" / "幕綱" / "_index.md").write_text(
+        "# 幕綱索引\n全書順序：arc01\n", encoding="utf-8"
+    )
+    (book / "story" / "幕綱" / "arc01.md").write_text("# arc01\n\n## 本 arc 承諾\n", encoding="utf-8")
+    (book / "story" / "01-大綱.md").write_text(FULL_OK, encoding="utf-8")
+    assert [p for p in lint(book) if "重複" in p]
+
+
+def test_coverage_line_counts_declarations(book: Path):
+    _write(book)
+    _, stats = lint_report(book)
+    assert stats.formula_files == 2 and stats.formula_unknown == 0
+    assert stats.registry_connected and stats.registry_formulas == 3
+    assert "`## 選用結構公式` 2 支檔宣告" in stats.render()

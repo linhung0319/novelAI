@@ -1,5 +1,6 @@
 """`.ai.md` 格式閘門。"""
 
+import pytest
 from derived_sync.cli import main
 from derived_sync.validate import (
     ValidateStats,
@@ -73,25 +74,19 @@ def test_missing_required_keys(tmp_path):
     assert "generated-from" in p.detail and "generated-at" in p.detail
 
 
-def test_declarative_files_exempt_from_required_keys(tmp_path):
-    """`結構` 無單一源、不走 hash，本來就不該有 generated-from。
+@pytest.mark.parametrize("name", ["結構.ai.md", "就緒儀表.ai.md"])
+def test_retired_reference_files_are_no_longer_exempt(tmp_path, name):
+    """**2026-07-28（功能 11）：「宣告式」那個豁免整個刪掉。**
 
-    **2026-07-28（功能 10）射程縮成只剩它一支**：`就緒儀表` 已廢除（見下）。
-    這個豁免本身也是待解的——它因為**一個**理由（無單一源可 hash）關掉了**三項**
-    檢查，其中兩項與 hash 無關（`設計原則.md` E2 第七種形態）→ 功能 11／14。
+    在此之前這兩支是「**沒有任何命名能讓它被驗**」的：舊名 `.md` 讓 `check_book` 的
+    `rglob("*.ai.md")` 掃不到，新名 `.ai.md` 讓 `validate_file` 早退**三次**
+    （front-matter 必填鍵／裁決 blockquote／節枚舉）——而後兩項與那個豁免的理由
+    （無單一源可 hash）**完全無關**（`設計原則.md` E2 第七種形態）。
+
+    連理由本身都是假的：`結構` 的對應表實測 108/108 幕可從幕綱 `結構階段` 欄重算。
     """
-    book = _book(tmp_path, {"story/參照/結構.ai.md": "---\n更新: 2026-07-26\n---\n"})
-    assert validate_file(book, book / "story/參照/結構.ai.md") == []
-
-
-def test_retired_dashboard_is_no_longer_exempt(tmp_path):
-    """`就緒儀表.ai.md` 2026-07-28 起不再豁免——那支檔已廢除。
-
-    在此之前它是「**沒有任何命名能讓它被驗**」的那一支：舊名 `.md` 讓 `check_book`
-    的 `rglob("*.ai.md")` 掃不到，新名 `.ai.md` 讓這裡早退三次。
-    """
-    book = _book(tmp_path, {"story/參照/就緒儀表.ai.md": "---\n更新: 2026-07-26\n---\n"})
-    (p,) = validate_file(book, book / "story/參照/就緒儀表.ai.md")
+    book = _book(tmp_path, {f"story/參照/{name}": "---\n更新: 2026-07-26\n---\n"})
+    (p,) = validate_file(book, book / "story" / "參照" / name)
     assert "generated-from" in p.detail
 
 

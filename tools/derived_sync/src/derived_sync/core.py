@@ -31,30 +31,33 @@ def _is_rollup(p: Path) -> bool:
     return p.name.startswith("_") and p.name.endswith(AI_SUFFIX)
 
 
-# 宣告式綜合檔：AI 寫、作者不手改，但**無單一上游源**可 hash 對映（跨全書的
-# 綜合視圖）。過去為了避免被誤報 orphan 而刻意不叫 `.ai.md`——那是讓工具的
-# 實作細節決定命名慣例，方向反了：後綴是給作者看的「這個別改」訊號。
-# 2026-07-26 起改由本 predicate 承擔，命名回歸語意（見 共同約定.md 二）。
+# **「宣告式綜合檔」這個檔類 2026-07-28（功能 11）整個廢除。**
 #
-# **2026-07-28（功能 10）移除 `就緒儀表`**：那支檔已廢除——依 `設計原則.md` **A6**
-#（同輪新增），「不許人改 ＋ 沒有 inbound 重算規則」是一個**必須解掉的衝突**，
-# 不是第三種身分（「別改」的正當性完全來自「改了會被重生覆蓋」，沒有重算規則那個
-# 訊號就是空的）。它拆成了「小源檔 `story/參照/就緒.md`（`readiness-lint` 守）
-# ＋ `readiness` 投影」。**還帶著舊檔的書由 `readiness-lint` 第 7 項報**，不是在
-# 這裡靜靜地繼續豁免。
+# 它曾是 `(會不會被覆蓋) × (人能不能改)` 那張 2×2 表外的第三格：AI 寫、作者不手改，
+# 卻**無單一上游源**可 hash 對映。實作是一個檔案級 predicate `_is_declarative`，讓
+# `check` 報 `declarative`（不計入需處理數）、`stamp` 直接 raise、`validate_file`
+# 早退三次（front-matter 必填鍵／裁決 blockquote／節枚舉）。
 #
-# **剩下的 `結構` 是功能 11 的題目**，A6 對它同樣適用（別重新推導）。連帶：本
-# predicate 的形狀也該改——它因為**一個**理由（無單一源可 hash）而在 `validate_file`
-# 早退**三次**（front-matter 必填鍵／裁決 blockquote／節枚舉），後兩項與 hash 完全
-# 無關（`設計原則.md` E2 第七種形態「豁免的射程比它的理由大」）。**正解是
-# `skip_hash(p)`，不是一個檔案級的 predicate**——實作交功能 14，本輪只縮射程。
-DECLARATIVE_STEMS = frozenset({"結構"})
-
-
-def _is_declarative(p: Path) -> bool:
-    if not p.name.endswith(AI_SUFFIX) or p.parent.name != "參照":
-        return False
-    return p.name[: -len(AI_SUFFIX)] in DECLARATIVE_STEMS
+# 它死於**兩輪連續的實測**：
+# - 功能 10 拆掉 `就緒儀表`（292,591 B、53.8% 是拍板日誌），並把判準升成
+#   `設計原則.md` **A6**——「不許人改 ＋ 沒有 inbound 重算規則」是一個**必須解掉的
+#   衝突，不是第三種身分**（「別改」的正當性完全來自「改了會被重生覆蓋」；沒有重算
+#   規則，那個訊號是空的，而**空的訊號比沒有訊號更糟**）。
+# - 功能 11 拆掉 `結構`，並發現這個豁免的**唯一支柱是一句沒人回頭檢查過的自述**：
+#   `結構.schema.md` 寫「跨全書的綜合視圖、無單一源檔可 hash」，而實測它的對應表
+#   **108/108 幕**都能從 `story/幕綱/arcNN.md` 的 `結構階段` 欄重算，選用公式那一半的
+#   權威 `大綱.schema.md` 早就指定給 `## 選用結構公式`——**而多源 rollup digest 機制
+#   （下面 `source_digest_for_derived` 的 `_is_rollup` 分支）早就存在且在跑**。
+#   A6 第 1 條路因此同輪補上一句：**「沒有源」要當成一個待驗證的宣稱，不是前提。**
+#
+# 現在 `story/參照/` 底下只剩源檔（`就緒.md`／`裁決流.md`／`待裁決.md`），全部有 lint。
+# **還帶著舊檔的書要被看見，不是靜靜地繼續豁免**：`結構.{md,ai.md}` 由
+# `structure-project` 的第五節報（＋成長哨兵的體積那一項），`就緒儀表.{md,ai.md}` 由
+# `readiness-lint` 第 7 項報。帶 `.ai.md` 而無源的檔從此照常報 `orphan`——**那是對的**。
+#
+# 連帶結清一筆 14 的欠債：`設計原則.md` E2 第七種形態（「豁免的射程比它的理由大」）
+# 提的處方是「`_is_declarative` 該長成 `skip_hash(p)`」——**豁免整個消失，所以不必改
+# 形狀了**。（那一條原則本身仍然成立，它只是少一個實例。）
 
 
 def _split_frontmatter(text: str) -> tuple[list[str] | None, str]:
@@ -98,8 +101,6 @@ def source_digest_for_derived(derived: Path) -> tuple[str, str]:
     其餘 X.ai.md：源 = 同層 `X.md`，或**目錄形態** `X/` 的切面集合；
     兩者皆缺回傳 ("", 說明)。"""
     d = derived.parent
-    if _is_declarative(derived):
-        return "", "（宣告式綜合檔·無單一源·不走 hash）"
     if _is_rollup(derived):
         # (排序鍵, 那一行)。**排序鍵是名稱**，不是整行——用整行排會讓
         # digest 依賴 hash 值的字典序，那是無語意的差異（既有書的 digest
@@ -166,11 +167,6 @@ def _set_kv(fm: list[str], key: str, value: str) -> list[str]:
 def stamp(derived: Path, on: str | None = None) -> str:
     """算出 derived 的源 digest，寫回其 front-matter 的 generated-from/generated-at。
     回傳蓋上的 digest。skill 重生 .ai.md 後呼叫此函式封章（別手算 hash）。"""
-    if _is_declarative(derived):
-        raise ValueError(
-            f"{derived.name} 是宣告式綜合檔（無單一源、不走 hash），不必也不能封章；"
-            "它的過期由 sync 做語意比對"
-        )
     digest, _ = source_digest_for_derived(derived)
     if not digest and not _is_rollup(derived):
         raise ValueError(f"無法為 {derived.name} 計算源 digest（源檔缺失？）")
@@ -189,19 +185,18 @@ def stamp(derived: Path, on: str | None = None) -> str:
 class DerivedStatus:
     derived: Path
     source: str
-    status: str  # fresh | stale | unstamped | orphan | declarative
+    status: str  # fresh | stale | unstamped | orphan
 
 
 def check_book(book: Path) -> list[DerivedStatus]:
-    """掃 book 下所有 *.ai.md，回報每個相對於其源檔的新鮮度。"""
+    """掃 book 下所有 *.ai.md，回報每個相對於其源檔的新鮮度。
+
+    **沒有豁免**（2026-07-28 功能 11：`declarative` 那一格廢除，見檔頭）：帶 `.ai.md`
+    而指不出源的檔一律報 `orphan`。**那是對的**——依 `設計原則.md` A6，「不許人改 ＋
+    沒有 inbound 重算規則」是一個要解掉的衝突，不是一種可以永遠豁免的身分。
+    """
     results: list[DerivedStatus] = []
     for derived in sorted(book.rglob(f"*{AI_SUFFIX}")):
-        if _is_declarative(derived):
-            # 不走 hash：沒有源可比，過期與否交 sync 語意比對。不計入需處理數。
-            results.append(
-                DerivedStatus(derived, "（宣告式綜合檔·不走 hash）", "declarative")
-            )
-            continue
         digest, desc = source_digest_for_derived(derived)
         if not digest and not _is_rollup(derived):
             results.append(DerivedStatus(derived, desc, "orphan"))

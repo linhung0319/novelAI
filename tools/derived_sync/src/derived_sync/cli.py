@@ -19,7 +19,6 @@ _MARK = {
     "stale": "[STALE]",
     "unstamped": "[?]   ",
     "orphan": "[ORPH]",
-    "declarative": "[decl]",  # 宣告式綜合檔：不走 hash，不計入需處理數
 }
 
 

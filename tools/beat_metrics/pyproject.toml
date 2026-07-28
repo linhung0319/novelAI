@@ -1,7 +1,7 @@
 [project]
 name = "beat-metrics"
 version = "0.1.0"
-description = "novelAI 幕號軸：幕綱格式閘門（beat-lint）＋正文層格式閘門（ch-lint）＋大綱層格式閘門（outline-lint）＋機械統計（可演性·分區衛生·母題重複）；零 LLM、可覆算"
+description = "novelAI 幕號軸：幕綱格式閘門（beat-lint）＋正文層格式閘門（ch-lint）＋大綱層格式閘門（outline-lint）＋結構軸投影（structure-project）＋機械統計（可演性·分區衛生·母題重複）；零 LLM、可覆算"
 requires-python = ">=3.11"
 dependencies = []
 
@@ -21,6 +21,13 @@ ch-lint = "beat_metrics.cli:ch_lint_main"
 # 新增第 7 份幕號集合實作。大綱曾是全系統唯一「被 共同約定.md 明文列進『強格式源·
 # 一支 lint』那一格、而那支 lint 不存在」的產物。
 outline-lint = "beat_metrics.cli:outline_lint_main"
+# 結構軸投影（**不是閘門**，一律 exit 0）：大綱宣告的選用公式＋幕綱 `結構階段` 欄投影出的
+# 「階段 ↔ 幕」對應表＋缺哪個必要階段（集合差）＋舊檔殘留偵測。
+# **第四個指令，同一份解析層**（功能 11 抉擇 3 A）：兩個輸入都已在本套件解析——幕綱八欄在
+# scan.scan_arc()、幕號 registry 與 spine 在 scan.load_book()、大綱節內容在 outline.load_files()。
+# 另開套件＝新增第 8 份幕號集合實作。它取代已廢除的 story/參照/結構.ai.md：那支檔宣稱
+# 「無單一源檔可 hash」，而實測對應表 108/108 幕可從幕綱重算（設計原則.md A6 的空訊號）。
+structure-project = "beat_metrics.cli:structure_project_main"
 
 [dependency-groups]
 dev = ["pytest>=8"]

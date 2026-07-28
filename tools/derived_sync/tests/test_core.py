@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from derived_sync.core import (
     canonical_text,
     check_book,
@@ -87,55 +88,52 @@ def test_stamp_preserves_body_and_other_frontmatter(tmp_path: Path) -> None:
     assert "## 分析" in text and "第二段" in text
 
 
-# ---------------------------------------------------------------- 宣告式綜合檔
+# ------------------------------------------------- 「宣告式綜合檔」廢除後的殘留
+# **2026-07-28（功能 11）：`_is_declarative` 整個刪掉，這一組從「驗豁免生效」翻面
+# 成「驗豁免真的沒了」。** 原本這裡有四支測試（＋`test_validate.py` 一支）在驗那個
+# 特例，而它們在**真實語料上跑的是 0 支檔**——全部用 `tmp_path` 造 `結構.ai.md`，
+# 而唯一的活書叫 `結構.md`（`rglob("*.ai.md")` 掃不到）。**測試是綠的，射程是空的**
+# ——那是 `設計原則.md` E2 第七種形態（「豁免的射程比它的理由大」）的鏡像。
 
-def _decl_book(tmp_path, name="結構.ai.md"):
+
+def _reference_book(tmp_path, name):
+    """一支住在 `story/參照/` 底下、帶 `.ai.md` 而沒有同名源的檔。"""
     book = tmp_path / "book"
     (book / "story" / "參照").mkdir(parents=True)
-    (book / "story" / "參照" / name).write_text("# 結構\n（無 front-matter）\n", encoding="utf-8")
+    (book / "story" / "參照" / name).write_text("# X\n（無 front-matter）\n", encoding="utf-8")
     return book
 
 
-def test_declarative_is_not_reported_orphan(tmp_path):
-    """`結構` 無單一上游源；過去為了避開 orphan 誤報而不敢叫 .ai.md，
-    那讓工具的實作細節決定了給作者看的命名訊號。"""
-    book = _decl_book(tmp_path)
-    statuses = {r.derived.name: r.status for r in check_book(book)}
-    assert statuses == {"結構.ai.md": "declarative"}
+@pytest.mark.parametrize("name", ["結構.ai.md", "就緒儀表.ai.md"])
+def test_retired_reference_files_are_reported_orphan(tmp_path, name):
+    """兩支已廢除的「宣告式綜合檔」現在都報 `orphan`——**那是對的**。
+
+    依 `設計原則.md` A6，「不許人改 ＋ 沒有 inbound 重算規則」是一個要解掉的衝突，
+    不是可以永遠豁免的第三種身分。真正說得出所以然的那一筆由各自的守衛給：
+    `結構` → `structure-project` 第五節；`就緒儀表` → `readiness-lint` 第 7 項。
+    """
+    book = _reference_book(tmp_path, name)
+    assert [r.status for r in check_book(book)] == ["orphan"]
 
 
-def test_declarative_not_counted_as_problem(tmp_path):
-    book = _decl_book(tmp_path, "結構.ai.md")
-    assert all(r.status not in ("orphan", "stale", "unstamped") for r in check_book(book))
+def test_stamping_a_sourceless_reference_file_raises(tmp_path):
+    """`stamp` 不再有「不必也不能封章」那條專屬 raise——它現在走一般的「算不出 digest」。
 
-
-def test_stamping_declarative_raises_with_reason(tmp_path):
-    import pytest
-
-    book = _decl_book(tmp_path)
-    with pytest.raises(ValueError, match="不必也不能封章"):
+    差別是實質的：舊訊息說「**這種檔**不必封章」（一種身分），新訊息說「**這一支**
+    找不到源」（一個要解掉的狀態）。
+    """
+    book = _reference_book(tmp_path, "結構.ai.md")
+    with pytest.raises(ValueError, match="無法為 .* 計算源 digest"):
         stamp(book / "story" / "參照" / "結構.ai.md")
 
 
-def test_readiness_dashboard_is_no_longer_declarative(tmp_path):
-    """**2026-07-28（功能 10）：`就緒儀表` 退出這個特例。**
-
-    那支檔已廢除（拆成源 `story/參照/就緒.md` ＋ `readiness` 投影）。還帶著它的書
-    要被看見——依 `設計原則.md` A6，「不許人改 ＋ 沒有重算規則」是要解掉的衝突，
-    不是一個可以永遠豁免的第三種身分。報成 `orphan` 是對的：它現在沒有源。
-    真正說得出所以然的那一筆由 `readiness-lint` 第 7 項給。
-    """
-    book = _decl_book(tmp_path, "就緒儀表.ai.md")
-    assert [r.status for r in check_book(book)] == ["orphan"]
-
-
-def test_declarative_only_applies_inside_參照(tmp_path):
-    """同名檔若出現在別處，仍走一般的源→衍生規則（不該被特例吃掉）。"""
-    book = tmp_path / "book"
-    d = book / "story" / "設定" / "角色"
-    d.mkdir(parents=True)
-    (d / "結構.ai.md").write_text("x\n", encoding="utf-8")
-    assert [r.status for r in check_book(book)] == ["orphan"]
+def test_reference_file_with_a_source_behaves_normally(tmp_path):
+    """`story/參照/` 不再是特例資料夾：有同名源就照常走 hash。"""
+    book = _reference_book(tmp_path, "就緒.ai.md")
+    (book / "story" / "參照" / "就緒.md").write_text("成熟度\n", encoding="utf-8")
+    assert [r.status for r in check_book(book)] == ["unstamped"]
+    stamp(book / "story" / "參照" / "就緒.ai.md")
+    assert [r.status for r in check_book(book)] == ["fresh"]
 
 
 # ---------------------------------------------------------------- 目錄形態

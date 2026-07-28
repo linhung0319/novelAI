@@ -55,7 +55,7 @@
 | 基調／筆調（含文体である／です・ます） | `氛圍與筆調.md` | 源 `00-摘要.md`「基調」節（唯一權威）→ 快取欄 `00-摘要.ai.md` 的 `基調`（由 `summary-lint` 第 5 項比對） | `develop`（`write`／`write-test`／`revise` 讀取） |
 | 風格執行細則（腔調／禁用詞表／稱謂系統／可用句式；承接基調展開） | `氛圍與筆調.md`＋`字詞句法與抗生硬.md`＋`修辭與字句鍛鍊.md` | `設定/風格/風格.md`（源）→ `風格.ai.md`（衍生機讀事實） | `develop`（`write`／`revise`／`write-test` 讀取） |
 | 結局類型（喜/悲/悲喜/暗示/開放/諷刺） | `結局類型.md` | `00-摘要.md`（題旨／結局走向） | `develop`（`organize`／`outline-test` 讀取） |
-| 結構公式（三幕/起承轉合/七問題/九階段/Save the Cat!/MICE…） | `結構公式.md` | `參照/結構.md`（選用哪套＋階段對應幕） | `organize`／`beat-sheet`（`beat-test`／`outline-test` 讀取） |
+| 結構公式（三幕/起承轉合/七問題/九階段/Save the Cat!/MICE…） | `結構公式.md`（**每套公式帶一行機讀 registry**：`<!-- 結構公式: X \| 必要階段: … -->`） | 大綱的 `## 選用結構公式`（選哪套＋α 變形）；階段對應幕跑 `structure-project` 投影、不落檔 | `organize`／`beat-sheet`（`beat-test`／`outline-test` 讀投影） |
 | 角色弧線型（正向/平/負） | `需求四象限.md` | `設定/角色/<名>.md`（源）→ `<名>.ai.md`「預期弧線」（衍生） | `organize`／`character`（`beat-test` 讀取） |
 | 開場型（依 genre 選冒頭型／鉤子強度） | `戲劇張力與懸念.md`（開場鉤子） | 幕綱幕首／首章（依 `beat-sheet`／`write`） | `beat-sheet`／`write` |
 

@@ -18,7 +18,7 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-from .core import AI_SUFFIX, _is_declarative, _split_frontmatter
+from .core import AI_SUFFIX, _split_frontmatter
 
 _H2_RE = re.compile(r"^##\s+(.+?)\s*$")
 _KEY_RE = re.compile(r"^([A-Za-z0-9_-]+):")
@@ -182,7 +182,6 @@ class ValidateStats:
     files: int = 0
     enumerated: int = 0
     fm_only: int = 0
-    declarative: int = 0
     skeleton: int = 0
     sections: int = 0
     blockquote_files: int = 0
@@ -192,7 +191,7 @@ class ValidateStats:
         return (
             f"檢查範圍：{self.files} 支 .ai.md"
             f"（{self.enumerated} 支套節枚舉／{self.fm_only} 支只驗 front-matter"
-            f"·**節枚舉對它們是空頭承諾**／{self.declarative} 支宣告式）；"
+            f"·**節枚舉對它們是空頭承諾**）；"
             f"其中 {self.skeleton} 支尚未封章的骨架跳過 front-matter 與 blockquote 檢查；"
             f"比對了 {self.sections} 個 `##` 節；"
             f"掃了裁決 blockquote，{self.blockquote_files} 支檔命中"
@@ -215,21 +214,23 @@ def validate_file(
     out: list[Problem] = []
     st = stats if stats is not None else ValidateStats()
     st.files += 1
-    if _is_declarative(p):
-        st.declarative += 1
-    elif fm is None:
+    if fm is None:
         st.skeleton += 1
     st.sections += sum(1 for ln in body.splitlines() if _H2_RE.match(ln))
 
-    # 裁決日誌 blockquote（T1）。骨架與宣告式豁免：模板的「⚠️ 尚未產出」頭註
-    # 本來就是長 blockquote，而它不是任何人的 append log。
-    if fm is not None and not _is_declarative(p):
+    # 裁決日誌 blockquote（T1）。只有骨架豁免：模板的「⚠️ 尚未產出」頭註本來就是
+    # 長 blockquote，而它不是任何人的 append log。
+    # **「宣告式」那個豁免 2026-07-28（功能 11）刪掉了**：它因為**一個**理由（無單一源
+    # 可 hash）而在本函式早退**三次**，其中裁決 blockquote 與節枚舉兩項**與 hash 完全
+    # 無關**（`設計原則.md` E2 第七種形態「豁免的射程比它的理由大」）。連理由本身都是
+    # 假的——見 `core.py` 檔頭。
+    if fm is not None:
         bq = decision_blockquotes(text)
         if bq:
             st.blockquote_files += 1
             st.blockquote_lines += len(bq)
 
-    if fm is not None and not _is_declarative(p):
+    if fm is not None:
         keys = {m.group(1) for ln in fm if (m := _KEY_RE.match(ln.strip()))}
         missing = [k for k in REQUIRED_KEYS if k not in keys]
         if missing:
@@ -246,11 +247,10 @@ def validate_file(
     # **`is not None` 不是 truthiness**：空 tuple 是一個合法的枚舉（`風格` ＝「不得有
     # 任何 `##` 節」，功能 07），而 `if allowed:` 會把它當成「沒有枚舉」——於是那支檔
     # 被算進 `fm_only`、stray 檢查整個跳過，**而輸出看起來完全正常**。
-    if not _is_declarative(p):
-        if allowed is not None:
-            st.enumerated += 1
-        else:
-            st.fm_only += 1
+    if allowed is not None:
+        st.enumerated += 1
+    else:
+        st.fm_only += 1
     if allowed is not None:
         stray = stray_sections(body, allowed)
         if stray:
@@ -291,7 +291,7 @@ def validate_report(book: Path) -> tuple[list[Problem], ValidateStats]:
         out += validate_file(book, p, stats)
         text = p.read_text(encoding="utf-8")
         fm, _ = _split_frontmatter(text)
-        if fm is None or _is_declarative(p):
+        if fm is None:
             continue
         for lineno, chars in decision_blockquotes(text):
             total_chars += chars

@@ -43,6 +43,7 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from . import formula as fm
 from .scan import ScanError, read_text
 from .structure import SKELETON_MARK, parse_book
 
@@ -73,9 +74,10 @@ _SEP_ROW_RE = re.compile(r"^\|[\s:|-]+\|$")
 # 節枚舉（`大綱.schema.md`「節枚舉」）。比對前先正規化標題（見 `_label`）。
 # `卷級方向` 兩種變體都收：scoped 檔一支一卷；`01-大綱.md` 併入後可同時帶好幾卷，
 # 所以卷 token 寫在括號裡（見 `_volume_token`）。
-FULL_SECTIONS = frozenset({"選用結構公式", "故事全文", "結局與題旨", "卷級方向"})
+SECTION_FORMULA = "選用結構公式"
+FULL_SECTIONS = frozenset({SECTION_FORMULA, "故事全文", "結局與題旨", "卷級方向"})
 SCOPED_SECTIONS = frozenset(
-    {"選用結構公式", "本段全文", "本段收束與鉤子", "本 arc 伏筆狀態", "卷級方向"}
+    {SECTION_FORMULA, "本段全文", "本段收束與鉤子", "本 arc 伏筆狀態", "卷級方向"}
 )
 PROSE_SECTION_FULL = "故事全文"
 PROSE_SECTION_SCOPED = "本段全文"
@@ -97,6 +99,13 @@ UNDECIDED_WORDS = ("待定", "未定", "大概")
 THESIS_PATTERN = re.compile(r"因為.*(導致|所以)")
 
 CLOSING_LABELS = ("本段收束", "鉤子", "對全書結局")
+
+# 第 12 項：`## 選用結構公式` 的 α 條目不得帶日期。**沿革不是變形宣告**——舊
+# `結構.schema.md` 規則 4 早就寫著「α 標一句『這裡是變形、變成什麼』就夠，為什麼
+# 這樣變形屬 `story/參照/裁決流.md`」，而那條規則零實作，實測那支檔的檔頭 blockquote
+# 因此從 111 長到 6,323 字元（57.0×）。這是它第一次有閘門。
+_ALPHA_RE = re.compile(r"^[-*]\s*.{0,8}?α")
+_DATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
 
 # 第 9 項：只認**書內相對路徑**。schema 檔、知識庫、佔位寫法（`arcNN.md`）、
 # 範圍寫法（`arc01–arc04.md`）都不是「指名一個檔」，逐一排除——不排除的話，
@@ -194,6 +203,11 @@ class OutlineStats:
     unmerged_scoped: int = 0
     both_homed: int = 0
     ending_copy: str = "未比對"
+    formula_files: int = 0
+    formula_names: int = 0
+    formula_unknown: int = 0
+    registry_formulas: int = 0
+    registry_connected: bool = False
     merged_in_place: list[str] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
     hints: list[str] = field(default_factory=list)
@@ -233,6 +247,13 @@ class OutlineStats:
                 f"          `{FULL_NAME}` 涵蓋 {self.covered_arcs} 個 arc／"
                 f"未併入的 scoped {self.unmerged_scoped} 支（兩邊都有內容 {self.both_homed} 支）"
                 f"／`{FULL_NAME}` 是否仍帶結局複本：{self.ending_copy}",
+                f"          `## {SECTION_FORMULA}` {self.formula_files} 支檔宣告"
+                f"（{self.formula_names} 個公式名·registry 查無 {self.formula_unknown} 支）／"
+                + (
+                    f"registry {self.registry_formulas} 套公式"
+                    if self.registry_connected
+                    else f"registry **未接**（找不到 {fm.KNOWLEDGE_DIR}/{fm.FORMULA_FILE}）"
+                ),
             ]
         )
 
@@ -833,6 +854,65 @@ def _check_destinations(
     ]
 
 
+def _check_formula(
+    f: OutlineFile, reg: "fm.Registry", stats: OutlineStats
+) -> list[Problem]:
+    """第 12 項：`## 選用結構公式` 節存在、公式名命中 registry、α 條目不記沿革。
+
+    **它守的是 2026-07-28（功能 11）新增的兩條格式承諾**：
+    ① 選用公式須是 `技巧知識庫/結構公式.md` registry 裡的一套——`structure-project`
+       的集合差拿這個名字去查必要階段，**查不到就整節算不了，而輸出會完全正常**
+       （`設計原則.md` E2 最後一格）。這正是 C3「抽取器只能命中既有 ID，不得自由造字」。
+    ② α 變形（本輪從已廢除的 `結構.ai.md` 併進來的那 173 字元，全書唯一不可重生的一格）
+       **只報現況、不記沿革**。
+
+    **這不是抉擇 5 C**（已駁回的是「把第 11 項的射程擴到 `story/參照/`」）：本項驗的是
+    大綱檔自己的節，在 `outline-lint` 既有的射程裡。
+    """
+    body = f.body(SECTION_FORMULA)
+    if body is None:
+        return [
+            Problem(
+                f.where,
+                f"缺 `## {SECTION_FORMULA}` 節",
+                "選用哪一套結構公式是大綱的承重宣告（`大綱.schema.md`「選用結構公式」）；"
+                "`beat-sheet` 排幕、`structure-project` 算集合差都讀它",
+            )
+        ]
+    stats.formula_files += 1
+    out: list[Problem] = []
+    if reg.connected:
+        hits = reg.match(body)
+        stats.formula_names += len(hits)
+        if not hits:
+            stats.formula_unknown += 1
+            out.append(
+                Problem(
+                    f.where,
+                    f"`## {SECTION_FORMULA}` 沒有一個 `{fm.FORMULA_FILE}` registry 裡的公式名",
+                    f"公式名要照 registry 的字串寫（{reg.names}）——"
+                    "`structure-project` 拿它去查必要階段，查不到就算不出缺哪個階段，"
+                    "**而報表會印得完全正常**。作者自訂公式要註明依據並在該檔加一行註記",
+                )
+            )
+    dated = [
+        raw.strip()
+        for raw in body.splitlines()
+        if _ALPHA_RE.match(raw.strip()) and _DATE_RE.search(raw)
+    ]
+    if dated:
+        out.append(
+            Problem(
+                f.where,
+                f"`## {SECTION_FORMULA}` 的 α 條目有 {len(dated)} 條帶日期",
+                "α **只標「這裡是變形、變成什麼」**；為什麼這樣變形、哪一輪拍的，"
+                "屬 `story/參照/裁決流.md`（`標的`＝該大綱檔）。"
+                "舊 `結構.ai.md` 的檔頭 blockquote 就是這條規則零實作長出來的（57.0×）",
+            )
+        )
+    return out
+
+
 def _check_coexistence(files: list[OutlineFile], stats: OutlineStats) -> list[Problem]:
     """第 8 項：並存（抉擇 4 A：**合法化**，只有「同一個 arc 兩邊都有內容」才報）。
 
@@ -886,11 +966,16 @@ def lint_report(book: Path) -> tuple[list[str], OutlineStats]:
     stats.scoped = sum(1 for f in files if f.kind == "scoped")
     stats.retired = sum(1 for f in files if f.kind == "已併入")
 
+    reg = fm.load(book)
+    stats.registry_connected = reg.connected
+    stats.registry_formulas = len(reg.formulas)
+
     problems: list[Problem] = []
     for f in files:
         problems += _check_sections(f, stats)
         problems += _check_header_status(f, stats)
         problems += _check_status_table(f)
+        problems += _check_formula(f, reg, stats)
         if f.kind == "全書":
             problems += _check_ending(f, stats)
         else:
@@ -914,6 +999,12 @@ def lint_report(book: Path) -> tuple[list[str], OutlineStats]:
     problems += _check_index(files, book, stats)
     problems += _check_destinations(texts, book, stats)
     problems += _check_coexistence(files, stats)
+
+    if reg.problems:
+        problems += [
+            Problem(f"{fm.KNOWLEDGE_DIR}/{fm.FORMULA_FILE}", p.split("：", 1)[-1])
+            for p in reg.problems
+        ]
 
     if stats.merged_in_place:
         stats.notes.append(

@@ -502,8 +502,10 @@ def test_no_content_to_move_means_no_nagging(tmp_path):
     assert [f for f in run(book) if f.kind == "目的地不存在"] == []
 
 
-def test_declarative_files_scanned_under_both_namings(tmp_path):
-    """就緒儀表／結構 2026-07-26 起改叫 .ai.md；既有書仍是舊名。兩種都要掃到。"""
+def test_retired_reference_files_scanned_under_both_namings(tmp_path):
+    """就緒儀表／結構**兩支都已廢除**（功能 10／11），而既有書仍帶著它們——舊名新名
+    都要掃到。**行長哨兵是那兩支孤兒檔在病例書上唯一常駐的訊號之一**（另兩個是體積
+    哨兵與各自的殘留偵測：`readiness-lint` 第 7 項／`structure-project` 第五節）。"""
     for name in ("就緒儀表.ai.md", "結構.md"):
         book = _book(tmp_path / name)
         (book / "story" / "參照" / name).write_text(
