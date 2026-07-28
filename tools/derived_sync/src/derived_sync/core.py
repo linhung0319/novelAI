@@ -60,6 +60,40 @@ def _is_rollup(p: Path) -> bool:
 # 形狀了**。（那一條原則本身仍然成立，它只是少一個實例。）
 
 
+_H1_RE = re.compile(r"^#\s+")
+
+
+def lede(path: Path) -> str:
+    """源檔 H1 之後第一個非空行（去掉開頭的 bullet 記號）。取不到回空字串。
+
+    **2026-07-28 功能 12 抉擇 3 B 的機械來源。** `一行需求`／`一句話定位` 這兩個
+    LLM 摘要欄廢除之後，「這個實體是什麼」改由源檔自己的第一段回答——它有作者維護、
+    天生不會漂。
+
+    **為什麼不印 H1**（抉擇 3 B 的字面）：實測一世之尊**角色 24/24、世界觀 4/4 的
+    H1 就是檔名**（`# 修煉體系`），印它等於把 ID 欄抄第二遍。報告支持 3 B 的證據
+    只取自 `大綱/_index.md` 的 `名稱` 欄（那一軸的 H1 是有資訊的標題），沒量這兩軸。
+    「H1 之後第一段」在這兩軸實測 100% 非空、中位 29／104 字元、**0 支超過 400**。
+
+    **它仍是純機械來源**：位置固定、零 LLM。與 08 抉擇 4 C 被駁回的「從自由源抽
+    基調那一句」不同——那一格抽的是**一個具名語意欄**（位置假設承載語意宣稱），
+    這一格抽的是**檔的開頭**（位置不承載語意），而且投影只印、不取值。
+    依 E1 配守衛：`char-lint` 第 9 項／`world-lint` 第 7 項驗「H1 之後要有非空行」。
+    """
+    if not path.is_file():
+        return ""
+    seen_h1 = False
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        s = raw.strip()
+        if not s:
+            continue
+        if not seen_h1 and _H1_RE.match(s):
+            seen_h1 = True
+            continue
+        return re.sub(r"^[-*]\s*", "", s)
+    return ""
+
+
 def _split_frontmatter(text: str) -> tuple[list[str] | None, str]:
     """回傳 (front-matter 行清單, 本體)；無合法 front-matter 時 (None, 全文)。"""
     text = text.replace("\r\n", "\n").replace("\r", "\n")

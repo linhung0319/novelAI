@@ -588,11 +588,10 @@ def _lint_index(
     """
     problems: list[str] = []
     if index_path is None:
-        if metas or stats.sources:
-            problems.append(
-                f"chapters/{INDEX_NAME}：不存在——它是章序的權威來源"
-                f"（`章節.schema.md`「`chapters/_index.ai.md` 格式」）"
-            )
+        # **缺 rollup 不是問題，是新的正常狀態**（2026-07-28 功能 12 抉擇 1 A）：
+        # 那支檔廢除了，章序的權威改由 `ch-lint --emit` 回答（它印的就是本函式
+        # 為了比對而算出來的那一份）。本項因此降級成**殘留偵測**：舊檔還在才比對
+        # ——既有書照抉擇 8 A 不遷移，那份視圖仍然要與各章 front-matter 一致。
         return problems
 
     where = f"chapters/{INDEX_NAME}"

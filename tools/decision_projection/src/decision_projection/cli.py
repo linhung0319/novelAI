@@ -13,6 +13,7 @@ from .parse import (
     parse_decisions,
     parse_pending,
     parse_spine,
+    spine_path,
     select,
     select_pending,
 )
@@ -148,8 +149,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         spine = None
         if args.as_of:
-            spine_path = args.book / "story" / "幕綱" / "_index.md"
-            spine = parse_spine(spine_path.read_text(encoding="utf-8"))
+            spine = parse_spine(spine_path(args.book).read_text(encoding="utf-8"))
             if args.as_of not in spine:
                 print(f"arc {args.as_of!r} 不在 spine（全書順序）中", file=sys.stderr)
                 return 1

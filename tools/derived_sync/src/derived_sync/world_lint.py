@@ -36,7 +36,7 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .core import AI_SUFFIX, _split_frontmatter
+from .core import AI_SUFFIX, _split_frontmatter, lede
 
 # 2026-07-27（功能 05）**刪掉的四個宣告欄**＋01 已搬走的 `🧊水下`。
 # 留著它們不是「舊格式還能用」——是「schema 已經不宣稱它們機讀，而檔裡還寫著
@@ -92,6 +92,9 @@ class WorldStats:
     index_rows: int = 0
     folder_topics: int = 0
     dim_rows: int = 0
+    # 源檔第一段（2026-07-28 功能 12 抉擇 3 B）。`一句話定位` 那個 LLM 摘要節廢除
+    # 之後，「這個主題是什麼」改由源檔 H1 之後第一段回答（`world-lint --emit` 印它）。
+    blank_ledes: int = 0
     ai_refs: int = 0
     ai_refs_dangling: int = 0
     rollup_found: bool = False
@@ -105,7 +108,8 @@ class WorldStats:
             f"·registry ＝幕綱 {self.registry_beats} 個標記名 ∪ 物件檔 {self.registry_objects} 支；"
             f"rollup {rollup}·核心規則索引 {self.index_rows} 列 vs 資料夾 {self.folder_topics} 支源檔·"
             f"背景維度 {self.dim_rows} 列（封閉七維）；"
-            f"幕綱檔名引用 {self.ai_refs} 處（{self.ai_refs_dangling} 個懸空）"
+            f"幕綱檔名引用 {self.ai_refs} 處（{self.ai_refs_dangling} 個懸空）；"
+            f"源檔第一段：**{self.blank_ledes}/{self.folder_topics} 支是空的**"
         )
 
 
@@ -307,14 +311,10 @@ def check_rollup(book: Path, stats: WorldStats) -> list[Problem]:
         # 舊命名的書可能叫 `_總覽.md`；兩種都吃（同 sentinel 的 `_base_stem`）
         legacy = d / f"{ROLLUP_STEM}.md"
         if not legacy.is_file():
-            if folder:
-                out.append(
-                    Problem(
-                        d,
-                        f"資料夾有 {len(folder)} 支源檔但沒有 {ROLLUP_STEM}{AI_SUFFIX}",
-                        "照 `書本模板/story/設定/世界觀/_總覽.ai.md` 的骨架建一支再重生",
-                    )
-                )
+            # **缺 rollup 不是問題，是新的正常狀態**（2026-07-28 功能 12 抉擇 1 A）：
+            # 那支檔廢除了，世界觀總覽改跑 `world-lint --emit`。本項因此降級成
+            # **殘留偵測**：舊檔還在才比對（既有書照抉擇 8 A 不遷移，那份視圖仍然
+            # 要與資料夾一致，否則它會靜默漂成第二份真相）。
             return out
         rollup = legacy
     stats.rollup_found = True
@@ -420,11 +420,42 @@ def check_filename_refs(book: Path, stats: WorldStats) -> list[Problem]:
     return out
 
 
+def check_lede(book: Path, stats: WorldStats) -> list[Problem]:
+    """第 7 項：每支源檔 H1 之後要有非空行（2026-07-28 功能 12 抉擇 3 B）。
+
+    **E1 的直接產物**：抉擇 3 B 廢掉 `## 一句話定位` 那個 LLM 摘要節之後，
+    「這個主題是什麼」的落點改成源檔的第一段，而 `world-lint --emit` 會印它。
+    宣稱了一個格式就要交出守它的檢查器——不然空的那幾支會**靜默印空白**，
+    而挑主題的人拿到一份看起來完整的清單（E2 最後一格）。
+
+    實測一世之尊 4/4 支非空、中位 104 字元、最長 132、**0 支超過 rollup 的 400**。
+    **不設長度門檻**（同 `char-lint` 第 9 項）：這一項只問「有沒有」。
+    """
+    d = book / "story" / "設定" / "世界觀"
+    if not d.is_dir():
+        return []
+    topics = topic_sources(book)
+    blank = [t for t in topics if not lede(d / f"{t}.md")]
+    stats.blank_ledes = len(blank)
+    if not blank:
+        return []
+    return [
+        Problem(
+            d,
+            f"{len(blank)}/{len(topics)} 支源檔的 H1 之後沒有非空行：{'、'.join(blank)}",
+            "`world-lint --emit` 的「一句話」欄讀的就是那一段"
+            "（2026-07-28 抉擇 3 B：`## 一句話定位` 那個 LLM 摘要節廢除，改印源檔第一段）。"
+            "在源檔 H1 底下補一句「這個主題是什麼」即可——**它是源，你寫的就是真相**",
+        )
+    ]
+
+
 def lint_book(book: Path) -> tuple[list[Problem], WorldStats]:
     stats = WorldStats()
     problems = (
         check_topics(book, stats)
         + check_rollup(book, stats)
         + check_filename_refs(book, stats)
+        + check_lede(book, stats)
     )
     return problems, stats

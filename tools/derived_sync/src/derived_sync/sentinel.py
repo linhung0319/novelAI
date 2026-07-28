@@ -96,6 +96,48 @@ def _outline_sources(book: Path) -> list[Path]:
     if d.is_dir():
         out += [p for p in sorted(d.glob("*.md")) if not p.name.startswith("_")]
     return out
+# 幕綱層的索引檔（2026-07-28 功能 12 補上）。arcNN 檔本身由 `beat_sheet_density`
+# 量 B/幕；漏掉的是這個資料夾裡**唯一一支不是 arcNN 的檔**。
+BEAT_DIR = ("story", "幕綱")
+BEAT_INDEX = "_index.md"
+
+
+def _beat_index(book: Path) -> Path | None:
+    """`story/幕綱/_index.md`——四支工具共用的 spine 的家，而它在整套哨兵裡不存在。
+
+    **2026-07-28（功能 12）補進體積與行長兩支目標集**。在此之前**四支目標集
+    0/4 含它**：實測 28,013 B ＝ `SOURCE_BYTES` 的 1.12×、`DERIVED_BYTES` 的
+    2.33×，18 行裝 11,780 字元（平均 654 字元/行）、9 行超過 400、最長 1,949
+    ——而 `derived-sync check` 對它**一個字都沒印**。
+
+    **這是「四份手寫路徑清單漏檔」的第九次**（03 補 `chapters/`、05 補設定層
+    衍生與源、08 補摘要兩支、09 補整個大綱軸、10 補 `story/參照/`）。**但這一次
+    的性質變了**——前八次漏的是「還沒被想到的資料夾／檔」，這一次漏的檔：
+
+    1. **就在 `beat_sheet_density` 每次都會 `glob` 進去的那個資料夾裡**。上面
+       `_ARC_RE` 那一行把它濾掉了，而**那個濾是對的**（它沒有 `## 幕NNN`，
+       不該進 B/幕 那支函式）——**錯的是沒有第二支函式接手**；
+    2. 被**四支工具**逐行解析（`beat_metrics`／`fact_projection`／
+       `decision_projection`／`foreshadow_project` 都靠它的 `全書順序：` 定序），
+       並被 2 支 SKILL.md 整檔讀；
+    3. **而且有一支綠色的測試把這個盲點釘成了預期行為**——
+       `tests/test_sentinel.py::test_non_arc_files_in_beat_dir_ignored` 斷言
+       「幕綱資料夾裡一支 50,000 漢字的 `_index.md` 什麼都不會觸發」。那個斷言
+       對 `beat_sheet_density` **是對的**，只是沒有人問「那誰來量它」。
+
+    也就是說手寫清單的失效模式已經從「遺漏」升級成「**即使人在現場、即使有一支
+    綠色的測試，也會漏**」。**根因不在本輪修**，統一的「這本書有哪些受管檔」
+    清單交功能 14。
+
+    **門檻沿用現成值，不新造第六級**：體積套 `SOURCE_BYTES`（它是 A1 源檔——
+    spine 是作者的創作決定，2026-07-28 起搬進同層的 `_順序.md`），行長套
+    `ROLLUP_LINE_CHARS`（400，同 `大綱/_index.md`——兩支都是「視圖 ≡ 資料夾」
+    形狀而不帶 `.ai.md` 的索引）。
+    """
+    p = book.joinpath(*BEAT_DIR, BEAT_INDEX)
+    return p if p.is_file() else None
+
+
 def _reference_sources(book: Path) -> list[Path]:
     """`story/參照/` 底下**非 append log** 的檔（就緒／結構／各代舊名）。
 
@@ -160,6 +202,13 @@ def beat_sheet_density(book: Path, limit: int = BEAT_BYTES_PER_BEAT) -> list[Fin
     門檻取自實測分佈：健康的落在 1378–2211 B/幕（一世之尊 arc01–arc04、芯片巫師
     全三段、harry_potter），漂移的從 2872 起跳並一路升到 9113（一世之尊 arc05 之後）。
     2500 是這兩群之間的空隙。
+
+    **`_ARC_RE` 濾掉 `_index.md` 是對的，但那不代表沒有人該量它**（2026-07-28
+    功能 12）：這支函式量的是 B/幕，而索引檔沒有 `## 幕NNN`，除以零沒有意義。
+    問題是**在功能 12 之前沒有第二支函式接手**——於是「幕綱資料夾裡一支 28,013 B
+    的檔什麼都不會觸發」變成一條被 `test_non_arc_files_in_beat_dir_ignored`
+    背書的行為。現在體積歸 `oversized_sources`、行長歸 `long_lines`，
+    兩支都走 `_beat_index()`（見那裡的第九次漏檔紀錄）。
     """
     out: list[Finding] = []
     d = book / "story" / "幕綱"
@@ -307,6 +356,28 @@ def oversized_sources(book: Path, limit: int = SOURCE_BYTES) -> list[Finding]:
                     "**搬之前先印保真率交作者確認**（見 `就緒.schema.md`）",
                 )
             )
+    # `story/幕綱/_index.md`（2026-07-28 功能 12 補上，見 `_beat_index`）。**hint 與前
+    # 五類都不同**：這支檔一開始就只該裝「每支 arc 一列」，而實測 18 行裡 11 行是 arc
+    # 概覽散文（平均 969 字元、最長 1,949），另有一行 652 字元的檔頭沿革與一行 310
+    # 字元的選用結構公式複本——**三種東西，三個不同的家，一支檔**。
+    beat_index = _beat_index(book)
+    if beat_index is not None:
+        size = _size(beat_index)
+        if size > limit:
+            out.append(
+                Finding(
+                    kind="源檔肥大",
+                    path=beat_index,
+                    detail=f"{size} B（建議 ≤{limit}）",
+                    hint="幕綱索引**沒有拆檔也沒有升級形態這條路**——它是視圖，"
+                    "一支 arc 一列就該是全部。變大一定是裝了別人的東西："
+                    "arc 概覽散文的權威是 `story/幕綱/arcNN.md` 自己（全書視圖跑 "
+                    "`beat-lint --emit`，別在這裡抄第二份）；選用結構公式屬大綱的 "
+                    "`## 選用結構公式`（本檔只指路）；帶日期的沿革屬 "
+                    "story/參照/裁決流.md（`標的`＝該索引檔），進度跑 `readiness`；"
+                    "`全書順序：` 那一行屬同層的 `_順序.md`（A1 源，`beat-lint` 守）",
+                )
+            )
     return out
 
 
@@ -401,6 +472,10 @@ def long_lines(
       豁免的理由見下。
     - **`story/00-摘要.ai.md`／`00-摘要.md`（2026-07-27 功能 08 補上）**
       → 沿用上面兩級（800／600），**不新造第五級門檻**。
+    - **`story/幕綱/_index.md`（2026-07-28 功能 12 補上，見 `_beat_index`）**
+      → 同 `rollup_limit`（400），與 `大綱/_index.md` 同一把尺（兩支都是
+      「視圖 ≡ 資料夾」形狀而不帶 `.ai.md` 的索引）。實測 9 行超過 400、
+      最長 1,949——**第九次漏檔，而這次漏的檔就在既有函式已經走進去的資料夾裡**。
 
     事實流／裁決流是 append log，有投影工具、且天生一行一筆——不受此限。
 
@@ -475,6 +550,16 @@ def long_lines(
     if outline_index.is_file():
         targets.append((outline_index, rollup_limit))
         outline.add(outline_index)
+    # **幕綱索引（2026-07-28 功能 12 補上）套 rollup 那一級（400），不新造門檻**：
+    # 它與 `大綱/_index.md` 是同一種檔（「視圖 ≡ 資料夾」形狀、不帶 `.ai.md`）。
+    # 實測 18 行裝 11,780 字元（平均 654 字元/行）、9 行超過 400、最長 1,949。
+    # **hint 要另立一個 set，不能靠 limit 判**——400 已經同時給設定層 rollup、
+    # `chapters/_index.ai.md` 與 `大綱/_index.md` 用，limit 分不出病徵。
+    beat_index_targets: set[Path] = set()
+    beat_index = _beat_index(book)
+    if beat_index is not None:
+        targets.append((beat_index, rollup_limit))
+        beat_index_targets.add(beat_index)
 
     # 設定層非 rollup 檔的病徵不是「表格 cell」而是「一條分析／一個 bullet 長成
     # 一份沿革」，所以 hint 分開寫。**兩種 hint 都提 `story/參照/裁決流.md`**——
@@ -498,6 +583,16 @@ def long_lines(
         "`## 卷級方向（卷X·本卷權威）` 一節、同卷其餘檔只指路。"
         "門檻取自 n=11 的實測空隙（409 → 723 之間取 600），沿用設定層源那一級"
     )
+    # 幕綱索引的病徵是**一列 arc 概覽長成整個 arc 的第三版改寫**（實測那 11 列對
+    # 同名 `arcNN.md` 的 8-gram 保真率只有 4.2–35.8%——它不是摘要，是走樣的複本），
+    # 不是「表格 cell 被當日誌用」也不是「一份沿革被塞進一行」，所以 hint 分開寫。
+    beat_index_hint = (
+        "索引的一列只寫「這個 arc 的幕號範圍與號段」，**不複述這個 arc 演了什麼**"
+        "——那是 `story/幕綱/arcNN.md` 自己的內容，全書視圖跑 `beat-lint --emit`"
+        "（實測這裡的 arc 概覽對同名 arc 檔的 8-gram 保真率只有 4.2–35.8%，"
+        "它已經漂成第二份真相）。選用結構公式屬大綱的 `## 選用結構公式`（本檔只指路）；"
+        "帶日期的沿革屬 story/參照/裁決流.md（`標的`＝該索引檔）"
+    )
     settings_limits = {settings_derived_limit, settings_source_limit}
     for p, limit in targets:
         worst = 0
@@ -515,7 +610,9 @@ def long_lines(
                     path=p,
                     detail=f"{count} 行超過 {limit} 字（最長 {worst} 字，第 {worst_no} 行）",
                     hint=(
-                        outline_hint
+                        beat_index_hint
+                        if p in beat_index_targets
+                        else outline_hint
                         if p in outline
                         else settings_hint
                         if limit in settings_limits

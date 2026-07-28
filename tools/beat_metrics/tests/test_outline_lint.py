@@ -205,6 +205,31 @@ def test_index_row_order_must_increase(book: Path):
     assert "arc03 之後是 arc02" in problems[0]
 
 
+def test_index_must_have_no_sections(book: Path):
+    """索引的節枚舉是**空集合**（`大綱.schema.md`「索引檔」：一列只寫
+    `arcNN：名稱 —— 狀態`），同 `DERIVED_SECTIONS["風格"]` ＝空 tuple 的作法。
+
+    實測一世之尊長出了 `## 卷一整體結構`——**那是選用結構公式的第四份**（權威在
+    各大綱檔的 `## 選用結構公式`，第 12 項守），而且它指向 11 已廢除的
+    `參照/結構.md`。在功能 12 之前零守衛：`outline-lint` 的節枚舉只套 `OutlineFile`
+    （arc／全書版），索引走 `_check_index` 另一條路。
+    """
+    _write(book, index=INDEX_OK + "\n## 卷一整體結構\n\n起承轉合：起＝arc01｜承＝arc02。\n")
+    problems = [p for p in lint(book) if "`##` 節" in p]
+    assert len(problems) == 1
+    assert "卷一整體結構" in problems[0]
+    assert "索引不複述" in problems[0]
+
+
+def test_clean_index_has_no_sections(book: Path):
+    """正例：只有清單列的索引不報，而覆蓋率行照樣印那個 0。"""
+    _write(book)
+    assert [p for p in lint(book) if "`##` 節" in p] == []
+    _, stats = lint_report(book)
+    assert stats.index_sections == 0
+    assert "枚舉外的 `##` 節 0 個" in stats.render()
+
+
 # ------------------------------------------------------------------ 第 4 項：引用
 
 

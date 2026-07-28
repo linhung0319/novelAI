@@ -489,11 +489,18 @@ def test_only_the_first_table_in_the_section_is_the_index(tmp_path):
     assert stats.index_rows == 2
 
 
-def test_missing_index_is_reported_when_chapters_exist(tmp_path):
+def test_missing_index_is_the_new_normal(tmp_path):
+    """**缺 `_index.ai.md` 不再是問題**（2026-07-28 功能 12 抉擇 1 A）。
+
+    那支檔廢除了，章序的權威改由 `ch-lint --emit` 回答——它印的就是本函式為了
+    比對而算出來的那一份（抉擇 4 C：誰重算誰印）。第 8 項因此降級成**殘留偵測**：
+    舊檔還在才比對（既有書照抉擇 8 A 不遷移，那份視圖仍要與各章 front-matter 一致）。
+    """
     book = _book(tmp_path, dict(CLEAN))
     (book / "chapters" / "_index.ai.md").unlink()
     problems, _ = lint_report(book)
-    assert _only(problems, "不存在——它是章序的權威來源")
+    assert _only(problems, "章序的權威") == []
+    assert problems == []
 
 
 # --------------------------------------------------------------- 失效行為

@@ -122,7 +122,7 @@ def scan_arc(path: Path, arc: str) -> ArcBeats:
 
 
 def load_book(book: Path) -> list[ArcBeats]:
-    """依 `幕綱/_index.md`「全書順序」定序——與 foreshadow_project 同源的紀律：
+    """依 `幕綱/_順序.md`「全書順序」定序——與 foreshadow_project 同源的紀律：
     **判先後不能比幕號大小**（arc 會亂序下沉，幕號不代表全書順序）。
     """
     d = book / "story" / "幕綱"
@@ -132,9 +132,32 @@ def load_book(book: Path) -> list[ArcBeats]:
     if not files:
         raise ScanError(f"{d} 下沒有 arcNN.md")
 
-    order = _spine(d / "_index.md")
+    order = _spine(spine_path(book))
     ranked = sorted(files, key=lambda a: (order.get(a, len(order)), a))
     return [scan_arc(files[a], a) for a in ranked]
+
+
+# spine 的落點（2026-07-28 功能 12 抉擇 2 A）。**新落點優先、舊落點回退。**
+#
+# `全書順序：` 是作者的創作決定（哪一段先發生），沒有任何檔算得出來——它是 A1 源，
+# 而它原本住在一支被 `beat-lint` 當「視圖 ≡ 資料夾」驗的索引檔裡（`設計原則.md` A1
+# 同輪補的那句：有 lint 在驗它 ≡ 別的檔，那條 lint 就是一條 inbound 規則）。
+# 一支檔同時裝「權威在自己身上的源」與「權威在別處的視圖」＝六問 Q0 的違反。
+#
+# **回退不是靜默的**：`beat-lint` 的覆蓋率行印它實際讀到哪一支，舊落點還在時多印
+# 一行殘留。系統在功能 10／11 已經罵過「一句半真的相容承諾比沒有承諾更糟」——
+# 解法不是拒絕回退（病例書照抉擇 8 A 不遷移），是**讓回退可見**。
+SPINE_FILES = ("_順序.md", "_index.md")
+
+
+def spine_path(book: Path) -> Path:
+    """回實際要讀的 spine 檔。**兩個落點都不在時回新落點**，讓錯誤訊息指向該建的那支。"""
+    d = book / "story" / "幕綱"
+    for name in SPINE_FILES:
+        p = d / name
+        if p.is_file():
+            return p
+    return d / SPINE_FILES[0]
 
 
 _SPINE_RE = re.compile(r"全書順序：(.+)$")
@@ -142,7 +165,7 @@ _ARC_TOKEN_RE = re.compile(r"arc[0-9A-Za-z]+")
 
 
 def parse_spine(text: str) -> dict[str, int]:
-    """`幕綱/_index.md` 的「全書順序」→ {arc: 排名}。
+    """`幕綱/_順序.md`（舊書：`_index.md`）的「全書順序」→ {arc: 排名}。
 
     **這份解析的唯一真相在 `tools/fact_projection/src/fact_projection/fold.py:parse_spine`**；
     工具間零相依（所有 tools/*/pyproject.toml 皆 dependencies = []），故複製最小片段。
@@ -164,12 +187,15 @@ def parse_spine(text: str) -> dict[str, int]:
                 arcs.append(tok)
         if arcs:
             return {a: r for r, a in enumerate(arcs)}
-    raise ScanError("幕綱 _index 找不到可解析的『全書順序：』arc 序列")
+    raise ScanError("幕綱順序檔找不到可解析的『全書順序：』arc 序列")
 
 
 def _spine(index: Path) -> dict[str, int]:
     if not index.is_file():
-        raise ScanError(f"找不到幕綱索引：{index}（「全書順序：」是四支工具共用的定序來源）")
+        raise ScanError(
+            f"找不到幕綱順序檔：{index}"
+            f"（「全書順序：」是四支工具共用的定序來源；舊書可能還住在 `_index.md`）"
+        )
     return parse_spine(read_text(index))
 
 

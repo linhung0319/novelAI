@@ -18,6 +18,7 @@ from .fold import (
     Slot,
     parse_spine,
     project,
+    spine_path as _spine_path,
 )
 from .objects import (
     KINDS as OBJECT_KINDS,
@@ -240,7 +241,7 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"  [x] {p}", file=sys.stderr)
             return 1
 
-    spine_path = args.book / "story" / "幕綱" / "_index.md"
+    spine_file = _spine_path(args.book)
     notes: list[str] = []
     try:
         events, mode = collect_events(args.book, orphans=notes)
@@ -251,7 +252,7 @@ def main(argv: list[str] | None = None) -> int:
                 f"{len(events) - legacy_lines} 行走章 delta）。"
                 "**世代是逐行判的**：舊格式那些行的集合維度不套操作串，其餘檢查照跑"
             )
-        spine = parse_spine(spine_path.read_text(encoding="utf-8"))
+        spine = parse_spine(spine_file.read_text(encoding="utf-8"))
         slots = project(
             events,
             spine,
@@ -370,9 +371,7 @@ def _history_main(args: argparse.Namespace) -> int:
     entity, token = entity.strip(), token.strip()
     try:
         events, _mode = collect_events(args.book)
-        spine = parse_spine(
-            (args.book / "story" / "幕綱" / "_index.md").read_text(encoding="utf-8")
-        )
+        spine = parse_spine(_spine_path(args.book).read_text(encoding="utf-8"))
     except FileNotFoundError as e:
         print(f"找不到檔案：{e}", file=sys.stderr)
         return 1
@@ -425,9 +424,7 @@ def refs_main(argv: list[str] | None = None) -> int:
 
     try:
         events, _mode = collect_events(args.book)
-        spine = parse_spine(
-            (args.book / "story" / "幕綱" / "_index.md").read_text(encoding="utf-8")
-        )
+        spine = parse_spine(_spine_path(args.book).read_text(encoding="utf-8"))
     except FileNotFoundError as e:
         print(f"找不到檔案：{e}", file=sys.stderr)
         return 1

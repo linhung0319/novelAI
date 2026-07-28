@@ -69,11 +69,27 @@ def _pos(spine: dict[str, int], m: Mark) -> tuple[int, int]:
     return (spine[m.arc], m.beat)
 
 
+# spine 的落點（2026-07-28 功能 12 抉擇 2 A）：**新落點優先、舊落點回退**。
+# `全書順序：` 是 A1 源（作者的創作決定），2026-07-28 從索引檔搬進同層的 `_順序.md`
+# ——它原本與一支「視圖 ≡ 資料夾」的索引同居一檔（六問 Q0 的違反）。
+# 舊書照抉擇 8 A 不遷移，所以回退保留；**讓回退可見的責任在 `beat-lint`**。
+SPINE_FILES = ("_順序.md", "_index.md")
+
+
+def spine_path(book: Path) -> Path:
+    d = book / "story" / "幕綱"
+    for name in SPINE_FILES:
+        p = d / name
+        if p.is_file():
+            return p
+    return d / SPINE_FILES[0]
+
+
 def build(book: Path) -> Report:
     beats_dir = book / "story" / "幕綱"
-    index = beats_dir / "_index.md"
+    index = spine_path(book)
     if not index.is_file():
-        raise ScanError(f"找不到幕綱索引：{index}")
+        raise ScanError(f"找不到幕綱順序檔：{index}（舊書可能還住在 `_index.md`）")
     spine = parse_spine(index.read_text(encoding="utf-8"))
 
     scans: list[ArcScan] = []

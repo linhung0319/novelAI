@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 
 from .chapters import lint_report as ch_lint_report
+from .emit import emit_beats, emit_chapters, emit_outline
 from .lint import lint_report
 from .motif import ArcMotif, Finding, detect, measure
 from .outline import lint_report as outline_lint_report
@@ -154,6 +155,25 @@ def main(argv: list[str] | None = None) -> int:
 CLEAN = "幕綱格式乾淨（幕號／前因／八欄／spine／分區）"
 
 
+def _emit(fn, book: Path) -> int:
+    """投影模式的共用出口（`--emit`）。**一律 exit 0**——它是投影不是閘門
+    （同 `structure-project`／`readiness`）。要驗格式就跑不帶 `--emit` 的同一支指令。
+    """
+    try:
+        report, stats = fn(book)
+    except ScanError as e:
+        print(f"掃描錯誤：{e}", file=sys.stderr)
+        return 0  # 投影不擋路：讀不到就說讀不到，不改變呼叫者的 exit code
+    except OSError as e:
+        print(f"讀取失敗：{e}", file=sys.stderr)
+        return 0
+    # 覆蓋率行由投影自己嵌在表格與殘留節之間（同 `structure-project` 的第四節），
+    # 這裡不再印一次——`stats` 留給測試斷言用。
+    print(report, end="")
+    _ = stats
+    return 0
+
+
 def lint_main(argv: list[str] | None = None) -> int:
     """格式閘門。輸出契約照抄 `fact_projection/cli.py:_print_lint`：
 
@@ -166,9 +186,16 @@ def lint_main(argv: list[str] | None = None) -> int:
         "內容好壞交 `beat-test`，漂移統計交 `beat-metrics`。",
     )
     ap.add_argument("--book", required=True, type=Path, help="書資料夾路徑（含 story/）")
+    ap.add_argument(
+        "--emit",
+        action="store_true",
+        help="（投影模式）印出這一軸的 rollup 視圖＋覆蓋率＋舊 rollup 殘留偵測，**不驗格式、一律 exit 0**（功能 12 抉擇 4 C：誰重算誰印）",
+    )
     args = ap.parse_args(argv)
 
     _force_utf8()
+    if args.emit:
+        return _emit(emit_beats, args.book)
     try:
         problems, stats = lint_report(args.book)
     except ScanError as e:
@@ -212,9 +239,16 @@ def ch_lint_main(argv: list[str] | None = None) -> int:
         "`derived-sync validate` 同類；內容好壞交 `write-test`，漂移統計交 `prose-metrics`。",
     )
     ap.add_argument("--book", required=True, type=Path, help="書資料夾路徑（含 chapters/）")
+    ap.add_argument(
+        "--emit",
+        action="store_true",
+        help="（投影模式）印出這一軸的 rollup 視圖＋覆蓋率＋舊 rollup 殘留偵測，**不驗格式、一律 exit 0**（功能 12 抉擇 4 C：誰重算誰印）",
+    )
     args = ap.parse_args(argv)
 
     _force_utf8()
+    if args.emit:
+        return _emit(emit_chapters, args.book)
     try:
         problems, stats = ch_lint_report(args.book)
     except ScanError as e:
@@ -261,9 +295,16 @@ def outline_lint_main(argv: list[str] | None = None) -> int:
         "與 `beat-lint`／`ch-lint` 同類；內容好壞交 `outline-test`。",
     )
     ap.add_argument("--book", required=True, type=Path, help="書資料夾路徑（含 story/）")
+    ap.add_argument(
+        "--emit",
+        action="store_true",
+        help="（投影模式）印出這一軸的 rollup 視圖＋覆蓋率＋舊 rollup 殘留偵測，**不驗格式、一律 exit 0**（功能 12 抉擇 4 C：誰重算誰印）",
+    )
     args = ap.parse_args(argv)
 
     _force_utf8()
+    if args.emit:
+        return _emit(emit_outline, args.book)
     try:
         problems, stats = outline_lint_report(args.book)
     except ScanError as e:

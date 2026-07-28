@@ -6,6 +6,7 @@ from pathlib import Path
 
 from .char_lint import lint_book as char_lint_book
 from .core import check_book, content_hash, source_digest_for_derived, stamp
+from .emit import emit_characters, emit_world
 from .readiness import lint_book as readiness_lint_book
 from .readiness import project_book as readiness_project
 from .sentinel import run as run_sentinel
@@ -48,6 +49,19 @@ def _print_sentinel(book: Path) -> None:
         rel = f.path.relative_to(book) if f.path.is_relative_to(book) else f.path
         print(f"[!]    {f.kind:<6} {rel}  {f.detail}")
         print(f"           {f.hint}")
+
+
+def _emit(fn, book: Path) -> int:
+    """投影模式的共用出口（`--emit`）。**一律 exit 0**——它是投影不是閘門
+    （同 `readiness`／`structure-project`）。要驗格式就跑不帶 `--emit` 的同一支指令。
+    """
+    try:
+        report, _stats = fn(book)
+    except (FileNotFoundError, ValueError, OSError) as e:
+        print(f"讀取失敗：{e}", file=sys.stderr)
+        return 0  # 投影不擋路
+    print(report, end="")
+    return 0
 
 
 def _cmd_check(args: argparse.Namespace) -> int:
@@ -332,8 +346,15 @@ def world_lint_main(argv: list[str] | None = None) -> int:
         "以及幕綱裡的檔名引用不懸空。零 LLM、可覆算。"
     )
     ap.add_argument("--book", required=True, type=Path, help="書資料夾路徑")
+    ap.add_argument(
+        "--emit",
+        action="store_true",
+        help="（投影模式）印出這一軸的 rollup 視圖＋覆蓋率＋舊 rollup 殘留偵測，**不驗格式、一律 exit 0**（功能 12 抉擇 4 C：誰重算誰印）",
+    )
     _force_utf8()
     args = ap.parse_args(argv)
+    if args.emit:
+        return _emit(emit_world, args.book)
     try:
         return _cmd_world_lint(args)
     except (FileNotFoundError, ValueError) as e:
@@ -358,8 +379,15 @@ def char_lint_main(argv: list[str] | None = None) -> int:
         "單檔與目錄形態不得並存、幕綱角色欄的未知 token。零 LLM、可覆算。"
     )
     ap.add_argument("--book", required=True, type=Path, help="書資料夾路徑")
+    ap.add_argument(
+        "--emit",
+        action="store_true",
+        help="（投影模式）印出這一軸的 rollup 視圖＋覆蓋率＋舊 rollup 殘留偵測，**不驗格式、一律 exit 0**（功能 12 抉擇 4 C：誰重算誰印）",
+    )
     _force_utf8()
     args = ap.parse_args(argv)
+    if args.emit:
+        return _emit(emit_characters, args.book)
     try:
         return _cmd_char_lint(args)
     except (FileNotFoundError, ValueError) as e:

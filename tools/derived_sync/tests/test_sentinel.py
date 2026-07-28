@@ -49,9 +49,54 @@ def test_bloated_beat_sheet_fires(tmp_path):
 
 
 def test_non_arc_files_in_beat_dir_ignored(tmp_path):
+    """**射程宣告，不是豁免宣告**（2026-07-28 功能 12 改寫 docstring，斷言原樣保留）。
+
+    `beat_sheet_density` 量的是 B/幕，而 `_index.md` 沒有 `## 幕NNN`——所以它不該
+    進這支函式，這個斷言是對的。**但在功能 12 之前沒有第二支函式接手**，於是這一支
+    綠色的測試把「幕綱資料夾裡一支 50,000 漢字的 `_index.md` 什麼都不會觸發」釘成了
+    預期行為（第九次「四份手寫路徑清單漏檔」，見 `sentinel._beat_index`）。
+    接手的兩支見下面兩支姊妹測試。
+    """
     book = _book(tmp_path)
     (book / "story" / "幕綱" / "_index.md").write_text("巨" * 50000, encoding="utf-8")
     assert beat_sheet_density(book) == []
+
+
+def test_beat_index_size_is_measured(tmp_path):
+    """**第九次「四份手寫路徑清單漏檔」**（功能 12）：在此之前四支目標集 0/4 含它，
+    於是實測 28,013 B（`SOURCE_BYTES` 的 1.12×）完全靜音——而它是四支工具共用
+    spine 的家、被 2 支 SKILL.md 整檔讀，**就在 `beat_sheet_density` 每次都會走進去
+    的那個資料夾裡**。"""
+    book = _book(tmp_path)
+    (book / "story" / "幕綱" / "_index.md").write_text("巨" * 30000, encoding="utf-8")
+    (f,) = oversized_sources(book)
+    assert f.path.name == "_index.md" and f.kind == "源檔肥大"
+
+
+def test_beat_index_hint_is_its_own(tmp_path):
+    """四種寄居內容各有各的家，hint 要逐一指出來（`設計原則.md` 新增的 F4：
+    schema 規定某欄只能裝 X 時，必須同時指出非 X 的內容該去哪）。"""
+    book = _book(tmp_path)
+    (book / "story" / "幕綱" / "_index.md").write_text("巨" * 30000, encoding="utf-8")
+    (f,) = oversized_sources(book)
+    assert "beat-lint --emit" in f.hint  # arc 概覽
+    assert "選用結構公式" in f.hint  # 公式複本
+    assert "story/參照/裁決流.md" in f.hint  # 沿革
+    assert "_順序.md" in f.hint  # spine
+
+
+def test_beat_index_row_uses_the_rollup_limit(tmp_path):
+    """與 `大綱/_index.md` 同一把尺（400）——兩支都是「視圖 ≡ 資料夾」形狀而
+    **不帶 `.ai.md`** 的索引。實測 9 行超過 400、最長 1,949。"""
+    book = _book(tmp_path)
+    (book / "story" / "幕綱" / "_index.md").write_text(
+        "- arc01：幕001–幕009（號段 001–100）　" + "概" * 500 + "\n", encoding="utf-8"
+    )
+    (f,) = long_lines(book)
+    assert f.path.name == "_index.md" and "400" in f.detail
+    # hint 不能沿用 `大綱/_index.md` 那一份：400 同時給四種檔用，limit 分不出病徵
+    assert "8-gram 保真率只有 4.2–35.8%" in f.hint
+    assert "n=11" not in f.hint
 
 
 # ---------------------------------------------------------------- 源檔

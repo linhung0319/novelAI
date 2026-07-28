@@ -25,7 +25,7 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .scan import ScanError, parse_spine, read_text
+from .scan import SPINE_FILES, ScanError, parse_spine, read_text, spine_path
 from .structure import EMPTY_VALUES, SKELETON_MARK, ArcStructure, arc_files, parse_book
 
 FIELDS = ("角色", "時空", "行動", "衝突", "結果", "前因", "伏筆", "結構階段")
@@ -61,6 +61,34 @@ DECISION_LOG = ("裁決流.md", "裁決流.co.md")
 # 零比對、零格式（就緒儀表狀態格／幕綱檔頭散文／測試報告不落檔）。
 TEST_RECORD_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})\s*[·・]\s*(\d+)高(\d+)中(\d+)低$")
 
+# ---- 幕綱索引 `story/幕綱/_index.md`（2026-07-28 功能 12 補上三項守衛）
+#
+# **這支檔在功能 12 之前是全書「壞了永遠不會發現」最集中的一格**：9 項裡 6 項在它
+# 身上。它是四支工具共用 spine 的家、28,013 B、5 天長 8.8×，而**它在整套工具鏈裡
+# 不存在**——`.md` 讓 `check`／`validate` 的 `rglob("*.ai.md")` 掃不到；`sentinel`
+# 四支手寫路徑清單沒有一支含它（功能 12 已補，見 `sentinel._beat_index`）；
+# `beat-lint` 只讀 `全書順序：` 那一行，其餘 11,647 字元不看。
+BEAT_INDEX_NAME = "_index.md"
+BEAT_DIR_LABEL = "幕綱"
+# 列的形狀：`- arc01：幕001–幕009（號段 001–100）　起（…）`（`幕綱.schema.md`「索引檔」）
+_BEAT_INDEX_ROW_RE = re.compile(r"^-\s*(arc[0-9A-Za-z]+)\s*[：:]")
+_BEAT_SPAN_RE = re.compile(r"幕(\d+)\s*[–—－-]\s*幕(\d+)")
+# 選用結構公式那一行。**權威在大綱的 `## 選用結構公式`**（功能 11 定的家，
+# `outline-lint` 第 12 項守），本檔只准指路——見 `_check_index` 的第三段。
+_FORMULA_LINE_RE = re.compile(r"^-\s*選用結構公式\s*[：:]\s*(.*)$")
+# 指路＝帶一個指向大綱層的路徑指標。判準與 `outline-lint` 第 11 項「同卷其餘檔
+# 只准指路」同形（那一項驗的也是「提到它的那一行必須帶路徑指標」）。
+_OUTLINE_POINTER_RE = re.compile(r"(01-大綱\.md|大綱/[^\s`）)]+\.md|大綱/)")
+
+# 檔內書內路徑的目的地存在性（`設計原則.md` E1「目的地承諾」推論）。
+# **這四個常數是 `outline.py` 第 9 項的最小複製**（套件內同層，但兩支 lint 的射程
+# 不同：那一支掃 `story/大綱/`，這一支掃 `story/幕綱/`）。射程刻意窄的理由見
+# `_check_destinations`。
+_MD_REF_RE = re.compile(r"`([^`\n]+?\.md)`")
+BOOK_PREFIXES = ("story/", "chapters/", "參照/", "幕綱/", "大綱/", "設定/", "物件/")
+_PLACEHOLDER_RE = re.compile(r"(arcNN|chNNNN|<[^>]+>|＜[^＞]+＞|NNNN|NNN)")
+_ARC_RANGE_RE = re.compile(r"arc(\d+)\s*[–—-]\s*arc(\d+)")
+
 
 @dataclass
 class LintStats:
@@ -91,10 +119,30 @@ class LintStats:
     object_files: int = 0
     test_records: int = 0
     test_records_bad: int = 0
+    # 幕綱索引（2026-07-28 功能 12）。**`index_span_missing` 要單獨印**：一列沒宣告
+    # 幕號範圍不是問題（schema 不強制），但「比對了幾列」與「幾列根本沒得比」是兩個
+    # 數字——只印前者就是用命中率冒充可用率（`設計原則.md` E2，06 補的推論）。
+    index_rows: int = 0
+    index_mismatch: int = 0
+    index_unordered: int = 0
+    index_spans: int = 0
+    index_span_mismatch: int = 0
+    index_span_missing: int = 0
+    formula_lines: int = 0
+    formula_no_pointer: int = 0
+    path_refs: int = 0
+    path_missing: int = 0
+    # spine 實際讀到哪一支檔（2026-07-28 功能 12 抉擇 2 A）。**要印出來**：
+    # 回退本身是一個要被看見的狀態，不是一句半真的相容承諾（功能 10／11 的教訓）。
+    spine_file: str = ""
+    spine_legacy: bool = False
     notes: list[str] = field(default_factory=list)
     hints: list[str] = field(default_factory=list)
 
     def render(self) -> str:
+        spine = f"spine 讀自 `{self.spine_file or '（找不到）'}`" + (
+            "（**舊落點·回退**）" if self.spine_legacy else ""
+        )
         return (
             f"檢查範圍：{self.arcs} 支 arc／{self.beats} 幕／{self.refs} 條前因／"
             f"{self.marks} 個伏筆標記（{self.mark_names} 名）／"
@@ -102,6 +150,12 @@ class LintStats:
             f"（其中 {self.status_prose_rows} 列的伏筆名全書無標記·不入機械 diff）／"
             f"{self.promise_sections} 個承諾區／{self.exclusions} 條排除線／"
             f"{self.object_files} 支物件檔；"
+            f"索引 {self.index_rows} 列（不符資料夾 {self.index_mismatch}／"
+            f"列序非遞增 {self.index_unordered}／幕號範圍比對 {self.index_spans} 列"
+            f"·**不符 {self.index_span_mismatch}**·未宣告範圍 {self.index_span_missing}／"
+            f"選用公式行 {self.formula_lines} 行·**未指路 {self.formula_no_pointer}**）；"
+            f"{self.path_refs} 筆檔內書內路徑（**目的地不存在 {self.path_missing}**）；"
+            f"{spine}；"
             f"{self.test_records}/{self.arcs} 支 arc 有 `beat-test` 紀錄"
             f"（**格式不合 {self.test_records_bad} 支**·缺紀錄不計入問題數）；"
             f"跳過 {self.skeletons} 支骨架"
@@ -113,18 +167,47 @@ def _base_name(name: str) -> str | None:
     return m.group(1).strip() if m else None
 
 
-def _check_spine(book: Path, arcs: list[ArcStructure], problems: list[str]) -> None:
-    """spine 涵蓋且唯一（V4／V7）。
+def _check_spine(
+    book: Path, arcs: list[ArcStructure], stats: LintStats, problems: list[str]
+) -> None:
+    """spine 涵蓋且唯一（V4／V7），落點是 `_順序.md`（2026-07-28 功能 12 抉擇 2 A）。
 
     `全書順序：` 是四支工具共用的定序來源，卻**零守衛**。漏列一個已拆的 arc，
     `beat-metrics` 2026-07-27 前會靜默退回檔名排序（其餘三支硬報錯）——同一個壞法
     看你先跑哪支工具決定你會不會發現。
+
+    **2026-07-28 搬家的理由**：它是本功能唯一「機械來源答不出來」的那一格（133 字元
+    ／1.1%）——arc 的故事順序是作者的創作決定，A1 源。而它原本住在一支被本 lint 當
+    「視圖 ≡ 資料夾」驗的索引檔裡：**同一支檔裡一半是源、一半是視圖**（六問 Q0）。
+    `設計原則.md` A1 同輪補的那句就是這件事——有 lint 在驗它 ≡ 別的檔，那條 lint
+    就是一條只報錯不產生的 inbound 規則。
+
+    **已駁回「證明它 ≡ 檔名排序後刪掉」**（抉擇 2 C）：實測 10/10 個實例相同，但它
+    省下的是 133 字元，賭上的是系統宣稱了三個月的「arc 可亂序」自由度。見
+    `docs/重構/02-待用構想.md`。
+
+    **回退可見**：舊書照抉擇 8 A 不遷移，所以 `_index.md` 仍讀得到；但覆蓋率行會
+    印實際讀的是哪一支，走回退時多報一行殘留（**只報不擋**）。系統在 10／11 罵過
+    「一句半真的相容承諾比沒有承諾更糟」——解法不是拒絕回退，是讓它可見。
     """
-    index = book / "story" / "幕綱" / "_index.md"
-    where = "幕綱/_index.md"
+    index = spine_path(book)
+    where = f"幕綱/{index.name}"
+    stats.spine_file = index.name
     if not index.is_file():
-        problems.append(f"{where}：不存在——「全書順序：」是四支工具共用的定序來源")
+        problems.append(
+            f"幕綱/{SPINE_FILES[0]}：不存在"
+            f"——「全書順序：」是四支工具共用的定序來源（`幕綱.schema.md`「順序檔」）"
+        )
         return
+    if index.name != SPINE_FILES[0]:
+        stats.spine_legacy = True
+        problems.append(
+            f"{where}：`全書順序：` 還住在舊落點——它是 A1 源"
+            f"（arc 的故事順序是創作決定，沒有任何檔算得出來），"
+            f"而 `{index.name}` 是一支被驗成「視圖 ≡ 資料夾」的索引。"
+            f"搬進同層的 `{SPINE_FILES[0]}`（三行以內）：`git mv` 那一行過去即可。"
+            f"**四支工具仍讀得到舊落點**，所以這是提醒不是停工——但別讓它一直是提醒"
+        )
     text = read_text(index)
     try:
         spine = parse_spine(text)
@@ -153,6 +236,169 @@ def _check_spine(book: Path, arcs: list[ArcStructure], problems: list[str]) -> N
         problems.append(f"{where}：「全書順序」未涵蓋 {a}（該 arc 已拆出幕號）")
     for a in sorted(set(spine) - present):
         problems.append(f"{where}：「全書順序」列了 {a}，但沒有對應的 {a}.md")
+
+
+def _check_index(
+    book: Path, arcs: list[ArcStructure], stats: LintStats, problems: list[str]
+) -> None:
+    """幕綱索引三項（2026-07-28 功能 12）：視圖 ≡ 資料夾／幕號範圍 ≡ 檔內 min·max／
+    列序遞增；外加「選用結構公式那一行只准指路」。
+
+    形狀照抄 `outline.py:_check_index`（大綱層第 3 項），**多一件事**：大綱的索引列
+    只有名稱與狀態，幕綱的索引列宣告了一個**可機械核對的區間**（`幕001–幕009`）。
+    那個區間的權威在 `arcNN.md` 自己的 `## 幕NNN` 標題，所以它是第 7 份「rollup
+    視圖 ≡ 資料夾」比對，也是**第一份把數值區間納入比對的**。
+
+    **這同時是投影器的核心**：`beat-lint --emit` 印的那一份，就是這裡為了比對而
+    算出來的那一份（抉擇 4 C：誰重算誰印，同一行程式，結構上不可能漂）。
+
+    實測一世之尊在此之前：arc 概覽對同名 `arcNN.md` 的 8-gram 保真率只有
+    4.2–35.8%，而**沒有任何東西會發現**（無視圖比對、無 hash、無 stamp）。
+    """
+    index = book / "story" / BEAT_DIR_LABEL / BEAT_INDEX_NAME
+    where = f"{BEAT_DIR_LABEL}/{BEAT_INDEX_NAME}"
+    # **視圖 ≡ 磁碟上有哪些 arc 檔，含骨架**（同 `_check_spine` 的 `present`）：
+    # 一支還沒拆幕的骨架仍然要有它的列，否則「這一段存在但還沒動工」與「這一段
+    # 不存在」在索引上看起來一樣。
+    folder = {a.arc for a in arcs}
+    if not index.is_file():
+        return  # 不存在由 `_check_spine` 報（那一項先跑，訊息更準）
+    text = read_text(index)
+    if SKELETON_MARK in text:
+        stats.notes.append(f"{where}：骨架（`{SKELETON_MARK}`），視圖比對跳過")
+        return
+
+    # 每 arc 的幕號區間——**用 `parse_book()` 已經算好的 beats，零額外解析**。
+    # **骨架不入比對**：它的 `## 幕NNN` 是佔位號，拿它當權威會把索引的正確值報成錯。
+    spans = {
+        a.arc: (min(b.number for b in a.beats), max(b.number for b in a.beats))
+        for a in arcs
+        if a.beats and not a.skeleton
+    }
+
+    rows: list[tuple[str, int, str]] = []  # (arc, lineno, 整列)
+    for i, raw in enumerate(text.splitlines(), start=1):
+        m = _BEAT_INDEX_ROW_RE.match(raw.strip())
+        if m:
+            rows.append((m.group(1), i, raw))
+    listed = [a for a, _, _ in rows]
+    stats.index_rows = len(rows)
+
+    # ---- 視圖 ≡ 資料夾（雙向）
+    missing = sorted(folder - set(listed))
+    extra = sorted(set(listed) - folder)
+    stats.index_mismatch = len(missing) + len(extra)
+    if missing:
+        problems.append(
+            f"{where}：{len(missing)} 支 arc 檔沒有列：{'、'.join(missing)}"
+            f"——索引是那個資料夾的視圖（`幕綱.schema.md`「索引檔」），"
+            f"而 spine 與它同居一檔：漏一列，`beat-sheet` 就看不到那一段存在"
+        )
+    if extra:
+        problems.append(
+            f"{where}：{len(extra)} 列指向不存在的 arc 檔：{'、'.join(extra)}"
+            f"——視圖 ≡ 資料夾（雙向）"
+        )
+
+    # ---- 幕號範圍 ≡ 檔內 min·max
+    for arc, lineno, raw in rows:
+        want = spans.get(arc)
+        if want is None:
+            continue  # 該 arc 還沒拆出幕號：索引可以先寫檔名列
+        m = _BEAT_SPAN_RE.search(raw)
+        if not m:
+            stats.index_span_missing += 1
+            continue  # 沒宣告區間不報——schema 不強制每列都寫（見覆蓋率行）
+        got = (int(m.group(1)), int(m.group(2)))
+        stats.index_spans += 1
+        if got != want:
+            stats.index_span_mismatch += 1
+            problems.append(
+                f"{where} 第 {lineno} 行：{arc} 宣告 幕{got[0]:03d}–幕{got[1]:03d}，"
+                f"而 {arc}.md 實際是 幕{want[0]:03d}–幕{want[1]:03d}"
+                f"——這一欄是視圖不是第二個家，機械來源是該檔的 `## 幕NNN` 標題"
+            )
+
+    # ---- 列序遞增（同 `outline-lint` 第 3 項：逆序的索引讓人以為那是「最近改過的」排序）
+    unordered = [
+        (listed[i - 1], listed[i]) for i in range(1, len(listed)) if listed[i] <= listed[i - 1]
+    ]
+    stats.index_unordered = len(unordered)
+    if unordered:
+        a, b = unordered[0]
+        problems.append(
+            f"{where}：列序非遞增 {len(unordered)} 處（第一處：{a} 之後是 {b}）"
+            f"——索引是視圖，序就是 arc 序。**故事順序不寫在這裡**，"
+            f"它是同層 `_順序.md` 的 `全書順序：`"
+        )
+
+    # ---- 選用結構公式那一行只准指路（2026-07-28 功能 12 步驟 4）
+    #
+    # 11 把選用公式的權威給了大綱的 `## 選用結構公式`（`outline-lint` 第 12 項守），
+    # 而實測**這一行是第三份**：310 字元，與大綱層 12 支檔的 8-gram 重疊只有 **10.7%**
+    # ——比 11 廢掉的 `結構.md` 那一份（16.6%）分歧得更厲害，且零守衛。
+    # **判準是路徑指標的有無，不是長度**：門檻是任意的（06 抉擇 5 A），指標不是。
+    for raw in text.splitlines():
+        m = _FORMULA_LINE_RE.match(raw.strip())
+        if not m:
+            continue
+        stats.formula_lines += 1
+        if not _OUTLINE_POINTER_RE.search(m.group(1)):
+            stats.formula_no_pointer += 1
+            problems.append(
+                f"{where}：`選用結構公式：` 那一行沒有指向大綱層的路徑指標"
+                f"——公式的權威是大綱的 `## 選用結構公式`"
+                f"（2026-07-28 功能 11 定的家，`outline-lint` 第 12 項守）。"
+                f"**本檔只指路、不複述**：寫成「見 `story/01-大綱.md` 的 "
+                f"`## 選用結構公式`」即可；集合差跑 `structure-project`"
+            )
+        break
+
+
+def _check_destinations(book: Path, stats: LintStats, problems: list[str]) -> None:
+    """檔內指名的書內路徑存在（`設計原則.md` E1「目的地承諾」推論）。
+
+    **第 7 個實例**（前六：幕綱設計註→裁決流／`derived-sync` 的 `missing_destinations`
+    ／`decision-lint` 兩處／`ch-lint` 的 `風格` 欄／`summary-lint` 的幕號·arc 引用／
+    `outline-lint` 第 9 項）。射程＝`story/幕綱/*.md`，**含 `_index.md`**——那正是
+    這一項要抓的地方：實測一世之尊 `幕綱/_index.md` 有 **4 處**引用 `參照/結構.md`，
+    而那支檔 2026-07-28（功能 11）已廢除。檔頭甚至逐字寫著「arc 概覽同步自
+    `參照/結構.md`」——**一支檔宣告自己的來源是系統剛剛刪掉的檔，零守衛。**
+
+    **射程刻意窄**（同 `outline-lint` 第 9 項）：只認反引號裡、以書內資料夾開頭的
+    `.md`。schema 檔、`技巧知識庫/`、佔位寫法（`arcNN.md`）、範圍寫法都不是「指名
+    一個檔」——不排除的話，一支完全合法的幕綱會因為引用了自己的 schema 而被報。
+    """
+    d = book / "story" / BEAT_DIR_LABEL
+    if not d.is_dir():
+        return
+    missing: dict[str, set[str]] = {}
+    for p in sorted(d.glob("*.md")):
+        where = f"{BEAT_DIR_LABEL}/{p.name}"
+        for m in _MD_REF_RE.finditer(read_text(p)):
+            ref = m.group(1).strip()
+            if not ref.startswith(BOOK_PREFIXES):
+                continue
+            if ".schema." in ref or _PLACEHOLDER_RE.search(ref):
+                continue
+            if _ARC_RANGE_RE.search(ref) or "–" in ref or "—" in ref:
+                continue
+            stats.path_refs += 1
+            rel = ref[len("story/") :] if ref.startswith("story/") else ref
+            if (book / "story" / rel).is_file() or (book / ref).is_file():
+                continue
+            missing.setdefault(ref, set()).add(where)
+    if not missing:
+        return
+    stats.path_missing = len(missing)
+    shown = "、".join(
+        f"`{r}`（{'、'.join(sorted(w))}）" for r, w in sorted(missing.items())[:4]
+    ) + ("…" if len(missing) > 4 else "")
+    problems.append(
+        f"{BEAT_DIR_LABEL}/：{len(missing)} 個檔內指名的路徑不存在：{shown}"
+        f"——箭頭指向空氣，而箭頭本身格式完全合法（E1）。改成實際的路徑，"
+        f"或照 `書本模板/` 的骨架先建那支檔"
+    )
 
 
 def lint_report(book: Path) -> tuple[list[str], LintStats]:
@@ -224,7 +470,14 @@ def lint_report(book: Path) -> tuple[list[str], LintStats]:
                 )
 
     # ---- spine（傳全部 arc 檔，含骨架：見 `_check_spine` 的 `present`）
-    _check_spine(book, everything, problems)
+    _check_spine(book, everything, stats, problems)
+
+    # ---- 幕綱索引的視圖 ＋ 選用公式指路（2026-07-28 功能 12）。**傳全部 arc 檔，
+    # 含骨架**（同 `_check_spine`）：視圖 ≡ 資料夾，而骨架也在資料夾裡。
+    _check_index(book, everything, stats, problems)
+
+    # ---- 檔內書內路徑的目的地存在性（2026-07-28 功能 12）
+    _check_destinations(book, stats, problems)
 
     # ---- 承諾區存在（`幕綱.schema.md`「分區是硬規定」）
     for a in arcs:

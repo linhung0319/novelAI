@@ -43,7 +43,7 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .core import AI_SUFFIX, _split_frontmatter
+from .core import AI_SUFFIX, _split_frontmatter, lede
 
 # 2026-07-27（功能 06 抉擇 1 B）**刪掉的三個宣告欄**＋01 已搬走的 `🧊水下`。
 # 留著它們不是「舊格式還能用」——是「schema 已經不宣稱它們機讀，而檔裡還寫著
@@ -146,6 +146,10 @@ class CharStats:
     role_tokens: int = 0
     role_tokens_unknown: int = 0
     role_tokens_frequent: int = 0
+    # 源檔第一段（2026-07-28 功能 12 抉擇 3 B）。`一行需求` 那個 LLM 摘要欄廢除
+    # 之後，「這個角色是什麼」改由源檔 H1 之後第一段回答（`char-lint --emit` 印它）。
+    # **依 E1 它要有守衛**，否則空的那幾支會靜默印空白（E2 最後一格）。
+    blank_ledes: int = 0
 
     def render(self) -> str:
         rollup = "有" if self.rollup_found else "**缺**"
@@ -163,7 +167,8 @@ class CharStats:
             f"rollup {rollup}·角色清單 {self.rollup_rows} 列 vs 資料夾 {self.sources} 支源；"
             f"幕綱角色欄 {self.role_fields} 個·括號外 {self.role_tokens} 個 token"
             f"（{self.role_tokens_unknown} 個 registry 查無"
-            f"·其中 {self.role_tokens_frequent} 個出現 ≥{TOKEN_MIN_HITS} 次）"
+            f"·其中 {self.role_tokens_frequent} 個出現 ≥{TOKEN_MIN_HITS} 次）；"
+            f"源檔第一段：**{self.blank_ledes}/{self.sources} 支是空的**"
         )
 
 
@@ -244,6 +249,26 @@ def source_names(book: Path) -> tuple[list[str], list[str], list[str]]:
         if p.is_dir() and not p.name.startswith("_") and any(p.glob("*.md"))
     }
     return sorted(singles | dirs), sorted(dirs), sorted(singles & dirs)
+
+
+def entity_lede(d: Path, name: str) -> str:
+    """單檔形態讀 `<名>.md`；目錄形態讀 `<名>/核心.md`，沒有核心切面就取排序第一支。
+
+    **目錄形態要一起吃**（同 `core._dir_digest` 與 `sentinel.long_lines` 的 `rglob`）：
+    升級成目錄不該讓這一欄靜默變空——那正是 06 抓到「空殼檔」時的同一種假陰性。
+    """
+    single = d / f"{name}.md"
+    if single.is_file():
+        return lede(single)
+    sub = d / name
+    if sub.is_dir():
+        core = sub / "核心.md"
+        if core.is_file():
+            return lede(core)
+        facets = sorted(sub.glob("*.md"))
+        if facets:
+            return lede(facets[0])
+    return ""
 
 
 def foreshadow_registry(book: Path) -> tuple[set[str], int, int]:
@@ -595,14 +620,10 @@ def check_rollup(book: Path, stats: CharStats) -> list[Problem]:
     if not rollup.is_file():
         legacy = d / f"{ROLLUP_STEM}.md"
         if not legacy.is_file():
-            if names:
-                out.append(
-                    Problem(
-                        d,
-                        f"資料夾有 {len(names)} 支源檔但沒有 {ROLLUP_STEM}{AI_SUFFIX}",
-                        "照 `書本模板/story/設定/角色/_index.ai.md` 的骨架建一支再重生",
-                    )
-                )
+            # **缺 rollup 不是問題，是新的正常狀態**（2026-07-28 功能 12 抉擇 1 A）：
+            # 那支檔廢除了，全書角色清單改跑 `char-lint --emit`。
+            # 本項因此降級成**殘留偵測**：舊檔還在才比對（既有書照抉擇 8 A 不遷移，
+            # 那份視圖仍然要與資料夾一致，否則它會靜默漂成第二份真相）。
             return out
         rollup = legacy
     stats.rollup_found = True
@@ -783,6 +804,38 @@ def check_role_fields(book: Path, stats: CharStats) -> list[Problem]:
     return out
 
 
+def check_lede(book: Path, stats: CharStats) -> list[Problem]:
+    """第 9 項：每支源檔 H1 之後要有非空行（2026-07-28 功能 12 抉擇 3 B）。
+
+    **這是 E1 的直接產物**：抉擇 3 B 廢掉 `一行需求` 那個 LLM 摘要欄之後，
+    「這個角色是什麼」的落點改成源檔的第一段，而 `char-lint --emit` 會印它。
+    宣稱了一個格式，就要交出守它的檢查器——不然空的那幾支會**靜默印空白**，
+    而挑實體的人拿到一份看起來完整的清單（E2 最後一格）。
+
+    實測一世之尊 24/24 支非空、中位 29 字元、最長 202、**0 支超過 rollup 的 400**。
+    **不設長度門檻**：分佈連續、沒有空隙（同 06 抉擇 5 A 的判準），行長由
+    `ROLLUP_LINE_CHARS` 統一管。這一項只問「有沒有」。
+    """
+    d = char_dir(book)
+    if not d.is_dir():
+        return []
+    names, _, _ = source_names(book)
+    blank = [n for n in names if not entity_lede(d, n)]
+    stats.blank_ledes = len(blank)
+    if not blank:
+        return []
+    shown = "、".join(blank[:5]) + ("…" if len(blank) > 5 else "")
+    return [
+        Problem(
+            d,
+            f"{len(blank)}/{len(names)} 支源檔的 H1 之後沒有非空行：{shown}",
+            "`char-lint --emit` 的「一句話」欄讀的就是那一段"
+            "（2026-07-28 抉擇 3 B：`一行需求` 那個 LLM 摘要欄廢除，改印源檔第一段）。"
+            "在源檔 H1 底下補一句「這個角色是什麼」即可——**它是源，你寫的就是真相**",
+        )
+    ]
+
+
 def lint_book(book: Path) -> tuple[list[Problem], CharStats]:
     stats = CharStats()
     problems = (
@@ -790,5 +843,6 @@ def lint_book(book: Path) -> tuple[list[Problem], CharStats]:
         + check_derived(book, stats)
         + check_rollup(book, stats)
         + check_role_fields(book, stats)
+        + check_lede(book, stats)
     )
     return problems, stats

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
+from pathlib import Path
 
 from .ops import OpError, apply_ops, parse_ops, render
 
@@ -171,6 +172,22 @@ def parse_events(
 _SPINE_RE = re.compile(r"全書順序：(.+)$")
 _ARC_TOKEN_RE = re.compile(r"arc[0-9A-Za-z]+")
 
+# spine 的落點（2026-07-28 功能 12 抉擇 2 A）：**新落點優先、舊落點回退**。
+# `全書順序：` 是 A1 源（作者的創作決定，沒有任何檔算得出來），2026-07-28 從索引檔
+# 搬進同層的 `_順序.md`——它原本與一支「視圖 ≡ 資料夾」的索引同居一檔。
+# 舊書照抉擇 8 A 不遷移，所以回退保留；**讓回退可見的責任在 `beat-lint`**。
+# **本檔是 `parse_spine` 的唯一真相**（其餘三支複製最小片段），這一段同理。
+SPINE_FILES = ("_順序.md", "_index.md")
+
+
+def spine_path(book: Path) -> Path:
+    d = book / "story" / "幕綱"
+    for name in SPINE_FILES:
+        p = d / name
+        if p.is_file():
+            return p
+    return d / SPINE_FILES[0]
+
 
 def parse_spine(text: str) -> dict[str, int]:
     for raw in text.splitlines():
@@ -183,7 +200,7 @@ def parse_spine(text: str) -> dict[str, int]:
                 arcs.append(tok)
         if arcs:
             return {arc: rank for rank, arc in enumerate(arcs)}
-    raise FoldError("幕綱 _index 找不到可解析的『全書順序：』arc 序列")
+    raise FoldError("幕綱順序檔找不到可解析的『全書順序：』arc 序列")
 
 
 @dataclass(frozen=True)

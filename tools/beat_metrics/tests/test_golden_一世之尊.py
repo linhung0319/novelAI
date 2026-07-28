@@ -69,10 +69,17 @@ def test_beat_lint_output_matches_golden(request):
 def test_the_case_book_is_still_red():
     """病例書必須是紅的。它變乾淨＝有人遷移了它，或有人又把檢查關掉了。"""
     problems, _ = lint_report(BOOK)
-    assert len(problems) == 15, f"預期 15 個問題，得到 {len(problems)}"
+    assert len(problems) == 17, f"預期 17 個問題，得到 {len(problems)}"
     assert sum("缺「## 本 arc 承諾」分區" in p for p in problems) == 10
     assert sum("疑似同一條伏筆的兩個名字" in p for p in problems) == 4
     assert sum("裁決流.md` 不存在" in p for p in problems) == 1
+    # 2026-07-28（功能 12）新增的兩筆：
+    #   ① `選用結構公式` 的**第三份**——310 字元，與大綱層 12 支檔的 8-gram 重疊
+    #      只有 10.7%（比 11 廢掉的 `結構.md` 那份 16.6% 分歧得更厲害），而它零守衛。
+    #   ② spine 還住在舊落點——病例書照抉擇 8 A 不遷移，所以這一筆會一直在。
+    #      **它是「回退可見」的活體證據**：四支工具照樣讀得到，而它不是靜默的。
+    assert sum("沒有指向大綱層的路徑指標" in p for p in problems) == 1
+    assert sum("還住在舊落點" in p for p in problems) == 1
 
 
 def test_the_clean_baseline_is_also_pinned():
@@ -86,6 +93,17 @@ def test_the_clean_baseline_is_also_pinned():
     assert (stats.marks, stats.mark_names) == (18, 15)
     assert stats.status_rows == 53
     assert not [p for p in problems if "指向不存在的幕" in p or "重複——幕號" in p]
+    # 2026-07-28（功能 12）補的三項在這本書上**全部乾淨**，而那不是「沒接上」：
+    #   索引 11 列 ≡ 11 支 arc 檔，且 11 列全部宣告了幕號範圍、11/11 與檔內 min·max 相符；
+    #   80 筆檔內書內路徑 0 懸空——**含那 4 處 `參照/結構.md`**，因為病例書不遷移、
+    #   那支檔還在磁碟上（它會在遷移那天變成懸空，殘留偵測走 `structure-project` 第五節）。
+    assert (stats.index_rows, stats.index_mismatch, stats.index_unordered) == (11, 0, 0)
+    assert (stats.index_spans, stats.index_span_mismatch, stats.index_span_missing) == (11, 0, 0)
+    assert (stats.path_refs, stats.path_missing) == (80, 0)
+    # spine 走回退，而**定序本身沒壞**（涵蓋率照驗、0 筆未涵蓋）——那正是
+    # 「回退可見」與「回退是錯的」的差別。
+    assert (stats.spine_file, stats.spine_legacy) == ("_index.md", True)
+    assert not [p for p in problems if "未涵蓋" in p or "沒有對應的" in p]
 
 
 def test_coverage_line_admits_what_the_machine_cannot_see():

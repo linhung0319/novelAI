@@ -195,6 +195,9 @@ class OutlineStats:
     index_rows: int = 0
     index_mismatch: int = 0
     index_unordered: int = 0
+    # 索引裡的 `##` 節數（2026-07-28 功能 12 步驟 4）。**恆為 0 才對**——
+    # 那支檔的節枚舉是空集合（`大綱.schema.md`「索引檔」）。
+    index_sections: int = 0
     path_refs: int = 0
     path_missing: int = 0
     volume_sections: int = 0
@@ -242,7 +245,8 @@ class OutlineStats:
                 f"卷級方向 {self.volume_sections} 節（{self.volume_tokens} 個卷 token）",
                 f"          `{INDEX_NAME}` {self.index_rows} 列 vs 資料夾 "
                 f"{self.scoped + self.retired} 支（不一致 {self.index_mismatch}／"
-                f"列序非遞增 {self.index_unordered} 處）／"
+                f"列序非遞增 {self.index_unordered} 處／"
+                f"**枚舉外的 `##` 節 {self.index_sections} 個**）／"
                 f"檔內路徑引用 {self.path_refs} 個（{self.path_missing} 個不存在）",
                 f"          `{FULL_NAME}` 涵蓋 {self.covered_arcs} 個 arc／"
                 f"未併入的 scoped {self.unmerged_scoped} 支（兩邊都有內容 {self.both_homed} 支）"
@@ -755,14 +759,10 @@ def _check_index(
     where = f"大綱/{INDEX_NAME}"
     folder = {f.arc for f in files if f.arc}
     if not index.is_file():
-        if folder:
-            return [
-                Problem(
-                    where,
-                    f"不存在，而 `大綱/` 底下有 {len(folder)} 支 arc 檔",
-                    "索引是那個資料夾的視圖（`大綱.schema.md`「索引檔」）",
-                )
-            ]
+        # **缺索引不是問題，是新的正常狀態**（2026-07-28 功能 12 抉擇 1 A）：
+        # 那支檔廢除了，大綱索引改跑 `outline-lint --emit`（它印的就是本函式為了
+        # 比對而算出來的那一份）。本項因此降級成**殘留偵測**：舊檔還在才比對
+        # ——既有書照抉擇 8 A 不遷移，那份視圖仍然要與資料夾一致。
         return []
     text = read_text(index)
     if SKELETON_MARK in text:
@@ -806,6 +806,34 @@ def _check_index(
                 where,
                 f"列序非遞增 {len(unordered)} 處（第一處：{a} 之後是 {b}）",
                 "索引是視圖，序就是 arc 序——逆序的索引讓人以為那是「最近改過的」排序",
+            )
+        )
+    # ---- 索引**不得有任何 `##` 節**（2026-07-28 功能 12 步驟 4）
+    #
+    # `大綱.schema.md`「索引檔」明訂它只有清單列（「一列只寫 `arcNN：名稱 —— 狀態`」），
+    # 而實測一世之尊長出了 `## 卷一整體結構`——**那是選用結構公式的第四份**（權威在
+    # 各大綱檔的 `## 選用結構公式`，11 定的家、`outline-lint` 第 12 項守），而且它
+    # 指向 11 已廢除的 `參照/結構.md`。**封閉判準**：這支檔的節枚舉是空集合，同
+    # `DERIVED_SECTIONS["風格"]` ＝空 tuple 的作法（07 抉擇 5 B）。
+    #
+    # 為什麼不改成「只擋選用公式那一節」：那要判「這一節在不在講公式」＝語意判斷，
+    # 正是被駁回五次的形狀。**節本來就一個都不該有**，所以擋節就夠了。
+    sections = [
+        (i, raw.strip())
+        for i, raw in enumerate(text.splitlines(), start=1)
+        if raw.startswith("##")
+    ]
+    stats.index_sections = len(sections)
+    if sections:
+        lineno, title = sections[0]
+        out.append(
+            Problem(
+                where,
+                f"有 {len(sections)} 個 `##` 節（第一個：第 {lineno} 行「{title[:24]}」）",
+                "索引只有清單列，一個節都不該有（`大綱.schema.md`「索引檔」）。"
+                "選用結構公式的權威是各大綱檔的 `## 選用結構公式`（第 12 項守），"
+                "**索引不複述**；沿革與逐題發落紀錄屬 `story/參照/裁決流.md`"
+                "（`標的`＝該索引檔），進度跑 `readiness`",
             )
         )
     return out

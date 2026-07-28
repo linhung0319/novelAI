@@ -161,12 +161,14 @@ def test_dimension_table_must_be_the_closed_seven(tmp_path):
     assert any("不是封閉七維" in p.detail and "缺 自身" in p.detail for p in problems)
 
 
-def test_missing_rollup_fires_when_sources_exist(tmp_path):
+def test_missing_rollup_is_the_new_normal(tmp_path):
+    """**缺 `_總覽.ai.md` 不再是問題**（2026-07-28 功能 12 抉擇 1 A）：那支檔廢除了，
+    世界觀總覽改跑 `world-lint --emit`。第 4／5 項降級成**殘留偵測**（舊檔還在才比對）。"""
     book = _book(tmp_path)
     (book / "story" / "設定" / "世界觀" / "_總覽.ai.md").unlink()
     problems, stats = lint_book(book)
     assert not stats.rollup_found
-    assert any("沒有 _總覽" in p.detail for p in problems)
+    assert not any("沒有 _總覽" in p.detail for p in problems)
 
 
 # ---------------------------------------------------------------- 第 6 項

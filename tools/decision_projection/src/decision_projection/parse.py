@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from pathlib import Path
 
 COLUMNS = ("日期", "來源", "標的", "裁決", "理由", "射程", "狀態")
 
@@ -260,8 +261,24 @@ def select(
     return out
 
 
+# spine 的落點（2026-07-28 功能 12 抉擇 2 A）：**新落點優先、舊落點回退**。
+# `全書順序：` 是 A1 源（作者的創作決定），2026-07-28 從索引檔搬進同層的 `_順序.md`
+# ——它原本與一支「視圖 ≡ 資料夾」的索引同居一檔（六問 Q0 的違反）。
+# 舊書照抉擇 8 A 不遷移，所以回退保留；**讓回退可見的責任在 `beat-lint`**。
+SPINE_FILES = ("_順序.md", "_index.md")
+
+
+def spine_path(book: Path) -> Path:
+    d = book / "story" / "幕綱"
+    for name in SPINE_FILES:
+        p = d / name
+        if p.is_file():
+            return p
+    return d / SPINE_FILES[0]
+
+
 def parse_spine(text: str) -> dict[str, int]:
-    """幕綱 `_index.md` 的「全書順序」→ {arc: 排名}。
+    """幕綱 `_順序.md`（舊書：`_index.md`）的「全書順序」→ {arc: 排名}。
 
     **這份解析的唯一真相在 `tools/fact_projection/src/fact_projection/fold.py:parse_spine`**；
     工具間零相依（所有 tools/*/pyproject.toml 皆 dependencies = []），故複製最小片段。
@@ -278,4 +295,4 @@ def parse_spine(text: str) -> dict[str, int]:
                 arcs.append(tok)
         if arcs:
             return {arc: rank for rank, arc in enumerate(arcs)}
-    raise ParseError("幕綱 _index 找不到可解析的『全書順序：』arc 序列")
+    raise ParseError("幕綱順序檔找不到可解析的『全書順序：』arc 序列")

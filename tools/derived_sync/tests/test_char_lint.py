@@ -239,12 +239,14 @@ def test_need_column_content_rules_are_aggregated(tmp_path):
     assert "1 列" in hits[0].detail
 
 
-def test_missing_rollup_is_reported(tmp_path):
+def test_missing_rollup_is_the_new_normal(tmp_path):
+    """**缺 `_index.ai.md` 不再是問題**（2026-07-28 功能 12 抉擇 1 A）：那支檔廢除了，
+    全書角色清單改跑 `char-lint --emit`。第 5 項降級成**殘留偵測**（舊檔還在才比對）。"""
     book = _book(tmp_path)
     (book / "story" / "設定" / "角色" / "_index.ai.md").unlink()
     problems, stats = lint_book(book)
     assert stats.rollup_found is False
-    assert any("沒有 _index.ai.md" in p.detail for p in problems)
+    assert not any("沒有 _index.ai.md" in p.detail for p in problems)
 
 
 def test_unstamped_rollup_skeleton_is_skipped(tmp_path):
