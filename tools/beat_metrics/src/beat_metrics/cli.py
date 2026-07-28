@@ -7,6 +7,7 @@ from pathlib import Path
 from .chapters import lint_report as ch_lint_report
 from .lint import lint_report
 from .motif import ArcMotif, Finding, detect, measure
+from .outline import lint_report as outline_lint_report
 from .playability import HOLLOW_SHARE_CAP, RUN_CAP, ArcPlayability, analyse
 from .scan import ScanError, load_book, load_pov
 
@@ -229,6 +230,52 @@ def ch_lint_main(argv: list[str] | None = None) -> int:
         print(f"（提示）{h}")
     if not problems:
         print(CH_CLEAN)
+        return 0
+    print(f"發現 {len(problems)} 個問題：", file=sys.stderr)
+    for p in problems:
+        print(f"  [x] {p}", file=sys.stderr)
+    return 1
+
+
+OUTLINE_CLEAN = "大綱層格式乾淨（節枚舉／檔頭狀態／引用／伏筆意圖表／卷級方向／索引視圖）"
+
+
+def outline_lint_main(argv: list[str] | None = None) -> int:
+    """大綱層格式閘門。輸出契約與 `lint_main`／`ch_lint_main` 完全相同。
+
+    **第三個指令，同一份解析層**（作者拍板抉擇 1 B）：第 4 項要的幕號 registry 就是
+    `structure.parse_book()`、第 5 項要的伏筆 regex `beat-lint` 已經在用。另開套件
+    ＝新增第 7 份幕號集合實作。套件名（`beat_metrics`）因此更不準了，那是可接受的
+    代價——**零複製是選它的唯一理由**；要重新命名／拆分交功能 14，三個指令一起處理。
+    """
+    ap = argparse.ArgumentParser(
+        description="大綱層格式閘門（零 LLM、可覆算）：節枚舉、檔頭狀態二選一、"
+        "`本 arc 伏筆狀態` 的三欄意圖表、卷級方向的卷 token 唯一與指路紀律、"
+        "`幕NNN`／`chNNNN`／`arcNN` 引用不懸空、`[[伏筆:x]]` 命中 registry、"
+        "`結局與題旨` 與 `本段收束與鉤子` 的形狀、`_index.md` 視圖 ≡ 資料夾、"
+        "檔內路徑的目的地存在。守的是「人破結構」那一側（`設計原則.md` B1），"
+        "與 `beat-lint`／`ch-lint` 同類；內容好壞交 `outline-test`。",
+    )
+    ap.add_argument("--book", required=True, type=Path, help="書資料夾路徑（含 story/）")
+    args = ap.parse_args(argv)
+
+    _force_utf8()
+    try:
+        problems, stats = outline_lint_report(args.book)
+    except ScanError as e:
+        print(f"掃描錯誤：{e}", file=sys.stderr)
+        return 1
+    except OSError as e:
+        print(f"讀取失敗：{e}", file=sys.stderr)
+        return 1
+
+    print(stats.render())
+    for n in stats.notes:
+        print(f"（資訊）{n}")
+    for h in stats.hints:
+        print(f"（提示）{h}")
+    if not problems:
+        print(OUTLINE_CLEAN)
         return 0
     print(f"發現 {len(problems)} 個問題：", file=sys.stderr)
     for p in problems:

@@ -65,6 +65,37 @@ def _summary_paths(book: Path) -> tuple[Path, Path]:
     """
     d = book.joinpath(*SUMMARY_DIR)
     return d / SUMMARY_SOURCE, d / SUMMARY_DERIVED
+
+
+# 大綱層（2026-07-28 功能 09 補上）。`_已併入/` 是退役源的家（`設計原則.md` A5），
+# **刻意不掃**：它已經不是權威、也不該再長，對它報「檔太大」只是雜訊。
+OUTLINE_FULL = ("story", "01-大綱.md")
+OUTLINE_DIR = ("story", "大綱")
+OUTLINE_INDEX = "_index.md"
+OUTLINE_RETIRED = "_已併入"
+
+
+def _outline_sources(book: Path) -> list[Path]:
+    """全書版 ＋ 未退役的 scoped 大綱檔。
+
+    **2026-07-28（功能 09）補進本檔的兩支目標集**。在此之前四支目標集 **0/4**
+    含 `story/大綱/`，於是 **6/12 支檔超過 `SOURCE_BYTES`**（最大 44,307＝門檻的
+    1.77×）、7 支檔有超過 600 字元的單行（最長 1,324）**全部靜音**——而同一次
+    `check` 卻報了 32,650 B 的 `血刀頭陀.md`。
+
+    **這是「四份手寫路徑清單漏檔」的第七次**（03 補 `chapters/`、05 補設定層衍生
+    與源、08 補摘要兩支）。前幾次漏的是資料夾或根目錄下的兩支檔，**這次漏的是一整個
+    產物軸**——而且是 repo 裡體積第三大的軸（302,669 B，僅次於幕綱與正文）。
+    **根因不在本輪修**，「這本書有哪些受管檔」的統一清單交功能 14。
+    """
+    out: list[Path] = []
+    full = book.joinpath(*OUTLINE_FULL)
+    if full.is_file():
+        out.append(full)
+    d = book.joinpath(*OUTLINE_DIR)
+    if d.is_dir():
+        out += [p for p in sorted(d.glob("*.md")) if not p.name.startswith("_")]
+    return out
 _BEAT_HEAD_RE = re.compile(r"^##\s*幕(\d+)")
 _PAREN_RE = re.compile(r"（[^（）]*）")
 
@@ -199,6 +230,33 @@ def oversized_sources(book: Path, limit: int = SOURCE_BYTES) -> list[Finding]:
                     "真正未定的暫定屬 raw/、正文釘死的事實屬該章 chNNNN.ai.md 的"
                     "「## 本章事實」。摘要是**唯一每支 skill 都無條件整檔讀的源檔**，"
                     "所以它多一個字，全書每次落筆都多讀一個字",
+                )
+            )
+    # 大綱（2026-07-28 功能 09 補上，見 `_outline_sources`）。**門檻沿用 `SOURCE_BYTES`，
+    # 不新造**：實測一世之尊 11 支 arcNN 的分佈是 4,848／4,848／5,743／5,963／11,901／
+    # 21,836／33,468／36,727／41,966／42,286／44,307——**21,836 → 33,468 之間有空隙，
+    # 25,000 正好落在裡面**（取法同 05 的 800／600 與 `beat_sheet_density` 的 2,500）。
+    # 樣本 n=11（比設定層那兩個門檻的 n=4 好，但仍是單書樣本）。
+    #
+    # **hint 與設定層／摘要都不同**：大綱沒有目錄形態、也沒有主題可拆，唯一的「拆」
+    # 是把已收斂的卷併進 `01-大綱.md` 並 `git mv` 進 `_已併入/`（那是生命週期動作，
+    # 不是切檔）。實測 arcNN 檔 **73% 不是連續敘述**——所以答案幾乎一定是搬，不是拆。
+    for p in _outline_sources(book):
+        size = _size(p)
+        if size > limit:
+            out.append(
+                Finding(
+                    kind="源檔肥大",
+                    path=p,
+                    detail=f"{size} B（建議 ≤{limit}）",
+                    hint="大綱**沒有拆檔這條路**（一卷一份、無目錄形態、無主題可拆），"
+                    "所以先搬：逐題發落紀錄／拍板來歷／護欄推導屬 "
+                    "story/參照/裁決流.md（`標的`＝該大綱檔）；既成的伏筆埋設點與"
+                    "回收點由 foreshadow-project --arc 回答，別在 "
+                    "`## 本 arc 伏筆狀態` 抄第三份（那一節只寫意圖）；"
+                    "「本 arc 不引爆哪條線」屬幕綱的 `## 本 arc 承諾`。"
+                    "搬完仍超標，代表這一卷該收斂進 01-大綱.md 了"
+                    "（併入的最後一步是 git mv 進 story/大綱/_已併入/）",
                 )
             )
     return out
@@ -350,6 +408,25 @@ def long_lines(
         targets.append((summary_derived, settings_derived_limit))
     if summary_src.is_file():
         targets.append((summary_src, settings_source_limit))
+    # **大綱層（2026-07-28 功能 09 補上）也沿用既有的兩級門檻，不新造第五級**：
+    #   arcNN 與 01-大綱.md → 源那一級（600）。實測 11 支 arcNN 的最長行分佈是
+    #     199／213／236／249／409｜723／728／924／1,035／1,072／1,324
+    #     ——**空隙在 409 → 723**，設定層源那一級 600 正好落在裡面（n=11）。
+    #   大綱/_index.md → rollup 那一級（400）。它是「視圖 ≡ 資料夾」形狀的索引，
+    #     與 `chapters/_index.ai.md`／設定層 rollup 同類，只是它**不帶 `.ai.md`**
+    #     （唯一一支這樣的 rollup → 形態交 12）。實測 11 列平均 823 字元、最長 1,828。
+    #
+    # **為什麼行長比檔案大小更該管**：實測 600 命中的那幾行有大半不是敘述段落，是
+    # **逐題拍板紀錄與編號排除線被塞進單行**（arc07 那條 1,324 字元的最長行就是）
+    # ——連續敘述天生一段一行，而一份沿革不該是一行。
+    outline: set[Path] = set()
+    for p in _outline_sources(book):
+        targets.append((p, settings_source_limit))
+        outline.add(p)
+    outline_index = book.joinpath(*OUTLINE_DIR, OUTLINE_INDEX)
+    if outline_index.is_file():
+        targets.append((outline_index, rollup_limit))
+        outline.add(outline_index)
 
     # 設定層非 rollup 檔的病徵不是「表格 cell」而是「一條分析／一個 bullet 長成
     # 一份沿革」，所以 hint 分開寫。**兩種 hint 都提 `story/參照/裁決流.md`**——
@@ -362,6 +439,16 @@ def long_lines(
     cell_hint = (
         "狀態格／rollup 一列只報摘要；沿革與裁決記錄屬 story/參照/裁決流.md，"
         "不該住在表格 cell 裡"
+    )
+    # 大綱層的病徵是**逐題拍板紀錄與編號排除線被塞進單行**，不是表格 cell、也不是
+    # 「一條分析長成一份沿革」，而且門檻的樣本數不同（n=11 vs n=4）——所以 hint 分開寫。
+    outline_hint = (
+        "連續敘述天生一段一行，而**一份沿革不該是一行**：逐題發落紀錄（Q1…Qn）、"
+        "本輪拍板來歷、護欄推導屬 story/參照/裁決流.md（`標的`＝該大綱檔）；"
+        "編號排除線屬幕綱的 `## 本 arc 承諾`（射程天然綁 arc，"
+        "`fact-project --for-beat` 會一起印）；卷級方向寫成 "
+        "`## 卷級方向（卷X·本卷權威）` 一節、同卷其餘檔只指路。"
+        "門檻取自 n=11 的實測空隙（409 → 723 之間取 600），沿用設定層源那一級"
     )
     settings_limits = {settings_derived_limit, settings_source_limit}
     for p, limit in targets:
@@ -379,7 +466,13 @@ def long_lines(
                     kind="狀態格過長",
                     path=p,
                     detail=f"{count} 行超過 {limit} 字（最長 {worst} 字，第 {worst_no} 行）",
-                    hint=settings_hint if limit in settings_limits else cell_hint,
+                    hint=(
+                        outline_hint
+                        if p in outline
+                        else settings_hint
+                        if limit in settings_limits
+                        else cell_hint
+                    ),
                 )
             )
     return out

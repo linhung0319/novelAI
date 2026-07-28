@@ -342,6 +342,88 @@ def test_summary_files_use_the_settings_line_limits(tmp_path):
     assert "600" in found["00-摘要.md"]
 
 
+# ---------------------------------------------------------------- 大綱（功能 09）
+
+def _outline(book):
+    d = book / "story" / "大綱"
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+def test_outline_source_size_is_measured(tmp_path):
+    """**第七次「四份手寫路徑清單漏檔」**：在此之前四支目標集 0/4 含 `story/大綱/`，
+    於是 6/12 支超過門檻（最大 44,307＝1.77×）全部靜音，而同一次 `check` 卻報了
+    32,650 B 的 `血刀頭陀.md`。這次漏的是**一整個產物軸**。"""
+    book = _book(tmp_path)
+    d = _outline(book)
+    (book / "story" / "01-大綱.md").write_text("全" * 30000, encoding="utf-8")
+    (d / "arc11.md").write_text("段" * 30000, encoding="utf-8")
+    names = {f.path.name for f in oversized_sources(book)}
+    assert names == {"01-大綱.md", "arc11.md"}
+
+
+def test_outline_hint_says_move_not_split(tmp_path):
+    """大綱沒有目錄形態、也沒有主題可拆——hint 不該叫人拆檔（實測 arcNN 檔
+    73% 不是連續敘述，所以答案幾乎一定是搬）。"""
+    book = _book(tmp_path)
+    (_outline(book) / "arc11.md").write_text("段" * 30000, encoding="utf-8")
+    (f,) = oversized_sources(book)
+    assert "沒有拆檔這條路" in f.hint
+    assert "story/參照/裁決流.md" in f.hint
+    assert "foreshadow-project --arc" in f.hint
+
+
+def test_retired_outlines_are_exempt(tmp_path):
+    """`_已併入/` 是退役源的家（`設計原則.md` A5）：它已經不是權威、也不該再長，
+    對它報「檔太大」只是雜訊。"""
+    book = _book(tmp_path)
+    retired = _outline(book) / "_已併入"
+    retired.mkdir()
+    (retired / "arc01.md").write_text("舊" * 30000, encoding="utf-8")
+    assert oversized_sources(book) == []
+    assert long_lines(book) == []
+
+
+def test_outline_index_is_not_measured_as_a_source(tmp_path):
+    """索引是視圖，套的是 rollup 那一級的行長，不是源檔的大小門檻。"""
+    book = _book(tmp_path)
+    (_outline(book) / "_index.md").write_text("- arc01：x —— 狀態：暫定\n" * 3000, encoding="utf-8")
+    assert oversized_sources(book) == []
+
+
+def test_outline_uses_the_source_line_limit(tmp_path):
+    """沿用設定層源那一級 600，**不新造第五級**：實測 11 支 arcNN 的最長行分佈
+    `199／213／236／249／409｜723／728／924／1,035／1,072／1,324`——空隙在 409 → 723。"""
+    book = _book(tmp_path)
+    d = _outline(book)
+    (d / "arc05.md").write_text("- " + "敘" * 409 + "\n", encoding="utf-8")  # 健康群最大值
+    assert long_lines(book) == []
+    (d / "arc07.md").write_text("- " + "拍" * 723 + "\n", encoding="utf-8")  # 漂移群最小值
+    (f,) = long_lines(book)
+    assert f.path.name == "arc07.md" and "600" in f.detail
+
+
+def test_outline_index_row_uses_the_rollup_limit(tmp_path):
+    """`大綱/_index.md` 是**唯一一支不帶 `.ai.md` 的 rollup**（形態交 12），
+    但「一列一摘要」這件事與別的 rollup 相同，所以套同一級 400。"""
+    book = _book(tmp_path)
+    (_outline(book) / "_index.md").write_text(
+        "- arc01：x —— 狀態：" + "沿" * 500 + "\n", encoding="utf-8"
+    )
+    (f,) = long_lines(book)
+    assert f.path.name == "_index.md" and "400" in f.detail
+
+
+def test_outline_long_line_hint_is_its_own(tmp_path):
+    """病徵不同（逐題拍板紀錄與編號排除線塞進單行），門檻的樣本數也不同（n=11
+    vs 設定層的 n=4）——hint 不該沿用設定層那一份。"""
+    book = _book(tmp_path)
+    (_outline(book) / "arc07.md").write_text("- " + "拍" * 900 + "\n", encoding="utf-8")
+    (f,) = long_lines(book)
+    assert "n=11" in f.hint
+    assert "一份沿革不該是一行" in f.hint
+
+
 def test_append_log_exempt_from_long_lines(tmp_path):
     """事實流／裁決流有投影工具，不受行長規範（新舊檔名都算）。"""
     book = _book(tmp_path)
