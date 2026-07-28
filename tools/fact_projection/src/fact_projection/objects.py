@@ -38,6 +38,7 @@ from .constraints import (
     parse_constraints,
 )
 from .fold import FoldError
+from .marks import BEAT_HEAD_RE, MARK_RE, REVEAL_TARGET_RE
 
 OBJECT_DIRNAME = "物件"
 
@@ -66,7 +67,7 @@ SECTIONS = (SECTION_WHAT, SECTION_WHY, CONSTRAINT_SECTION)
 # 實測 92 次出現、91 次隱形，且 `foreshadow-project` 大方印「0 條為可疑點」。
 REVEAL_PUBLIC = "公開"
 _REVEAL_UNDERWATER = re.compile(r"^水下\s*[｜|]\s*(.+)$")
-_REVEAL_TARGET = re.compile(r"^揭示於\s*收\[\[伏筆[:：]\s*([^\]]+?)\s*\]\]$")
+_REVEAL_TARGET = REVEAL_TARGET_RE  # 標記語法只寫一次，見 `marks.py`
 _CROSS_BOOK = "跨集留白"
 
 # 檔名即 ID，所以檔名裡不能有那些會讓 ID 失去唯一性或無法被引用的字。
@@ -74,9 +75,6 @@ _BAD_NAME_CHARS = "〔〕[]｜|:：/\\*?\"<>"
 
 _FM_FENCE = "---"
 _H2_RE = re.compile(r"^##\s+(.+?)\s*$")
-# 伏筆標記。唯一真相在 `tools/foreshadow_project/scan.py:_MARK_RE`；工具間零相依
-# （所有 tools/*/pyproject.toml 皆 dependencies = []），故此處複製最小片段。
-_MARK_RE = re.compile(r"(埋|收)\[\[伏筆[:：]\s*([^\]]+?)\s*\]\]")
 
 _ENCODING = "utf-8-sig"
 
@@ -314,14 +312,16 @@ def planted_and_paid(book: Path) -> tuple[set[str], set[str]]:
     if not d.is_dir():
         return planted, paid
     for p in sorted(d.glob("*.md")):
-        for kind, name in _MARK_RE.findall(p.read_text(encoding=_ENCODING)):
+        for kind, name in MARK_RE.findall(p.read_text(encoding=_ENCODING)):
             (planted if kind == "埋" else paid).add(name.strip())
     return planted, paid
 
 
 _SPINE_RE = re.compile(r"全書順序：(.+)$")
 _ARC_TOKEN_RE = re.compile(r"arc[0-9A-Za-z]+")
-_BEAT_HEAD_RE = re.compile(r"^##\s*幕\d+", re.M)
+# **與 `beats` 是同一把尺**（2026-07-28 功能 14，抉擇 1 D：同套件內的複製沒有
+# 政策在支持它）。這裡只要「這支檔有沒有幕標題」，所以用 `search`。
+_BEAT_HEAD_RE = re.compile(BEAT_HEAD_RE.pattern, re.M)
 
 
 def unbuilt_arcs(book: Path) -> list[str]:

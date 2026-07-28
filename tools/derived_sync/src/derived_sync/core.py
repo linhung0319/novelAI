@@ -6,8 +6,14 @@ from dataclasses import dataclass
 from datetime import date as _date
 from pathlib import Path
 
+from .md import lede_of, split_frontmatter
+
 AI_SUFFIX = ".ai.md"
 _KV_RE = re.compile(r"^([A-Za-z0-9_-]+):\s*(.*?)\s*(?:#.*)?$")
+
+# **本套件的 Markdown 解析層只有一份，在 `md.py`**（2026-07-28 功能 14）。
+# 這個別名讓既有 import 站點不必全改，新程式碼一律直接用 `md.split_frontmatter`。
+_split_frontmatter = split_frontmatter
 
 
 def canonical_text(text: str) -> str:
@@ -60,9 +66,6 @@ def _is_rollup(p: Path) -> bool:
 # 形狀了**。（那一條原則本身仍然成立，它只是少一個實例。）
 
 
-_H1_RE = re.compile(r"^#\s+")
-
-
 def lede(path: Path) -> str:
     """源檔 H1 之後第一個非空行（去掉開頭的 bullet 記號）。取不到回空字串。
 
@@ -82,28 +85,7 @@ def lede(path: Path) -> str:
     """
     if not path.is_file():
         return ""
-    seen_h1 = False
-    for raw in path.read_text(encoding="utf-8").splitlines():
-        s = raw.strip()
-        if not s:
-            continue
-        if not seen_h1 and _H1_RE.match(s):
-            seen_h1 = True
-            continue
-        return re.sub(r"^[-*]\s*", "", s)
-    return ""
-
-
-def _split_frontmatter(text: str) -> tuple[list[str] | None, str]:
-    """回傳 (front-matter 行清單, 本體)；無合法 front-matter 時 (None, 全文)。"""
-    text = text.replace("\r\n", "\n").replace("\r", "\n")
-    lines = text.split("\n")
-    if not lines or lines[0].strip() != "---":
-        return None, text
-    for i in range(1, len(lines)):
-        if lines[i].strip() == "---":
-            return lines[1:i], "\n".join(lines[i + 1 :])
-    return None, text  # 未封閉 → 視為無 front-matter
+    return lede_of(path.read_text(encoding="utf-8"))
 
 
 def _dir_digest(d: Path) -> tuple[str, int]:
@@ -219,7 +201,7 @@ def stamp(derived: Path, on: str | None = None) -> str:
 class DerivedStatus:
     derived: Path
     source: str
-    status: str  # fresh | stale | unstamped | orphan
+    status: str  # fresh | stale | unstamped | skeleton | orphan
 
 
 def check_book(book: Path) -> list[DerivedStatus]:
@@ -237,7 +219,12 @@ def check_book(book: Path) -> list[DerivedStatus]:
             continue
         recorded = read_generated_from(derived)
         if recorded is None:
-            status = "unstamped"
+            # **`skeleton` 與 `unstamped` 是兩件事**（2026-07-28 功能 14）：
+            # 完全沒有 front-matter ＝這支檔從沒被產出過（`書本模板` 的骨架），
+            # **不可能 stale**，所以它不是新鮮度問題；有 front-matter 卻缺
+            # `generated-from` ＝重生了忘記封章，那才是。`validate` 早就這樣分。
+            fm, _ = split_frontmatter(derived.read_text(encoding="utf-8"))
+            status = "skeleton" if fm is None else "unstamped"
         elif recorded == digest:
             status = "fresh"
         else:

@@ -1,0 +1,30 @@
+[project]
+name = "meta-lint"
+version = "0.1.0"
+description = "novelAI 工具鏈的格式閘門：**唯一一支不吃 `--book` 的檢查器**——它守的是 repo 自己（指令 ↔ SKILL.md 雙向、schema 指名的 lint 存在、平行清單一致、覆蓋率行含錯誤路徑、輸出與 exit 契約），另投影門檻常數／同形實作份數／測試狀態"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+# **它的「書」是 repo 自己**（2026-07-28 功能 14，抉擇 3 A）。
+#
+# 為什麼是第 8 個套件而不是掛進 `derived_sync`：它的輸入是 repo 佈局
+# （8 支 pyproject／12 支 SKILL.md／12 支 schema／workflow），不是某一本書。塞進任何
+# 書軸套件都會讓那支套件多一份與書無關的職責，而且它要掃「全部 pyproject」，
+# 住在其中一支裡會製造自我引用的怪味。
+#
+# **它的觸發者是 `.github/workflows/tools.yml`，不是 SKILL.md**——所以第 1 項的
+# 「觸發者」定義含「或某支 workflow」。這一輪診斷出的十項「壞了永遠不會發現」裡，
+# V2（811 支測試零 CI）是唯一一項**會讓其他九項的修復失效**的：修好了 lint，
+# 而沒有東西保證它明天還是好的。
+meta-lint = "meta_lint.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/meta_lint"]

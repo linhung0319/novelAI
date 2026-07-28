@@ -1,22 +1,41 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
-from .core import AI_SUFFIX
-from .validate import (
-    SETTINGS_KINDS,
-    SUMMARY_DERIVED,
-    SUMMARY_DIR,
-    SUMMARY_KIND,
-    SUMMARY_SOURCE,
-    enum_for,
-    stray_sections,
+from .book_layout import (
+    APPEND_LOG_STEMS,
+    BEAT_BYTES_PER_BEAT,
+    DERIVED_BYTES,
+    LINE_CHARS,
+    OUTLINE_DIR,
+    OUTLINE_INDEX,
+    ROLLUP_LINE_CHARS,
+    SETTINGS_DERIVED_LINE_CHARS,
+    SETTINGS_SOURCE_LINE_CHARS,
+    SIZE_AXES,
+    SOURCE_BYTES,
+    base_stem,
+    beat_arcs,
+    beat_index,
+    chapter_derived,
+    chapter_sources,
+    outline_index,
+    outline_sources,
+    raw_files,
+    reference_logs,
+    reference_sources,
+    settings_dirs,
+    summary_paths,
 )
+from .core import AI_SUFFIX
+from .md import BEAT_HEAD_RE
+from .validate import SUMMARY_KIND, enum_for, stray_sections
 
-# 門檻皆為**建議值**（advisory），不是門檻式 pass/fail——呼應「AI 是審稿員不是門檻」。
-# 取值依據見各函式 docstring，全部可由 CLI 覆寫。
+# **門檻與路徑清單的擁有者是 `book_layout.py`**（2026-07-28 功能 14）。在此之前
+# 五支掃描器各自手寫路徑，而那個形狀被十次診斷各自報過一次「第 N 次手寫路徑清單
+# 漏檔」——**每一次的處置都是「各補各的、根因不修」**（明細見 `book_layout.py`）。
 #
 # 哨兵量的是**「必須整檔讀的東西有多大」**，不是「檔多大」（`共同約定.md` 零）：
 # 有投影工具可切片的檔（約束表／裁決流，以及舊格式的事實流）**檔案大小**不受規範。
@@ -24,22 +43,7 @@ from .validate import (
 # **但「有投影工具」不豁免行長**：投影的粒度**就是行**，一行不可再切。2026-07-27
 # 前這裡曾整支檔豁免，於是實測 1,728 字的單一事件行一聲沒吭地長了 11 個 arc
 # （見 `結構定義/事實流.schema.md`）。故行長改為一律受管，只是門檻不同。
-BEAT_BYTES_PER_BEAT = 2500  # 幕綱：每幕位元組
-SOURCE_BYTES = 25000  # 源：單檔（或單一角色目錄總和）絕對上限（約 8000 漢字）
-DERIVED_BYTES = 12000  # 衍生 `.ai.md`：無切片工具，且應是源的壓縮，故更嚴（約 4000 漢字）
-LINE_CHARS = 2000  # 綜合檔單行（單一表格 cell）字元數
-ROLLUP_LINE_CHARS = 400  # rollup 一列＝一行摘要，比綜合檔嚴得多（schema 說「一行需求」）
-# 設定層**非 rollup** 檔的單行（2026-07-27 功能 05 補上）。分析段落天生比 rollup 的
-# 一列長（「限制與代價」那種一條就是一段），所以不套 400；但也不能沒有門檻——實測
-# `江湖勢力.ai.md` 單行 1,155 字元（rollup 門檻的 2.9×）一聲沒吭地長了八次重生。
 #
-# **兩個門檻皆取自實測分佈的空隙，樣本 n=4（一世之尊四支世界觀主題），是暫定值**：
-#   衍生最長行 671／690／1,072／1,155 → 800 落在 690 與 1,072 之間
-#   源檔最長行 372／375／430／575     → 600 落在 430 與 575 之上的空隙
-# 取法與 `beat_sheet_density` 的 2,500 一致（「兩群之間的空隙」）。**第二本書有設定層
-# 之後要重取**——n=4 的分佈不足以定一個跨書門檻，見 `世界觀.schema.md`「單行長度」。
-SETTINGS_DERIVED_LINE_CHARS = 800
-SETTINGS_SOURCE_LINE_CHARS = 600
 # 事實行量的是**內容欄**（信封第四欄），與 `fact-lint` 同一把尺，只是門檻更早：
 # 哨兵 120（≈1.6× 健康均值）先示警，`fact-lint` 200 才擋。
 FACT_LINE_CHARS = 120
@@ -49,121 +53,56 @@ FACT_PAREN_MIN_CHARS = 60
 _ARC_RE = re.compile(r"^arc[0-9A-Za-z]+$")
 
 
-def _summary_paths(book: Path) -> tuple[Path, Path]:
-    """摘要軸的兩支檔。路徑的唯一真相在 `validate.py`（見那裡的 `SUMMARY_*`）。
 
-    **2026-07-27（功能 08）補進本檔的三支目標集**。在此之前四支目標集
-    **0/4** 含它，於是源 15,656 B（門檻的 62.6%）、衍生 10,530 B（門檻的
-    **87.8%**）、源最長行 594、衍生最長行 626 **全部靜音**——而摘要的成長軸
-    是**裁決輪次**（源 10.6×／衍生 15.5×），`共同約定.md` 甚至明文把它列進
-    「本來就是單檔且有界」的豁免。
+# **十次「手寫路徑清單漏檔」的沿革搬進 `book_layout.py` 了**（2026-07-28 功能 14）。
+# 本檔從此只回答「多大算大」，不回答「掃哪些檔」——後者的唯一真相在那支檔，
+# 而**它印得出「我掃了幾支」**（`SentinelStats`）。那一行才是這十次漏檔的真正解藥：
+# 一份清單仍然可能漏，但一個印「大綱 0 支」的覆蓋率行會讓漏變得看得見。
 
-    **這是「四份手寫路徑清單漏檔」的第六次**（03 補 `chapters/`、05 補設定層
-    衍生與源各一）。前五次漏的是資料夾，這次漏的是 `story/` 根目錄下的兩支檔
-    ——形狀相同，根因相同：每支函式各自手寫路徑。**根因不在本輪修**，
-    「這本書有哪些受管檔」的統一清單交功能 14。
+
+@dataclass
+class SentinelStats:
+    """**我在這本書上掃了幾支。**（`設計原則.md` E2 的可執行推論，**0 也印**。）
+
+    **成長哨兵曾是全系統唯一沒有覆蓋率行的守衛**（功能 14 的 V3）：`_print_sentinel`
+    在 0 筆時直接 `return`，而且它從不印「我掃了幾支檔」。實測射程——一世之尊 282 支
+    `.md` 中 **184 支在射程內、98 支在射程外**，**644,577 B ＝全書 24.9% 完全靜音，
+    而 `check` 的結語是「0 個需處理」**。
+
+    **十次漏檔每一次都會被這一行當場抓到**：`story/大綱/` 不在名單時，這一行會印
+    「大綱 0 支」；`story/幕綱/_index.md` 不在名單時，會印「幕綱索引 0 支」。
+
+    **豁免的那幾軸也要印**（E2 第七形態＋功能 13 的先例）：「刻意不受管」與「忘了加」
+    在清單上要長得不一樣，所以 `正文源`／`raw` 印的是「N 支·刻意豁免（理由）」。
     """
-    d = book.joinpath(*SUMMARY_DIR)
-    return d / SUMMARY_SOURCE, d / SUMMARY_DERIVED
+
+    size: dict[str, int] = field(default_factory=dict)
+    lines_scanned: int = 0
+    fact_files: int = 0
+    fact_lines: int = 0
+    destinations: int = 0
+    destinations_missing: int = 0
+
+    def count(self, label: str, n: int = 1) -> None:
+        self.size[label] = self.size.get(label, 0) + n
+
+    def render(self) -> str:
+        cells = []
+        for axis in SIZE_AXES:
+            n = self.size.get(axis.label, 0)
+            cells.append(
+                f"{axis.label} {n}（**刻意豁免**：{axis.exempt}）"
+                if axis.exempt
+                else f"{axis.label} {n}"
+            )
+        return (
+            "掃描範圍：體積 " + "／".join(cells) + "；"
+            f"行長 {self.lines_scanned} 支；"
+            f"事實行 {self.fact_files} 支檔·{self.fact_lines} 行；"
+            f"搬移目的地 {self.destinations} 個（**{self.destinations_missing} 個不存在**）"
+        )
 
 
-# 大綱層（2026-07-28 功能 09 補上）。`_已併入/` 是退役源的家（`設計原則.md` A5），
-# **刻意不掃**：它已經不是權威、也不該再長，對它報「檔太大」只是雜訊。
-OUTLINE_FULL = ("story", "01-大綱.md")
-OUTLINE_DIR = ("story", "大綱")
-OUTLINE_INDEX = "_index.md"
-OUTLINE_RETIRED = "_已併入"
-
-
-def _outline_sources(book: Path) -> list[Path]:
-    """全書版 ＋ 未退役的 scoped 大綱檔。
-
-    **2026-07-28（功能 09）補進本檔的兩支目標集**。在此之前四支目標集 **0/4**
-    含 `story/大綱/`，於是 **6/12 支檔超過 `SOURCE_BYTES`**（最大 44,307＝門檻的
-    1.77×）、7 支檔有超過 600 字元的單行（最長 1,324）**全部靜音**——而同一次
-    `check` 卻報了 32,650 B 的 `血刀頭陀.md`。
-
-    **這是「四份手寫路徑清單漏檔」的第七次**（03 補 `chapters/`、05 補設定層衍生
-    與源、08 補摘要兩支）。前幾次漏的是資料夾或根目錄下的兩支檔，**這次漏的是一整個
-    產物軸**——而且是 repo 裡體積第三大的軸（302,669 B，僅次於幕綱與正文）。
-    **根因不在本輪修**，「這本書有哪些受管檔」的統一清單交功能 14。
-    """
-    out: list[Path] = []
-    full = book.joinpath(*OUTLINE_FULL)
-    if full.is_file():
-        out.append(full)
-    d = book.joinpath(*OUTLINE_DIR)
-    if d.is_dir():
-        out += [p for p in sorted(d.glob("*.md")) if not p.name.startswith("_")]
-    return out
-# 幕綱層的索引檔（2026-07-28 功能 12 補上）。arcNN 檔本身由 `beat_sheet_density`
-# 量 B/幕；漏掉的是這個資料夾裡**唯一一支不是 arcNN 的檔**。
-BEAT_DIR = ("story", "幕綱")
-BEAT_INDEX = "_index.md"
-
-
-def _beat_index(book: Path) -> Path | None:
-    """`story/幕綱/_index.md`——四支工具共用的 spine 的家，而它在整套哨兵裡不存在。
-
-    **2026-07-28（功能 12）補進體積與行長兩支目標集**。在此之前**四支目標集
-    0/4 含它**：實測 28,013 B ＝ `SOURCE_BYTES` 的 1.12×、`DERIVED_BYTES` 的
-    2.33×，18 行裝 11,780 字元（平均 654 字元/行）、9 行超過 400、最長 1,949
-    ——而 `derived-sync check` 對它**一個字都沒印**。
-
-    **這是「四份手寫路徑清單漏檔」的第九次**（03 補 `chapters/`、05 補設定層
-    衍生與源、08 補摘要兩支、09 補整個大綱軸、10 補 `story/參照/`）。**但這一次
-    的性質變了**——前八次漏的是「還沒被想到的資料夾／檔」，這一次漏的檔：
-
-    1. **就在 `beat_sheet_density` 每次都會 `glob` 進去的那個資料夾裡**。上面
-       `_ARC_RE` 那一行把它濾掉了，而**那個濾是對的**（它沒有 `## 幕NNN`，
-       不該進 B/幕 那支函式）——**錯的是沒有第二支函式接手**；
-    2. 被**四支工具**逐行解析（`beat_metrics`／`fact_projection`／
-       `decision_projection`／`foreshadow_project` 都靠它的 `全書順序：` 定序），
-       並被 2 支 SKILL.md 整檔讀；
-    3. **而且有一支綠色的測試把這個盲點釘成了預期行為**——
-       `tests/test_sentinel.py::test_non_arc_files_in_beat_dir_ignored` 斷言
-       「幕綱資料夾裡一支 50,000 漢字的 `_index.md` 什麼都不會觸發」。那個斷言
-       對 `beat_sheet_density` **是對的**，只是沒有人問「那誰來量它」。
-
-    也就是說手寫清單的失效模式已經從「遺漏」升級成「**即使人在現場、即使有一支
-    綠色的測試，也會漏**」。**根因不在本輪修**，統一的「這本書有哪些受管檔」
-    清單交功能 14。
-
-    **門檻沿用現成值，不新造第六級**：體積套 `SOURCE_BYTES`（它是 A1 源檔——
-    spine 是作者的創作決定，2026-07-28 起搬進同層的 `_順序.md`），行長套
-    `ROLLUP_LINE_CHARS`（400，同 `大綱/_index.md`——兩支都是「視圖 ≡ 資料夾」
-    形狀而不帶 `.ai.md` 的索引）。
-    """
-    p = book.joinpath(*BEAT_DIR, BEAT_INDEX)
-    return p if p.is_file() else None
-
-
-def _reference_sources(book: Path) -> list[Path]:
-    """`story/參照/` 底下**非 append log** 的檔（就緒／結構／各代舊名）。
-
-    **2026-07-28（功能 10）補進體積那一支目標集**。在此之前**三支體積哨兵目標集
-    0/3 含 `story/參照/`**，於是實測 **292,591 B** 的 `就緒儀表.md`——**全書最大的
-    一支檔**、`SOURCE_BYTES` 的 **11.7×**、`DERIVED_BYTES` 的 **24.4×**、佔全書
-    2,589,923 B 的 11.3%——完全靜音，而同一次 `check` 卻報了 32,650 B 的
-    `血刀頭陀.md`。`long_lines` 早就在掃這個資料夾（同一支檔的**行**），只有大小
-    那一份漏了它：**證據這不是刻意豁免，是每支函式各自手寫路徑清單。**
-
-    **這是「四份手寫路徑清單漏檔」的第八次**（03 補 `chapters/`、05 補設定層衍生
-    與源、08 補摘要兩支、09 補整個大綱軸），而這一次漏的是**全書最大的一支檔**。
-    **根因不在本輪修**，「這本書有哪些受管檔」的統一清單交功能 14。
-
-    **門檻沿用 `SOURCE_BYTES`，不新造第五級**：`就緒.md` 是源、目標 < 1,500 B，
-    門檻綽綽有餘。`結構.md`（實測 58,546 B）2026-07-28（功能 11）**廢除**，還帶著它的書
-    在這裡照舊被報體積——**那是刻意的**：說得出所以然的那一筆由 `structure-project` 的
-    第五節給（逐格印「這一格的機械來源是哪一支檔的哪一欄」），本函式只負責讓它不隱形。
-    """
-    d = book / "story" / "參照"
-    if not d.is_dir():
-        return []
-    return [p for p in sorted(d.glob("*.md")) if _base_stem(p) not in APPEND_LOG_STEMS]
-
-
-_BEAT_HEAD_RE = re.compile(r"^##\s*幕(\d+)")
 _PAREN_RE = re.compile(r"（[^（）]*）")
 
 # 節枚舉／`SETTINGS_KINDS` 的唯一真相在 `validate.py`（那裡是格式的擁有者）。
@@ -184,19 +123,13 @@ class Finding:
     hint: str
 
 
-def _base_stem(p: Path) -> str:
-    """去掉 `.ai.md` 或 `.md`，取實體名。`就緒儀表.ai.md` → `就緒儀表`。"""
-    name = p.name
-    if name.endswith(AI_SUFFIX):
-        return name[: -len(AI_SUFFIX)]
-    return p.stem
-
-
 def _size(p: Path) -> int:
     return len(p.read_text(encoding="utf-8").encode("utf-8"))
 
 
-def beat_sheet_density(book: Path, limit: int = BEAT_BYTES_PER_BEAT) -> list[Finding]:
+def beat_sheet_density(
+    book: Path, limit: int = BEAT_BYTES_PER_BEAT, stats: SentinelStats | None = None
+) -> list[Finding]:
     """幕綱該正比於幕數。明顯超出＝設計理由滲進了檔案。
 
     門檻取自實測分佈：健康的落在 1378–2211 B/幕（一世之尊 arc01–arc04、芯片巫師
@@ -211,14 +144,11 @@ def beat_sheet_density(book: Path, limit: int = BEAT_BYTES_PER_BEAT) -> list[Fin
     兩支都走 `_beat_index()`（見那裡的第九次漏檔紀錄）。
     """
     out: list[Finding] = []
-    d = book / "story" / "幕綱"
-    if not d.is_dir():
-        return out
-    for p in sorted(d.glob("*.md")):
-        if not _ARC_RE.match(p.stem):
-            continue
+    st = stats if stats is not None else SentinelStats()
+    for p in beat_arcs(book, _ARC_RE):
+        st.count("幕綱")
         text = p.read_text(encoding="utf-8")
-        beats = sum(1 for ln in text.splitlines() if _BEAT_HEAD_RE.match(ln))
+        beats = sum(1 for ln in text.splitlines() if BEAT_HEAD_RE.match(ln))
         if beats == 0:
             continue
         per = len(text.encode("utf-8")) // beats
@@ -234,7 +164,9 @@ def beat_sheet_density(book: Path, limit: int = BEAT_BYTES_PER_BEAT) -> list[Fin
     return out
 
 
-def oversized_sources(book: Path, limit: int = SOURCE_BYTES) -> list[Finding]:
+def oversized_sources(
+    book: Path, limit: int = SOURCE_BYTES, stats: SentinelStats | None = None
+) -> list[Finding]:
     """人管·源必須整檔讀，故單檔（或單一角色目錄）不該無限長。
 
     **用絕對門檻，不用「同層中位數的 N 倍」**：承重角色的設定檔本來就該比路人厚，
@@ -244,13 +176,16 @@ def oversized_sources(book: Path, limit: int = SOURCE_BYTES) -> list[Finding]:
     正解是升級成目錄形態（角色）或拆主題（世界觀）。
     """
     out: list[Finding] = []
-    for kind in SETTINGS_KINDS:
-        d = book / "story" / "設定" / kind
-        if not d.is_dir():
-            continue
+    st = stats if stats is not None else SentinelStats()
+    # **豁免的兩軸也要數**（E2 第七形態＋功能 13 的先例）：一個豁免要能回答
+    # 「它豁免了幾支」，否則它與「掃描器根本走不進去」不可分辨。
+    st.count("正文源", len(chapter_sources(book)))
+    st.count("raw", len(raw_files(book)))
+    for _kind, d in settings_dirs(book):
         for entry in sorted(d.iterdir()):
             if entry.is_dir():
                 # 目錄形態：切面總和過大＝這個角色本身該再拆，不是切面不夠
+                st.count("設定層源")
                 facets = sorted(entry.glob("*.md"))
                 size = sum(_size(f) for f in facets)
                 hint = (
@@ -258,6 +193,7 @@ def oversized_sources(book: Path, limit: int = SOURCE_BYTES) -> list[Finding]:
                     "檢查是否有 AI 產物（裁決紀錄／正文既成事實）誤寫進源檔"
                 )
             elif entry.suffix == ".md" and not entry.name.endswith(AI_SUFFIX) and not entry.name.startswith("_"):
+                st.count("設定層源")
                 size = _size(entry)
                 # **先搬後拆**（2026-07-27 功能 06 抉擇 4 B，作者拍板）。在此之前
                 # 這一支只說「升級成目錄形態」，而實測 `血刀頭陀.md`（32,650 B）
@@ -289,8 +225,9 @@ def oversized_sources(book: Path, limit: int = SOURCE_BYTES) -> list[Finding]:
     # 摘要沒有目錄形態、也沒有「拆主題」可拆——它一本書就是一份，所以搬完仍超標
     # 時沒有第二步。實測它 51.4% 是裁決理由與已駁回方案、16.7% 是「臨場拍板」節
     # （而其中一大半寫著「已定案／已鎖定」），也就是說**搬走就夠了**。
-    src, _ = _summary_paths(book)
+    src, _ = summary_paths(book)
     if src.is_file():
+        st.count("摘要")
         size = _size(src)
         if size > limit:
             out.append(
@@ -315,7 +252,8 @@ def oversized_sources(book: Path, limit: int = SOURCE_BYTES) -> list[Finding]:
     # **hint 與設定層／摘要都不同**：大綱沒有目錄形態、也沒有主題可拆，唯一的「拆」
     # 是把已收斂的卷併進 `01-大綱.md` 並 `git mv` 進 `_已併入/`（那是生命週期動作，
     # 不是切檔）。實測 arcNN 檔 **73% 不是連續敘述**——所以答案幾乎一定是搬，不是拆。
-    for p in _outline_sources(book):
+    for p in outline_sources(book):
+        st.count("大綱")
         size = _size(p)
         if size > limit:
             out.append(
@@ -337,7 +275,8 @@ def oversized_sources(book: Path, limit: int = SOURCE_BYTES) -> list[Finding]:
     # **hint 與前四類都不同**：這裡沒有「拆」也沒有「升級形態」可做——這個資料夾裝的
     # 是綜合檔，它變大**一定**是因為裝了別人的東西（實測 `就緒儀表.md` 53.8% 是拍板
     # 日誌、27.5% 是 `derived-sync check` 當場算得出來的東西、20.9% 是 transient TODO）。
-    for p in _reference_sources(book):
+    for p in reference_sources(book):
+        st.count("參照")
         size = _size(p)
         if size > limit:
             out.append(
@@ -360,14 +299,15 @@ def oversized_sources(book: Path, limit: int = SOURCE_BYTES) -> list[Finding]:
     # 五類都不同**：這支檔一開始就只該裝「每支 arc 一列」，而實測 18 行裡 11 行是 arc
     # 概覽散文（平均 969 字元、最長 1,949），另有一行 652 字元的檔頭沿革與一行 310
     # 字元的選用結構公式複本——**三種東西，三個不同的家，一支檔**。
-    beat_index = _beat_index(book)
-    if beat_index is not None:
-        size = _size(beat_index)
+    bi = beat_index(book)
+    if bi is not None:
+        st.count("幕綱索引")
+        size = _size(bi)
         if size > limit:
             out.append(
                 Finding(
                     kind="源檔肥大",
-                    path=beat_index,
+                    path=bi,
                     detail=f"{size} B（建議 ≤{limit}）",
                     hint="幕綱索引**沒有拆檔也沒有升級形態這條路**——它是視圖，"
                     "一支 arc 一列就該是全部。變大一定是裝了別人的東西："
@@ -392,23 +332,21 @@ def _derived_targets(book: Path) -> list[tuple[Path, str]]:
     （要不要有一份統一的「這本書有哪些受管檔」交功能 14）。
     """
     out: list[tuple[Path, str]] = []
-    for kind in SETTINGS_KINDS:
-        d = book / "story" / "設定" / kind
-        if d.is_dir():
-            out += [(p, kind) for p in sorted(d.glob(f"*{AI_SUFFIX}"))]
-    chapters = book / "chapters"
-    if chapters.is_dir():
-        out += [(p, "章節") for p in sorted(chapters.glob(f"*{AI_SUFFIX}"))]
+    for kind, d in settings_dirs(book):
+        out += [(p, kind) for p in sorted(d.glob(f"*{AI_SUFFIX}"))]
+    out += [(p, "章節") for p in chapter_derived(book)]
     # **2026-07-27（功能 08）補上摘要衍生檔**——第六次補同一個根因（見 `_summary_paths`）。
     # 實測 10,530 B ＝ `DERIVED_BYTES` 的 87.8%，而它還帶著 04 早就該搬走的
     # `## 待裁決回饋`（818 字元）：**兩個觸發都成立而兩個都靜音**。
-    _, derived = _summary_paths(book)
+    _, derived = summary_paths(book)
     if derived.is_file():
         out.append((derived, SUMMARY_KIND))
     return out
 
 
-def unsliceable_derived(book: Path, limit: int = DERIVED_BYTES) -> list[Finding]:
+def unsliceable_derived(
+    book: Path, limit: int = DERIVED_BYTES, stats: SentinelStats | None = None
+) -> list[Finding]:
     """衍生 `.ai.md` 沒有任何切片工具，故不享有「可以很大」的豁免。
 
     見 `共同約定.md` 零的資格條款。兩個獨立觸發：
@@ -419,7 +357,9 @@ def unsliceable_derived(book: Path, limit: int = DERIVED_BYTES) -> list[Finding]
     2. **超過門檻**——衍生應是源的壓縮，比源檔門檻更嚴。
     """
     out: list[Finding] = []
+    st = stats if stats is not None else SentinelStats()
     for p, kind in _derived_targets(book):
+        st.count("章衍生" if kind == "章節" else "設定層衍生")
         text = p.read_text(encoding="utf-8")
         size = len(text.encode("utf-8"))
         allowed = enum_for(kind, p.name[: -len(AI_SUFFIX)])
@@ -448,6 +388,7 @@ def unsliceable_derived(book: Path, limit: int = DERIVED_BYTES) -> list[Finding]
 
 def long_lines(
     book: Path,
+    stats: SentinelStats | None = None,
     limit: int = LINE_CHARS,
     rollup_limit: int = ROLLUP_LINE_CHARS,
     settings_derived_limit: int = SETTINGS_DERIVED_LINE_CHARS,
@@ -496,18 +437,9 @@ def long_lines(
     """
     out: list[Finding] = []
     targets: list[tuple[Path, int]] = []
-    ref = book / "story" / "參照"
-    if ref.is_dir():
-        # 依 base stem 判斷，才能同時吃到新命名（就緒儀表.ai.md）與既有書的舊命名
-        targets += [
-            (p, limit)
-            for p in sorted(ref.glob("*.md"))
-            if _base_stem(p) not in APPEND_LOG_STEMS
-        ]
-    for kind in SETTINGS_KINDS:
-        d = book / "story" / "設定" / kind
-        if not d.is_dir():
-            continue
+    # 依 base stem 判斷，才能同時吃到新命名（就緒儀表.ai.md）與既有書的舊命名
+    targets += [(p, limit) for p in reference_sources(book)]
+    for _kind, d in settings_dirs(book):
         targets += [(p, rollup_limit) for p in sorted(d.glob(f"_*{AI_SUFFIX}"))]
         # 非 rollup 的衍生與源。**用 rglob 吃到角色的目錄形態**（`<名>/<切面>.md`）
         # ——單檔形態與目錄形態的行長是同一件事，不該因為源升級成目錄就靜音。
@@ -518,15 +450,15 @@ def long_lines(
                 targets.append((p, settings_derived_limit))
             else:
                 targets.append((p, settings_source_limit))
-    chapters = book / "chapters"
-    if chapters.is_dir():
-        targets += [(p, rollup_limit) for p in sorted(chapters.glob(f"_*{AI_SUFFIX}"))]
+    targets += [
+        (p, rollup_limit) for p in chapter_derived(book) if p.name.startswith("_")
+    ]
     # **摘要兩支檔（2026-07-27 功能 08 補上）沿用設定層的兩級門檻**，不新造第五級：
     # 衍生是分析段落（同 `<主題>.ai.md` 的「限制與代價」，天生比 rollup 的一列長）、
     # 源是自由散文，性質與設定層那兩類相同。實測衍生最長行 626、源最長行 594
     # ——**兩者都只差門檻一點點**，那正是要它們進目標集的理由，不是放它們走的理由。
     # 另：`n=1` 的樣本不足以另立門檻（06 抉擇 5 A 已駁回「沒有空隙時硬定數字」）。
-    summary_src, summary_derived = _summary_paths(book)
+    summary_src, summary_derived = summary_paths(book)
     if summary_derived.is_file():
         targets.append((summary_derived, settings_derived_limit))
     if summary_src.is_file():
@@ -543,23 +475,23 @@ def long_lines(
     # **逐題拍板紀錄與編號排除線被塞進單行**（arc07 那條 1,324 字元的最長行就是）
     # ——連續敘述天生一段一行，而一份沿革不該是一行。
     outline: set[Path] = set()
-    for p in _outline_sources(book):
+    for p in outline_sources(book):
         targets.append((p, settings_source_limit))
         outline.add(p)
-    outline_index = book.joinpath(*OUTLINE_DIR, OUTLINE_INDEX)
-    if outline_index.is_file():
-        targets.append((outline_index, rollup_limit))
-        outline.add(outline_index)
+    oi = outline_index(book)
+    if oi is not None:
+        targets.append((oi, rollup_limit))
+        outline.add(oi)
     # **幕綱索引（2026-07-28 功能 12 補上）套 rollup 那一級（400），不新造門檻**：
     # 它與 `大綱/_index.md` 是同一種檔（「視圖 ≡ 資料夾」形狀、不帶 `.ai.md`）。
     # 實測 18 行裝 11,780 字元（平均 654 字元/行）、9 行超過 400、最長 1,949。
     # **hint 要另立一個 set，不能靠 limit 判**——400 已經同時給設定層 rollup、
     # `chapters/_index.ai.md` 與 `大綱/_index.md` 用，limit 分不出病徵。
     beat_index_targets: set[Path] = set()
-    beat_index = _beat_index(book)
-    if beat_index is not None:
-        targets.append((beat_index, rollup_limit))
-        beat_index_targets.add(beat_index)
+    bi = beat_index(book)
+    if bi is not None:
+        targets.append((bi, rollup_limit))
+        beat_index_targets.add(bi)
 
     # 設定層非 rollup 檔的病徵不是「表格 cell」而是「一條分析／一個 bullet 長成
     # 一份沿革」，所以 hint 分開寫。**兩種 hint 都提 `story/參照/裁決流.md`**——
@@ -594,6 +526,8 @@ def long_lines(
         "帶日期的沿革屬 story/參照/裁決流.md（`標的`＝該索引檔）"
     )
     settings_limits = {settings_derived_limit, settings_source_limit}
+    st = stats if stats is not None else SentinelStats()
+    st.lines_scanned += len(targets)
     for p, limit in targets:
         worst = 0
         worst_no = 0
@@ -641,6 +575,7 @@ def bloated_fact_lines(
     book: Path,
     limit: int = FACT_LINE_CHARS,
     ratio: float = FACT_PAREN_RATIO,
+    stats: SentinelStats | None = None,
 ) -> list[Finding]:
     """事實行只該寫「這一幕改變了什麼」——一行一筆 delta，不是一份前情提要。
 
@@ -656,19 +591,14 @@ def bloated_fact_lines(
     """
     # (路徑, 是否只認 `## 本章事實` 區塊)。章衍生檔一定要限定區塊——「## 待裁決
     # 回饋」底下也是 `- ` 開頭，全檔掃會誤報；參照/ 底下的檔沒有區塊標題，全檔掃。
-    targets: list[tuple[Path, bool]] = []
-    chapters = book / "chapters"
-    if chapters.is_dir():
-        targets += [(p, True) for p in sorted(chapters.glob("ch*" + AI_SUFFIX))]
-    ref = book / "story" / "參照"
-    if ref.is_dir():
-        targets += [
-            (p, False)
-            for p in sorted(ref.glob("*.md"))
-            if _base_stem(p) in APPEND_LOG_STEMS
-        ]
+    targets: list[tuple[Path, bool]] = [
+        (p, True) for p in chapter_derived(book) if p.name.startswith("ch")
+    ]
+    targets += [(p, False) for p in reference_logs(book)]
 
     out: list[Finding] = []
+    st = stats if stats is not None else SentinelStats()
+    st.fact_files += len(targets)
     for p, sectioned in targets:
         text = p.read_text(encoding="utf-8")
         if sectioned:
@@ -681,6 +611,7 @@ def bloated_fact_lines(
             ]
         # 量的是**內容欄**（信封第四欄），與 fact-lint 同一把尺。第一個全形冒號
         # 是 token/內容的分隔（見 事實流.schema.md 信封格式）。
+        st.fact_lines += len(lines)
         bodies = [(i, ln.split("：", 1)[-1]) for i, ln in lines if "：" in ln]
         long_hits = [(i, b) for i, b in bodies if len(b) > limit]
         paren_hits = [
@@ -723,7 +654,9 @@ DESTINATIONS: dict[str, tuple[str, ...]] = {
 }
 
 
-def missing_destinations(book: Path, findings: list[Finding]) -> list[Finding]:
+def missing_destinations(
+    book: Path, findings: list[Finding], stats: SentinelStats | None = None
+) -> list[Finding]:
     """**每一個「搬去 X」的建議，發建議前先檢查 X 在不在**（`設計原則.md` E1 新推論）。
 
     實測一世之尊：`derived-sync check` 的 229 行輸出裡有 37 行叫人把東西搬進
@@ -739,12 +672,15 @@ def missing_destinations(book: Path, findings: list[Finding]) -> list[Finding]:
     一支乾淨的書不該因為「你沒有裁決流」而被念。
     """
     out: list[Finding] = []
+    st = stats if stats is not None else SentinelStats()
+    st.destinations += len(DESTINATIONS)
     for label, candidates in DESTINATIONS.items():
         hits = [f for f in findings if label in f.hint]
         if not hits:
             continue
         if any((book / c).exists() for c in candidates):
             continue
+        st.destinations_missing += 1
         kinds = "、".join(sorted({f.kind for f in hits}))
         out.append(
             Finding(
@@ -759,12 +695,19 @@ def missing_destinations(book: Path, findings: list[Finding]) -> list[Finding]:
     return out
 
 
-def run(book: Path) -> list[Finding]:
+def run(book: Path) -> tuple[list[Finding], SentinelStats]:
+    """回 (findings, 覆蓋率)。**兩個回傳值都要印**（`設計原則.md` E2）。
+
+    在 2026-07-28（功能 14）之前這支只回 findings，而 `cli._print_sentinel` 在 0 筆
+    時直接 `return`——於是「哨兵掃了 0 支檔」與「哨兵掃過而一切正常」印出來**完全
+    相同**。十次「手寫路徑清單漏檔」每一次都落在前者。
+    """
+    stats = SentinelStats()
     findings = (
-        beat_sheet_density(book)
-        + oversized_sources(book)
-        + unsliceable_derived(book)
-        + long_lines(book)
-        + bloated_fact_lines(book)
+        beat_sheet_density(book, stats=stats)
+        + oversized_sources(book, stats=stats)
+        + unsliceable_derived(book, stats=stats)
+        + long_lines(book, stats=stats)
+        + bloated_fact_lines(book, stats=stats)
     )
-    return findings + missing_destinations(book, findings)
+    return findings + missing_destinations(book, findings, stats), stats

@@ -9,6 +9,17 @@ class MetricsError(Exception):
     """找不到章節、或章節無法對映到 arc。"""
 
 
+class LayerMissing(MetricsError):
+    """**這本書還沒有正文層**——與「這本書的格式壞了」是兩件事（功能 14，抉擇 6 A）。
+
+    契約：**exit 2，而且照樣印覆蓋率行**（`共同約定.md`「輸出與 exit 契約」）。
+    6 本書裡有 3 本長期處在這個狀態，不分開的話 CI 會永遠紅。
+
+    **它是 `MetricsError` 的子類**（同 `beat_metrics.LayerMissing ⊂ ScanError`）：
+    既有的 `except MetricsError` 照舊接得住，只有想分辨的地方才要多接一層。
+    """
+
+
 # 刻意**不內建任何文類詞表**（武打詞、修煉詞…）。那會讓工具只對武俠有效，
 # 且把「這個文類本來就這樣」誤判成退化。以下全部是文類無關的普世量，
 # 唯一的「詞彙」是從該書自己的 設定/角色/ 檔名推導出來的——書自己定義的，不是我們塞的。
@@ -109,14 +120,14 @@ def _arc_of(md: Path) -> str:
 def load_book_chapters(book: Path) -> list[Chapter]:
     d = book / "chapters"
     if not d.is_dir():
-        raise MetricsError(f"找不到 chapters/：{d}")
+        raise LayerMissing(f"找不到 chapters/：{d}")
     chapters = [
         Chapter(label=p.stem, group=_arc_of(p), path=p)
         for p in sorted(d.glob("ch*.md"))
         if not p.name.endswith(".ai.md")
     ]
     if not chapters:
-        raise MetricsError(f"{d} 下沒有 chNNNN.md")
+        raise LayerMissing(f"{d} 下沒有 chNNNN.md")
     return chapters
 
 

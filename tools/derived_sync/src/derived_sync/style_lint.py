@@ -47,7 +47,8 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .core import AI_SUFFIX, _split_frontmatter
+from .core import AI_SUFFIX
+from .md import KEY_RE, front_matter_of
 
 # 留下來的五個語意欄。**每一個都要在本模組被真的讀到**，否則依 A4／E1 它不配留在
 # front-matter（見檔頭）。`風格.schema.md` 有一張逐欄對照表指名這裡的項次。
@@ -74,7 +75,6 @@ SUMMARY_KEY = "基調"
 
 STYLE_DIRNAME = "風格"
 
-_KEY_RE = re.compile(r"^([^\s:：]+)\s*[:：]\s*(.*)$")
 # 顆粒度 token 的**位置判準**：只認「值的開頭」或「緊接 `碎在` 之後」的那一個。
 #
 # **第一版寫成「值裡有沒有 `分句|句|段` 這個字」，實測是假陰性**——`短句快節奏＋
@@ -162,24 +162,6 @@ def style_dir(book: Path) -> Path:
     return book / "story" / "設定" / STYLE_DIRNAME
 
 
-def _front_matter(p: Path) -> dict[str, str] | None:
-    """`.ai.md` 的 front-matter → 扁平 dict；沒有 front-matter 回 None。
-
-    **值要剝掉 `#` 之後的註解**：`風格.schema.md` 的範例本身就在值後面寫註解
-    （`基調參照: 哥特恐怖＋黑色幽默    # 引 00-摘要.md「基調」`），不剝的話第 6 項
-    的字串比對會對著一段註解比。
-    """
-    fm, _ = _split_frontmatter(p.read_text(encoding="utf-8"))
-    if fm is None:
-        return None
-    out: dict[str, str] = {}
-    for line in fm:
-        m = _KEY_RE.match(line.strip())
-        if m:
-            out[m.group(1).strip()] = m.group(2).split("#", 1)[0].strip()
-    return out
-
-
 def _split_top(s: str) -> list[str]:
     """依**最外層**逗號切分（括號／方括號／大括號內的逗號不算）。
 
@@ -223,7 +205,7 @@ def _parse_mapping(value: str) -> list[tuple[str, str]]:
         s = s[1:-1]
     out: list[tuple[str, str]] = []
     for part in _split_top(s):
-        m = _KEY_RE.match(part)
+        m = KEY_RE.match(part)
         if m:
             out.append((m.group(1).strip(), m.group(2).strip()))
         else:
@@ -461,7 +443,7 @@ def _check_tone(book: Path, p: Path, raw: str, stats: StyleStats) -> list[Proble
                 "是本項的比對基準。摘要衍生檔還沒產出時，這一欄等於沒有依據",
             )
         ]
-    fm = _front_matter(target)
+    fm = front_matter_of(target)
     if fm is None:
         # 尚未封章的骨架（模板／新書）：`check` 已經報成 unstamped，重複報是雜訊。
         stats.tone_state = f"未比對（{SUMMARY_DERIVED} 尚未封章）"
@@ -560,7 +542,7 @@ def lint_book(book: Path) -> tuple[list[Problem], StyleStats]:
         if p.name.startswith("_"):
             continue  # rollup（多檔形態才有，格式比照世界觀 _總覽；本輪零實作）
         stats.files += 1
-        fm = _front_matter(p)
+        fm = front_matter_of(p)
         if fm is None:
             # 尚未封章的骨架：`check` 已經報成 unstamped，重複報是雜訊
             #（同 validate／world-lint／char-lint 的骨架處置）。

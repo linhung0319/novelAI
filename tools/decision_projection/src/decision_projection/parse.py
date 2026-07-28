@@ -264,7 +264,12 @@ def select(
 # spine 的落點（2026-07-28 功能 12 抉擇 2 A）：**新落點優先、舊落點回退**。
 # `全書順序：` 是 A1 源（作者的創作決定），2026-07-28 從索引檔搬進同層的 `_順序.md`
 # ——它原本與一支「視圖 ≡ 資料夾」的索引同居一檔（六問 Q0 的違反）。
-# 舊書照抉擇 8 A 不遷移，所以回退保留；**讓回退可見的責任在 `beat-lint`**。
+# 舊書照抉擇 8 A 不遷移，所以回退保留。
+#
+# **「回退在覆蓋率行上是看得見的狀態」曾是 1/4 成立**（2026-07-28 功能 14 的 V9）：
+# 12 那一輪的承諾是四支工具都要讓回退可見，而只有 `beat-lint` 有 `spine_legacy` 欄
+# ——本支與 `fact-project`／`foreshadow-project` **實作了回退但不印讀自哪裡**。
+# 一個看不見的回退與「這本書已經遷移完了」在輸出上完全相同。
 SPINE_FILES = ("_順序.md", "_index.md")
 
 
@@ -275,6 +280,13 @@ def spine_path(book: Path) -> Path:
         if p.is_file():
             return p
     return d / SPINE_FILES[0]
+
+
+def spine_note(book: Path) -> str:
+    """`spine 讀自 \\`X\\`` ——**走舊落點時要說出來**（功能 14，V9）。"""
+    p = spine_path(book)
+    legacy = "（**舊落點·回退**）" if p.name != SPINE_FILES[0] else ""
+    return f"spine 讀自 `{p.name}`{legacy}" if p.is_file() else "spine **找不到**"
 
 
 def parse_spine(text: str) -> dict[str, int]:

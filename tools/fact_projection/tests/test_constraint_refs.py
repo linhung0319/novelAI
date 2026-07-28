@@ -78,15 +78,16 @@ def test_release_point_already_written_prints_a_reminder(tmp_path, capsys):
     book = _book(tmp_path)
     _chapter(book, "ch0003", "[幕008, 幕012]", "那扇門終於關上了。\n")
     assert main(["--book", str(book), "--as-of", "幕012（arc01）"]) == 0
-    err = capsys.readouterr().err
-    assert "「解除於」幕009（arc01） 已經寫成正文" in err and "ch0003" in err
+    # `（資訊）` 走 **stdout**（2026-07-28 功能 14 的輸出契約）
+    out = capsys.readouterr().out
+    assert "「解除於」幕009（arc01） 已經寫成正文" in out and "ch0003" in out
 
 
 def test_no_reminder_while_the_release_point_is_unwritten(tmp_path, capsys):
     book = _book(tmp_path)
     _chapter(book, "ch0001", "[幕001, 幕004]", "真觀站在門邊。\n")
     assert main(["--book", str(book), "--as-of", "幕004（arc01）"]) == 0
-    assert "已經寫成正文" not in capsys.readouterr().err
+    assert "已經寫成正文" not in capsys.readouterr().out
 
 
 def test_no_reminder_for_a_constraint_that_never_releases(tmp_path, capsys):

@@ -15,9 +15,11 @@ from .fold import (
     RELATION_SEP,
     Event,
     FoldError,
+    LayerMissing,
     Slot,
     parse_spine,
     project,
+    spine_note,
     spine_path as _spine_path,
 )
 from .objects import (
@@ -34,6 +36,19 @@ _ASOF_RE = re.compile(r"^幕(\d+)（(arc[^）]+)）$")
 
 _KIND_ORDER = {k: i for i, k in enumerate(KINDS)}
 
+
+# ---------------------------------------------------------------- 輸出與 exit 契約
+#
+# **唯一真相在 `結構定義/共同約定.md`「輸出與 exit 契約」**（2026-07-28 功能 14）。
+# stdout 裝「人與 LLM 要看的一切」（覆蓋率行、問題、資訊、提示、投影輸出），
+# stderr **只裝執行錯誤**。exit：0 乾淨／1 有格式問題／**2 這本書還沒有這一層
+# （照樣印覆蓋率行）**。
+#
+# ⚠️ argparse 的用法錯誤也是 2（Python 標準行為，本輪不改）——分辨方式是
+# **stdout 有沒有覆蓋率行**，`meta-lint` 第 6 項驗的就是這一條。
+EXIT_CLEAN = 0
+EXIT_PROBLEMS = 1
+EXIT_LAYER_MISSING = 2
 
 def _force_utf8() -> None:
     """書內容是中文，主控台編碼（如 Windows cp950）不該決定工具能不能輸出。"""
@@ -236,13 +251,14 @@ def main(argv: list[str] | None = None) -> int:
     if not args.ignore_lint:
         problems = lint(args.book)
         if problems:
-            print(f"格式閘門擋下 {len(problems)} 個問題（--ignore-lint 可略過）：", file=sys.stderr)
+            print(f"格式閘門擋下 {len(problems)} 個問題（--ignore-lint 可略過）：")
             for p in problems:
-                print(f"  [x] {p}", file=sys.stderr)
-            return 1
+                print(f"  [x] {p}")
+            return EXIT_PROBLEMS
 
     spine_file = _spine_path(args.book)
-    notes: list[str] = []
+    # **回退要看得見**（功能 14，V9）：12 承諾四支工具都印，實測只有 `beat-lint` 做到。
+    notes: list[str] = [spine_note(args.book)]
     try:
         events, mode = collect_events(args.book, orphans=notes)
         if mode == "legacy":
@@ -293,7 +309,7 @@ def main(argv: list[str] | None = None) -> int:
         slots = _narrow_propositions(slots, set(beat_ctx.foreshadows), notes)
 
     for n in notes:
-        print(f"（資訊）{n}", file=sys.stderr)
+        print(f"（資訊）{n}")
 
     print(
         format_projection(
@@ -385,8 +401,9 @@ def _history_main(args: argparse.Namespace) -> int:
         print(f"投影錯誤：arc {unknown} 不在 spine（全書順序）中，無法定位", file=sys.stderr)
         return 1
     picked.sort(key=lambda e: (spine[e.arc], e.beat, e.order))
+    print(f"（資訊）{spine_note(args.book)}")
     print(format_history(picked, entity, token), end="")
-    return 0
+    return EXIT_CLEAN
 
 
 def refs_main(argv: list[str] | None = None) -> int:
@@ -443,6 +460,7 @@ def refs_main(argv: list[str] | None = None) -> int:
             return 1
         after = (spine[m.group(2)], int(m.group(1)))
 
+    print(f"（資訊）{spine_note(args.book)}")
     if args.entity:
         found = entity_refs(events, args.entity, spine, after)
         print(_format_entity_refs(args.entity, found), end="")
@@ -617,11 +635,27 @@ def lint_main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
     _force_utf8()
 
-    problems, stats = lint_report(args.book)
+    try:
+        problems, stats = lint_report(args.book)
+    except LayerMissing as e:
+        return _print_layer_missing(e)
     return _print_lint(problems, stats, "事實信封行與物件檔格式乾淨。")
 
 
+def _print_layer_missing(e: Exception) -> int:
+    """**exit 2 ＝跑不動，而且照樣印覆蓋率行**（抉擇 6 A）。"""
+    print(f"檢查範圍：掃了 0 筆——這本書還沒有這一層（{e}）")
+    return EXIT_LAYER_MISSING
+
+
 def _print_lint(problems: list[str], stats, clean_msg: str) -> int:
+    """**問題進 stdout**（2026-07-28 功能 14 改，V10）。
+
+    在此之前覆蓋率行走 stdout、問題清單走 stderr，實測後果：
+    `fact-lint --book 一世之尊 > report.txt` 得到 **2 行（412 B）**，而 206 個
+    問題（47,547 B）全部落進 stderr——**在一個由 LLM 驅動、routinely 重導輸出的
+    系統裡，這是一個會安靜地讀成「乾淨」的介面**。
+    """
     print(stats.render())
     for n in stats.notes:
         print(f"（資訊）{n}")
@@ -629,11 +663,11 @@ def _print_lint(problems: list[str], stats, clean_msg: str) -> int:
         print(f"（提示）{h}")
     if not problems:
         print(clean_msg)
-        return 0
-    print(f"發現 {len(problems)} 個問題：", file=sys.stderr)
+        return EXIT_CLEAN
+    print(f"發現 {len(problems)} 個問題：")
     for p in problems:
-        print(f"  [x] {p}", file=sys.stderr)
-    return 1
+        print(f"  [x] {p}")
+    return EXIT_PROBLEMS
 
 
 def object_lint_main(argv: list[str] | None = None) -> int:
@@ -658,7 +692,10 @@ def object_lint_main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
     _force_utf8()
 
-    problems, stats = lint_report(args.book)
+    try:
+        problems, stats = lint_report(args.book)
+    except LayerMissing as e:
+        return _print_layer_missing(e)
     if not args.all:
         problems = [p for p in problems if _is_object_problem(p)]
     d = objects_dir(args.book)

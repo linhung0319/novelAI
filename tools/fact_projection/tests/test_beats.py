@@ -119,7 +119,8 @@ def test_for_beat_replaces_entities_and_asof(tmp_path, capsys):
     assert main(["--book", str(book), "--for-beat", "幕002"]) == 0
     out = capsys.readouterr()
     assert "### 少年" in out.out and "路人" not in out.out
-    assert "由該幕「角色」欄導出實體" in out.err
+    # `（資訊）` 走 **stdout**（2026-07-28 功能 14 的輸出契約）
+    assert "由該幕「角色」欄導出實體" in out.out
 
 
 def test_explicit_entities_still_win(tmp_path, capsys):
@@ -144,7 +145,7 @@ def test_relevant_propositions_narrow_and_report_the_hidden_count(tmp_path, caps
     assert main(["--book", str(book), "--for-beat", "幕002", "--propositions", "relevant"]) == 0
     out = capsys.readouterr()
     assert "信物用途" in out.out and "主宰目的" not in out.out
-    assert "另 1 條休眠中" in out.err  # 縮減 context 不能是靜默的
+    assert "另 1 條休眠中" in out.out  # 縮減 context 不能是靜默的
 
 
 def test_relevant_requires_for_beat(tmp_path, capsys):

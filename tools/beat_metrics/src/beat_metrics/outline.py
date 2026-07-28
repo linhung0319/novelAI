@@ -44,7 +44,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from . import formula as fm
-from .scan import ScanError, read_text
+from .refs import ARC_RANGE_RE, FORESHADOW_RE, MISSING_HINT, format_missing, scan_md_refs
+from .scan import LayerMissing, ScanError, read_text
 from .structure import SKELETON_MARK, parse_book
 
 # ------------------------------------------------------------------ 常數
@@ -58,14 +59,8 @@ RETIRED_DIR = "_已併入"
 
 _ARC_FILE_RE = re.compile(r"^arc(\d+)$")
 _ARC_TOKEN_RE = re.compile(r"arc(\d+)")
-# `arc01–arc04`／`arc01—arc04`／`arc01-arc04`：`01-大綱.md` 實際在用的範圍寫法。
-_ARC_RANGE_RE = re.compile(r"arc(\d+)\s*[–—-]\s*arc(\d+)")
 _BEAT_TOKEN_RE = re.compile(r"幕(\d+)")
 _CH_TOKEN_RE = re.compile(r"ch(\d{4})")
-# 唯一真相在 `foreshadow_project/scan.py:_MARK_RE`；工具間零相依，故複製最小片段
-# （同 `structure.py` 檔頭的理由）。大綱層**不分埋／收**——那是幕綱的事，這裡只問
-# 「這個名字在不在 registry 裡」。
-_FORESHADOW_RE = re.compile(r"\[\[伏筆[:：]\s*([^\]]+?)\s*\]\]")
 _H2_RE = re.compile(r"^##\s+(.*?)\s*$")
 _INDEX_ROW_RE = re.compile(r"^-\s*arc(\d+)\s*[：:]")
 _BULLET_RE = re.compile(r"^-\s*(.+?)\s*[：:]")
@@ -110,9 +105,8 @@ _DATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
 # 第 9 項：只認**書內相對路徑**。schema 檔、知識庫、佔位寫法（`arcNN.md`）、
 # 範圍寫法（`arc01–arc04.md`）都不是「指名一個檔」，逐一排除——不排除的話，
 # 一支合法的大綱會因為引用了自己的 schema 而被報成「目的地不存在」。
-_MD_REF_RE = re.compile(r"`([^`\n]+?\.md)`")
-BOOK_PREFIXES = ("story/", "chapters/", "參照/", "幕綱/", "大綱/", "設定/", "物件/")
-_PLACEHOLDER_RE = re.compile(r"(arcNN|chNNNN|<[^>]+>|＜[^＞]+＞|NNNN|NNN)")
+# （這三個常數 2026-07-28 搬進 `refs.py`，與 `beat-lint` 第 12 項共用一份——
+# 「什麼算一個引用、什麼不算」是同一條規則，兩份會漂。）
 
 
 # ------------------------------------------------------------------ 資料結構
@@ -349,7 +343,7 @@ def load_files(book: Path) -> list[OutlineFile]:
                 )
             )
     if not out:
-        raise ScanError(
+        raise LayerMissing(
             f"找不到任何大綱檔：{full} 不存在，{d} 底下也沒有 arcNN.md"
         )
     return out
@@ -715,7 +709,7 @@ def _check_foreshadow(
     beats_dir = book / "story" / "幕綱"
     if beats_dir.is_dir():
         for p in sorted(beats_dir.glob("*.md")):
-            registry |= {n.strip() for n in _FORESHADOW_RE.findall(read_text(p))}
+            registry |= {n.strip() for n in FORESHADOW_RE.findall(read_text(p))}
     objects = book / "story" / "物件"
     if objects.is_dir():
         registry |= {
@@ -723,7 +717,7 @@ def _check_foreshadow(
         }
     names: dict[str, str] = {}
     for f in texts:
-        for m in _FORESHADOW_RE.finditer(f.text):
+        for m in FORESHADOW_RE.finditer(f.text):
             stats.foreshadow_hits += 1
             names.setdefault(m.group(1).strip(), f.where)
     stats.foreshadow_names = len(names)
@@ -851,33 +845,16 @@ def _check_destinations(
     佔位寫法（`arcNN.md`）、範圍寫法（`arc01–arc04.md`）都不是「指名一個檔」——
     不排除的話，一支完全合法的大綱會因為引用了自己的 schema 而被報成目的地不存在。
     """
-    missing: dict[str, set[str]] = {}
-    for f in texts:
-        for m in _MD_REF_RE.finditer(f.text):
-            ref = m.group(1).strip()
-            if not ref.startswith(BOOK_PREFIXES):
-                continue
-            if ".schema." in ref or _PLACEHOLDER_RE.search(ref):
-                continue
-            if _ARC_RANGE_RE.search(ref) or "–" in ref or "—" in ref:
-                continue
-            stats.path_refs += 1
-            rel = ref[len("story/") :] if ref.startswith("story/") else ref
-            if (book / "story" / rel).is_file() or (book / ref).is_file():
-                continue
-            missing.setdefault(ref, set()).add(f.where)
+    checked, missing = scan_md_refs([(f.where, f.text) for f in texts], book)
+    stats.path_refs += checked
     if not missing:
         return []
     stats.path_missing = len(missing)
-    shown = "、".join(
-        f"`{r}`（{'、'.join(sorted(w))}）" for r, w in sorted(missing.items())[:4]
-    ) + ("…" if len(missing) > 4 else "")
     return [
         Problem(
             "大綱/",
-            f"{len(missing)} 個檔內指名的路徑不存在：{shown}",
-            "箭頭指向空氣，而箭頭本身格式完全合法（E1）。改成實際的路徑，"
-            "或照 `書本模板/` 的骨架先建那支檔",
+            f"{len(missing)} 個檔內指名的路徑不存在：{format_missing(missing)}",
+            MISSING_HINT,
         )
     ]
 
@@ -960,7 +937,7 @@ def _check_coexistence(files: list[OutlineFile], stats: OutlineStats) -> list[Pr
     # 「守留白紀律、只指路」誤判成「兩個家」——那正好與它要抓的病相反。
     prose = re.sub(r"`[^`\n]*`", "", full.body(PROSE_SECTION_FULL) or "")
     covered: set[int] = set()
-    for m in _ARC_RANGE_RE.finditer(prose):
+    for m in ARC_RANGE_RE.finditer(prose):
         covered |= set(range(int(m.group(1)), int(m.group(2)) + 1))
     covered |= {int(m.group(1)) for m in _ARC_TOKEN_RE.finditer(prose)}
     stats.covered_arcs = len(covered)

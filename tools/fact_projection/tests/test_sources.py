@@ -230,7 +230,8 @@ def test_lint_main_exit_codes(tmp_path, capsys):
         tmp_path / "b", chapters={"ch0001.ai.md": _ch("- 幕002（arc01）· 少年 · 心情：開心")}
     )
     assert lint_main(["--book", str(dirty)]) == 1
-    assert "未知類型 token" in capsys.readouterr().err
+    # 問題清單走 **stdout**（2026-07-28 功能 14 的輸出契約）
+    assert "未知類型 token" in capsys.readouterr().out
 
 
 # ------------------------------------------------- 覆蓋率輸出（設計原則 E2）
@@ -437,8 +438,9 @@ def test_projection_is_gated_by_lint(tmp_path, capsys):
         objects={"同伴.md": _obj("| 甲 | 乙 | 幕005(arc01) | — |")},
     )
     assert main(["--book", str(book), "--as-of", "幕011（arc01）"]) == 1
-    err = capsys.readouterr().err
-    assert "格式閘門擋下" in err and "全形／半形" in err
+    # 閘門擋下的問題走 **stdout**（2026-07-28 功能 14 的輸出契約）
+    out = capsys.readouterr().out
+    assert "格式閘門擋下" in out and "全形／半形" in out
 
 
 def test_projection_is_gated_by_object_lint_too(tmp_path, capsys):
@@ -449,7 +451,7 @@ def test_projection_is_gated_by_object_lint_too(tmp_path, capsys):
         objects={"同伴.md": "---\n型別: 不存在的型\n---\n## 為什麼存在\n因為。\n"},
     )
     assert main(["--book", str(book), "--as-of", "幕011（arc01）"]) == 1
-    assert "封閉枚舉" in capsys.readouterr().err
+    assert "封閉枚舉" in capsys.readouterr().out
 
 
 def test_ignore_lint_lets_it_through(tmp_path, capsys):
@@ -467,7 +469,7 @@ def test_projection_still_raises_on_bad_line(tmp_path, capsys):
         tmp_path, chapters={"ch0001.ai.md": _ch("- 幕002（arc01）· 少年 · 心情：開心")}
     )
     assert main(["--book", str(book), "--as-of", "幕011（arc01）"]) == 1
-    assert "未知類型 token" in capsys.readouterr().err
+    assert "未知類型 token" in capsys.readouterr().out
 
 
 def test_bom_prefixed_files_still_parse(tmp_path):

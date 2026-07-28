@@ -16,6 +16,7 @@ from .exposition import (
 )
 from .metrics import (
     Chapter,
+    LayerMissing,
     MetricsError,
     chapter_metrics,
     load_book_chapters,
@@ -31,6 +32,19 @@ from .rhythm import (
     summarize_rhythm,
 )
 
+
+# ---------------------------------------------------------------- 輸出與 exit 契約
+#
+# **唯一真相在 `結構定義/共同約定.md`「輸出與 exit 契約」**（2026-07-28 功能 14）。
+# stdout 裝「人與 LLM 要看的一切」（覆蓋率行、問題、資訊、提示、投影輸出），
+# stderr **只裝執行錯誤**。exit：0 乾淨／1 有格式問題／**2 這本書還沒有這一層
+# （照樣印覆蓋率行）**。
+#
+# ⚠️ argparse 的用法錯誤也是 2（Python 標準行為，本輪不改）——分辨方式是
+# **stdout 有沒有覆蓋率行**，`meta-lint` 第 6 項驗的就是這一條。
+EXIT_CLEAN = 0
+EXIT_PROBLEMS = 1
+EXIT_LAYER_MISSING = 2
 
 def _force_utf8() -> None:
     for stream in (sys.stdout, sys.stderr):
@@ -289,18 +303,22 @@ def main(argv: list[str] | None = None) -> int:
                 combine(corpus_rows, "語料"),
                 args.corpus.name,
             )
+    except LayerMissing as e:
+        # **exit 2 ＝跑不動，而且照樣印覆蓋率行**（抉擇 6 A）。
+        print(f"檢查範圍：掃了 0 章——這本書還沒有這一層（{e}）")
+        return EXIT_LAYER_MISSING
     except MetricsError as e:
         print(f"統計錯誤：{e}", file=sys.stderr)
-        return 1
+        return EXIT_PROBLEMS
     except OSError as e:
         print(f"讀取失敗：{e}", file=sys.stderr)
-        return 1
+        return EXIT_PROBLEMS
 
     # 借來的詞彙表屬於**另一套語料**：拿 A 書的角色名去量 B 書，覆蓋率天生不足，
     # 「在場角色／獨白章」會系統性偏低。那是誤用，不是漂移，故整組停用。
     borrowed = args.vocab_from is not None
     if not vocab:
-        print("（注意：無角色詞彙表，「在場角色／獨白章」兩項已停用）", file=sys.stderr)
+        print("（注意：無角色詞彙表，「在場角色／獨白章」兩項已停用）")
     elif borrowed:
         print(
             "（注意：詞彙表借自其他書，「在場角色／獨白章」兩項已停用——"
@@ -336,7 +354,7 @@ def main(argv: list[str] | None = None) -> int:
         ),
         end="",
     )
-    return 1 if findings or expo_findings or rhythm_findings else 0
+    return EXIT_PROBLEMS if findings or expo_findings or rhythm_findings else EXIT_CLEAN
 
 
 if __name__ == "__main__":

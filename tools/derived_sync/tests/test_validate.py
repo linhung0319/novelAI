@@ -8,6 +8,7 @@ from derived_sync.validate import (
     enum_for,
     validate_book,
     validate_file,
+    validate_report,
 )
 
 GOOD_FM = "---\ngenerated-from: abc123\ngenerated-at: 2026-07-26\n---\n"
@@ -281,3 +282,108 @@ def test_validate_book_and_cli_exit_codes(tmp_path, capsys):
     dirty = _book(tmp_path / "b", {"chapters/ch0001.ai.md": GOOD_FM + "## 硬事實\n- 乙\n"})
     assert main(["validate", "--book", str(dirty)]) == 1
     assert "硬事實" in capsys.readouterr().out
+
+
+# --------------------------------- schema 外的 front-matter 鍵（2026-07-28 功能 14，V13）
+#
+# `REQUIRED_KEYS` **只驗缺、不驗多**，所以一個沒有人定義過的鍵可以長出來並活很久
+# ——實測 `00-摘要.ai.md` 的 `終局` 是某一輪重生自己長出來的 534 字元單行，
+# schema 從沒定義過它，零消費者，活過至少 4 個版本。
+
+
+def _char_book(tmp_path, fm: str):
+    book = tmp_path / "書"
+    d = book / "story" / "設定" / "角色"
+    d.mkdir(parents=True)
+    (d / "少年.md").write_text("# 少年\n\n怕水。\n", encoding="utf-8")
+    (d / "少年.ai.md").write_text(
+        f"---\n{fm}---\n"
+        "## 需求四象限\n- 期盼：變強\n## 預期弧線\n盲目\n"
+        "## 馬斯洛層次\n安全\n## 對衝關係\n對撞\n",
+        encoding="utf-8",
+    )
+    return book
+
+
+def test_schema_keys_pass(tmp_path):
+    book = _char_book(
+        tmp_path,
+        "generated-from: abc\ngenerated-at: 2026-07-28\n定位: 主角\n"
+        "所屬arc: [arc01]\n暫定: false\n伏筆: { 埋: [], 收: [] }\n",
+    )
+    assert validate_book(book) == []
+
+
+def test_unknown_key_is_reported(tmp_path):
+    """`弧線類型` 是 06 刪掉的欄；`占卜結果` 是誰都沒定義過的——兩種都要抓。"""
+    book = _char_book(
+        tmp_path,
+        "generated-from: abc\ngenerated-at: 2026-07-28\n定位: 主角\n"
+        "弧線類型: 正弧線\n占卜結果: 大吉\n",
+    )
+    problems = validate_book(book)
+    assert len(problems) == 1
+    assert "schema 外的 front-matter 鍵" in problems[0].detail
+    assert "`占卜結果`" in problems[0].detail and "`弧線類型`" in problems[0].detail
+
+
+def test_unknown_keys_aggregate_into_one_line(tmp_path):
+    """**聚合**（03 拍板的判準）：實測一世之尊 29 支檔命中，逐支報就是 29 行同型雜訊。"""
+    book = tmp_path / "書"
+    d = book / "story" / "設定" / "角色"
+    d.mkdir(parents=True)
+    for name in ("甲", "乙", "丙"):
+        (d / f"{name}.md").write_text(f"# {name}\n\n介紹。\n", encoding="utf-8")
+        (d / f"{name}.ai.md").write_text(
+            "---\ngenerated-from: a\ngenerated-at: 2026-07-28\n角色: X\n---\n"
+            "## 需求四象限\n甲\n## 預期弧線\n乙\n## 馬斯洛層次\n丙\n## 對衝關係\n丁\n",
+            encoding="utf-8",
+        )
+    problems = [p for p in validate_book(book) if "schema 外" in p.detail]
+    assert len(problems) == 1
+    assert "3 支 .ai.md" in problems[0].detail
+
+
+def test_chinese_keys_are_visible_to_the_parser(tmp_path):
+    """舊的 `^([A-Za-z0-9_-]+):` **連中文鍵都看不到**，所以「缺某鍵」在摘要軸上
+    一直是空頭承諾——那支檔的鍵全是中文（`主線`／`題旨`／`基調`…）。"""
+    book = tmp_path / "書"
+    (book / "story").mkdir(parents=True)
+    (book / "story" / "00-摘要.md").write_text("# 摘要\n\n主線。\n", encoding="utf-8")
+    (book / "story" / "00-摘要.ai.md").write_text(
+        "---\ngenerated-from: a\ngenerated-at: 2026-07-28\n"
+        "主線: 少年復仇\n題旨: { X: 恨, Y: 放下 }\n終局: 他回頭了\n---\n"
+        "## 壓縮\n略\n## 高概念\n略\n## 取向定位分析\n略\n",
+        encoding="utf-8",
+    )
+    problems = [p for p in validate_book(book) if "schema 外" in p.detail]
+    assert len(problems) == 1
+    # 中文鍵讀得到 → `終局` 被抓到；`主線`／`題旨` 是合法鍵，不得誤報
+    assert "`終局`" in problems[0].detail
+    assert "`主線`" not in problems[0].detail and "`題旨`" not in problems[0].detail
+
+
+def test_coverage_line_prints_both_key_numbers(tmp_path):
+    """**兩個數字必須成對**：只印「檢查了幾個鍵」＝用命中率冒充可用率（E2）。"""
+    book = _char_book(
+        tmp_path, "generated-from: a\ngenerated-at: 2026-07-28\n弧線類型: 正弧線\n"
+    )
+    _, stats = validate_report(book)
+    line = stats.render()
+    assert "front-matter 鍵：1 支檔套鍵枚舉" in line
+    assert "**1 個是 schema 外的**" in line
+
+
+def test_rollups_have_no_key_enumeration(tmp_path):
+    """rollup 三支 2026-07-28（功能 12）已廢除——殘留偵測是 `--emit` 末節的事，
+    在這裡再報一次只是同一件事的第二個警報（E2 第七形態：豁免要寫出豁免哪一項）。"""
+    book = tmp_path / "書"
+    d = book / "story" / "設定" / "角色"
+    d.mkdir(parents=True)
+    (d / "_index.ai.md").write_text(
+        "---\ngenerated-from: a\ngenerated-at: 2026-07-28\n誰都沒定義過: X\n---\n"
+        "## 角色清單\n- 甲\n",
+        encoding="utf-8",
+    )
+    _, stats = validate_report(book)
+    assert stats.keys_unenumerated == 1 and stats.keys_unknown == 0

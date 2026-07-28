@@ -66,11 +66,17 @@ def test_main_parse_error_returns_1(tmp_path, capsys):
     assert rc == 1 and "表頭欄位不符" in capsys.readouterr().err
 
 
-def test_main_missing_file_returns_1(tmp_path, capsys):
+def test_main_missing_stream_is_exit_2_with_a_coverage_line(tmp_path, capsys):
+    """**「這本書還沒有裁決軸」與「裁決流格式壞了」是兩件事**（2026-07-28 功能 14，
+    抉擇 6 A）：exit 2，而且照樣印覆蓋率行——6 本書裡有 3 本長期是前者，
+    不分開的話 CI 會被那 3 本永遠釘在紅色。"""
     book = tmp_path / "empty"
     (book / "story" / "參照").mkdir(parents=True)
     rc = main(["--book", str(book)])
-    assert rc == 1 and "找不到" in capsys.readouterr().err
+    out = capsys.readouterr()
+    assert rc == 2
+    assert "掃了 0 列裁決" in out.out and "還沒有這一層" in out.out
+    assert out.err == ""
 
 
 def test_resolve_stream_missing_raises(tmp_path):
@@ -133,7 +139,8 @@ def test_as_of_unknown_arc_returns_1(tmp_path, capsys):
 def test_missing_target_path_is_reported_as_info(tmp_path, capsys):
     book = _make_book(tmp_path)
     main(["--book", str(book)])
-    assert "在書內找不到" in capsys.readouterr().err
+    # `（資訊）` 走 **stdout**（2026-07-28 功能 14 的輸出契約）
+    assert "在書內找不到" in capsys.readouterr().out
 
 
 # ------------------------------------------------- 待裁決那一節（2026-07-27 功能 04）

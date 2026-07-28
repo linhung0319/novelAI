@@ -5,6 +5,14 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 
+class LayerMissing(Exception):
+    """**這本書還沒有這一層**——與「這本書的格式壞了」是兩件事（功能 14，抉擇 6 A）。
+
+    契約：**exit 2，而且照樣印覆蓋率行**（`共同約定.md`「輸出與 exit 契約」）。
+    6 本書裡有 3 本長期是這個狀態，不分開的話 CI 會永遠紅。
+    """
+
+
 class ScanError(Exception):
     """幕綱／spine 解析失敗（找不到 spine、arc 無法定位）。"""
 

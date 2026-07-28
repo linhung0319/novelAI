@@ -66,7 +66,8 @@ def test_main_bad_asof_format_returns_1(tmp_path, capsys):
 def test_main_unknown_token_returns_1(tmp_path, capsys):
     book = _make_book(tmp_path, body="- 幕001（arcF）· 哈利 · 心情：開心\n")
     rc = main(["--book", str(book), "--as-of", "幕011（arcF）"])
-    assert rc == 1 and "未知類型 token" in capsys.readouterr().err
+    # 格式閘門擋下的問題走 **stdout**（2026-07-28 功能 14 的輸出契約）
+    assert rc == 1 and "未知類型 token" in capsys.readouterr().out
 
 
 def test_main_bad_kinds_returns_1(tmp_path, capsys):

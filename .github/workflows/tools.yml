@@ -1,0 +1,141 @@
+# 寫作系統工具鏈的守衛（2026-07-28 功能 14，抉擇 2 A）。
+#
+# **為什麼是獨立的一支 workflow，不是加進 `pages.yml`。**
+# `pages.yml` 把 `chapters/` 變成 GitHub Pages，是作者「在手機上看產出結果」的
+# 便利設施；**當這套 AI 小說寫作輔助系統真正被使用時，不會需要它**。守衛掛在
+# 一個用完即棄的站台上，等於哪天站台被刪、守衛跟著一起消失。
+# **所以本檔與 `pages.yml` 不共用任何 job，而那一支這一輪一個字都沒動。**
+#
+# **正確的說法不是「這個 repo 有 CI 紀律，只是漏了 Python」**——是**這套寫作
+# 系統從來沒有過任何自動化守衛**：唯一存在的 workflow 屬於另一個產品。
+# 「811 支測試零自動執行」這個事實不變，而成因從「漏了」變成「從來沒有過」。
+#
+# **CI 是後備，不是主要觸發者**：工具鏈的真正呼叫者是 **AI 的 skill**
+# （`meta-lint` 第 1／2 項驗的就是那個觸發模型）。這裡守的是「明天它們還是好的」。
+
+name: tools
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tools-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tools:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      # ---------------------------------------------------------------- ① 測試
+      #
+      # **雙向擋**（見 `tools/meta_lint/known-red.toml`）：
+      #   紅而不在清單裡 → fail（新的回歸）；
+      #   在清單裡卻變綠了 → 也 fail（一份過期的已知紅清單就是下一個
+      #   「守衛壞了而沒有人知道」——`設計原則.md` E2 第八種形態）。
+      - name: pytest（8 個套件；紅的必須登記在案）
+        run: |
+          set -uo pipefail
+          status=0
+          for pkg in tools/*/; do
+            name=$(basename "$pkg")
+            [ -d "$pkg/tests" ] || continue
+            echo "::group::$name"
+            uv run --project "$pkg" pytest -q -p no:cacheprovider "$pkg/tests" \
+              --junit-xml="junit-$name.xml" || status=1
+            echo "::endgroup::"
+          done
+          # 逐支比對「紅的是不是登記在案的那幾支」
+          uv run --project tools/meta_lint python - <<'PY'
+          import glob, sys, tomllib, xml.etree.ElementTree as ET
+
+          expected = {
+              t["test"] for t in tomllib.load(open("tools/meta_lint/known-red.toml", "rb"))["known_red"]
+          }
+          red = set()
+          for f in glob.glob("junit-*.xml"):
+              for case in ET.parse(f).getroot().iter("testcase"):
+                  if case.find("failure") is None and case.find("error") is None:
+                      continue
+                  red.add(f"{case.get('file')}::{case.get('name')}".replace("\\", "/"))
+
+          new = sorted(red - expected)
+          healed = sorted(expected - red)
+          for t in new:
+              print(f"::error::新的紅字（不在 known-red.toml 裡）：{t}")
+          for t in healed:
+              print(f"::error::已知紅清單過期——這一支綠了，把它從 known-red.toml 刪掉：{t}")
+          sys.exit(1 if new or healed else 0)
+          PY
+
+      # ---------------------------------------------------------------- ② 書本模板
+      #
+      # **exit ∈ {0,2} 且格式問題數 0**（抉擇 6 A）：0 ＝乾淨、2 ＝這本書還沒有
+      # 這一層（模板沒有正文，`prose-metrics` 一定是 2）。**exit 1 才是紅字。**
+      #
+      # 診斷輪寫的「實測今天就是全綠」**是錯的**（功能 14 探勘時推翻）：
+      # 19 支裡 17 支 exit 0，另兩支是 `derived-sync check`（模板的兩支骨架被報成
+      # `unstamped`）與 `prose-metrics`（沒有 chNNNN.md）。本輪讓那個前提成真——
+      # 前者拆出 `skeleton` 狀態、後者走 exit 2。
+      - name: 書本模板 19 指令（exit ∈ {0,2} 且問題數 0）
+        run: |
+          set -uo pipefail
+          status=0
+          run() {  # run <套件> <指令> [子指令...]
+            pkg=$1; shift
+            out=$(uv run --project "tools/$pkg" "$@" --book 書本模板 2>&1) || true
+            rc=$(uv run --project "tools/$pkg" "$@" --book 書本模板 >/dev/null 2>&1; echo $?)
+            label="$*"
+            if [ "$rc" != "0" ] && [ "$rc" != "2" ]; then
+              echo "::error::$label 在書本模板上 exit $rc（只准 0 或 2）"; status=1
+            fi
+            if echo "$out" | grep -qE "發現 [1-9][0-9]* 個問題|合計 [1-9][0-9]* 個格式問題"; then
+              echo "::error::$label 在書本模板上報了格式問題"; echo "$out"; status=1
+            fi
+          }
+          run beat_metrics beat-lint
+          run beat_metrics ch-lint
+          run beat_metrics outline-lint
+          run beat_metrics structure-project
+          run beat_metrics beat-metrics
+          run derived_sync derived-sync check
+          run derived_sync derived-sync validate
+          run derived_sync world-lint
+          run derived_sync char-lint
+          run derived_sync style-lint
+          run derived_sync summary-lint
+          run derived_sync readiness-lint
+          run derived_sync readiness
+          run fact_projection fact-lint
+          run fact_projection object-lint
+          run decision_projection decision-lint
+          run decision_projection decision-project
+          run foreshadow_project foreshadow-project
+          run prose_metrics prose-metrics
+          exit $status
+
+      # ---------------------------------------------------------------- ③ 黃金檔
+      #
+      # **黃金檔即基準線**（抉擇 8 B）：一世之尊是刻意保留的病例書，它那 531 筆
+      # findings 視為已登記；黃金檔比的是**完整輸出**，所以任何**新增**的筆數
+      # 都會讓 diff 失敗。黃金檔測試住在各套件的 `tests/` 裡，上面 ① 已經跑過
+      # ——這一步只是把「病例書在不在」單獨釘出來，因為那 17 份的射程全靠它。
+      - name: 一世之尊（病例書必須在，否則 17 份黃金檔的射程是空的）
+        run: test -d 一世之尊
+
+      # ---------------------------------------------------------------- ④ meta-lint
+      #
+      # **這一步就是 `meta-lint` 的觸發者**（第 1 項認 SKILL.md **或 workflow**）：
+      # 它不吃 `--book`，沒有任何一支 skill 該跑它。
+      - name: meta-lint（工具鏈自己的閘門）
+        run: uv run --project tools/meta_lint meta-lint

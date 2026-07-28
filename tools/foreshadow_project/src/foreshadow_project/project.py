@@ -7,6 +7,7 @@ from pathlib import Path
 from .scan import (
     ArcScan,
     Ice,
+    LayerMissing,
     Mark,
     ScanError,
     StatusRow,
@@ -57,6 +58,8 @@ class Report:
     ice_scanned: int  # 掃到幾處（含解析不了的）——沒有這個數字就會出現「0 條可疑」的假陰性
     expired_unbuilt: list[tuple[StatusRow, str]]
     scanned_arcs: list[str]
+    # **回退要看得見**（功能 14，V9）：12 承諾四支工具都印，實測只有 1/4 做到。
+    spine_note: str = ""
 
     @property
     def ice_unparsed(self) -> int:
@@ -72,7 +75,12 @@ def _pos(spine: dict[str, int], m: Mark) -> tuple[int, int]:
 # spine 的落點（2026-07-28 功能 12 抉擇 2 A）：**新落點優先、舊落點回退**。
 # `全書順序：` 是 A1 源（作者的創作決定），2026-07-28 從索引檔搬進同層的 `_順序.md`
 # ——它原本與一支「視圖 ≡ 資料夾」的索引同居一檔（六問 Q0 的違反）。
-# 舊書照抉擇 8 A 不遷移，所以回退保留；**讓回退可見的責任在 `beat-lint`**。
+# 舊書照抉擇 8 A 不遷移，所以回退保留。
+#
+# **「回退在覆蓋率行上是看得見的狀態」曾是 1/4 成立**（2026-07-28 功能 14 的 V9）：
+# 12 那一輪的承諾是四支工具都要讓回退可見，而只有 `beat-lint` 有 `spine_legacy` 欄
+# ——`fact-project`／`decision-project`／`foreshadow-project` **實作了回退但不印讀自
+# 哪裡**。一個看不見的回退與「這本書已經遷移完了」在輸出上完全相同。
 SPINE_FILES = ("_順序.md", "_index.md")
 
 
@@ -85,11 +93,20 @@ def spine_path(book: Path) -> Path:
     return d / SPINE_FILES[0]
 
 
+def spine_note(book: Path) -> str:
+    """`spine 讀自 \\`X\\`` ——**走舊落點時要說出來**（功能 14，V9）。"""
+    p = spine_path(book)
+    legacy = "（**舊落點·回退**）" if p.name != SPINE_FILES[0] else ""
+    return f"spine 讀自 `{p.name}`{legacy}" if p.is_file() else "spine **找不到**"
+
+
 def build(book: Path) -> Report:
     beats_dir = book / "story" / "幕綱"
     index = spine_path(book)
     if not index.is_file():
-        raise ScanError(f"找不到幕綱順序檔：{index}（舊書可能還住在 `_index.md`）")
+        # **這是「還沒到那一層」，不是掃描錯誤**（2026-07-28 功能 14，抉擇 6 A）：
+        # 一本只有 `raw/` 的書本來就沒有幕綱。呼叫端據此回 exit 2 並照印覆蓋率行。
+        raise LayerMissing(f"找不到幕綱順序檔：{index}（舊書可能還住在 `_index.md`）")
     spine = parse_spine(index.read_text(encoding="utf-8"))
 
     scans: list[ArcScan] = []
@@ -170,6 +187,7 @@ def build(book: Path) -> Report:
             )
 
     return Report(
+        spine_note=spine_note(book),
         spine=spine,
         threads=sorted(
             threads.values(),

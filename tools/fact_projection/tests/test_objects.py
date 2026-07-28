@@ -270,11 +270,12 @@ def test_object_lint_narrows_to_object_problems(tmp_path, capsys):
     (book / "chapters" / "ch0001.md").write_text("（正文）\n", encoding="utf-8")
 
     assert object_lint_main(["--book", str(book)]) == 1
-    err = capsys.readouterr().err
-    assert "封閉枚舉" in err and "未知類型 token" not in err
+    # 問題清單走 **stdout**（2026-07-28 功能 14 的輸出契約）
+    out = capsys.readouterr().out
+    assert "封閉枚舉" in out and "未知類型 token" not in out
 
     assert object_lint_main(["--book", str(book), "--all"]) == 1
-    assert "未知類型 token" in capsys.readouterr().err
+    assert "未知類型 token" in capsys.readouterr().out
 
 
 def test_object_lint_does_not_match_物件_inside_a_hint(tmp_path, capsys):
@@ -292,9 +293,9 @@ def test_object_lint_does_not_match_物件_inside_a_hint(tmp_path, capsys):
     (book / "chapters" / "ch0001.md").write_text("（正文）\n", encoding="utf-8")
 
     assert object_lint_main(["--book", str(book)]) == 0  # 物件檔本身是乾淨的
-    assert "不必重抄" not in capsys.readouterr().err
+    assert "不必重抄" not in capsys.readouterr().out
     assert object_lint_main(["--book", str(book), "--all"]) == 1
-    assert "不必重抄" in capsys.readouterr().err
+    assert "不必重抄" in capsys.readouterr().out
 
 
 def test_object_lint_surfaces_the_retired_constraint_location(tmp_path, capsys):
@@ -304,7 +305,7 @@ def test_object_lint_surfaces_the_retired_constraint_location(tmp_path, capsys):
     ref.mkdir(parents=True)
     (ref / "約束.co.md").write_text("| 約束名 |\n", encoding="utf-8")
     assert object_lint_main(["--book", str(book)]) == 1
-    assert "落點已廢除" in capsys.readouterr().err
+    assert "落點已廢除" in capsys.readouterr().out
 
 
 def test_object_lint_says_so_when_there_is_no_object_dir(tmp_path, capsys):

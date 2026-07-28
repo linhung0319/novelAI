@@ -15,13 +15,13 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
-from .core import AI_SUFFIX, _split_frontmatter
+from .core import AI_SUFFIX
+from .md import front_matter, split_frontmatter
 
 _H2_RE = re.compile(r"^##\s+(.+?)\s*$")
-_KEY_RE = re.compile(r"^([A-Za-z0-9_-]+):")
 
 # `.ai.md` 檔末的自由 blockquote 裁決日誌——三支 schema 明文禁止、零守衛。
 # 門檻取自診斷輪的量法（`功能報告/04-裁決與回饋.md` §〇）：只算 >40 字元的行，
@@ -85,6 +85,68 @@ DERIVED_SECTIONS: dict[str, tuple[str, ...]] = {
     "章節/_index": ("章節索引",),
 }
 
+# 各 schema 定義的 front-matter 鍵（**封閉集合**）。與上面的 `DERIVED_SECTIONS`
+# 並列，**由 `meta-lint` 第 4 項驗兩份清單的產物集合一致**——依 E1，新增一份平行
+# 清單就要同時交出守它的檢查器（08 抉擇 7 刻意把這件事延到 14，理由正是「它會製造
+# 第三份與 `DERIVED_SECTIONS`／`SETTINGS_KINDS` 平行的清單」；本輪付這筆代價，
+# 而代價的配套就是那一項）。
+#
+# **為什麼需要它**（2026-07-27 功能 08 交下來的 V13）：`REQUIRED_KEYS` **只驗缺、
+# 不驗多**，所以一個沒有人定義過的鍵可以長出來並活很久——實測 `00-摘要.ai.md` 的
+# `終局` 是某一輪重生自己長出來的 **534 字元單行**（該檔最長的 front-matter 行），
+# schema 從沒定義過它，零消費者，活過至少 4 個版本。**05／06 那七個被刪的欄若當初
+# 有這條，會在誕生當天被報。**
+#
+# **兩份清單的分工**：本表是**通用**的那一半（「不得有 schema 外的鍵」對每一支
+# `.ai.md` 都成立）；各軸 lint 的「不得再有已廢除的欄」是**專屬**的那一半（帶搬移
+# 提示，指得出內容該去哪）。兩者在已廢除的欄上會重疊，那是刻意的——通用的那條
+# 抓的是「**沒有人定義過**的鍵」，專屬的那條抓的是「**定義過而後來刪掉**的鍵」，
+# 而後者要給搬移目的地。
+#
+# **rollup（`_index`／`_總覽`）刻意不列**：那三支 2026-07-28（功能 12）已廢除，
+# 殘留偵測是 `--emit` 末節的事（`設計原則.md` E2 第七形態：豁免要寫出豁免哪一項）。
+# 在這裡再報一次只是同一件事的第二個警報。
+DERIVED_KEYS: dict[str, tuple[str, ...]] = {
+    # 結構定義/角色.schema.md「front-matter 只有這六鍵」
+    "角色": ("generated-from", "generated-at", "定位", "所屬arc", "暫定", "伏筆"),
+    # 結構定義/世界觀.schema.md「front-matter 只有這四鍵」
+    "世界觀": ("generated-from", "generated-at", "主題", "伏筆"),
+    # 結構定義/風格.schema.md（`風格` 欄選填：多檔時才填）
+    "風格": (
+        "generated-from",
+        "generated-at",
+        "風格",
+        "基調參照",
+        "禁用詞表",
+        "稱謂系統",
+        "可用句式",
+        "語域",
+    ),
+    # 結構定義/摘要.schema.md 的八鍵表
+    "摘要": (
+        "generated-from",
+        "generated-at",
+        "主線",
+        "題旨",
+        "基調",
+        "視角結構",
+        "取向定位",
+        "貫穿大懸念",
+    ),
+    # 結構定義/章節.schema.md「六欄皆必填」＋選填的 `write-test`
+    "章節": (
+        "generated-from",
+        "generated-at",
+        "對應幕",
+        "所屬arc",
+        "POV",
+        "基調參照",
+        "風格",
+        "狀態",
+        "write-test",
+    ),
+}
+
 SETTINGS_KINDS = ("角色", "世界觀", "風格")
 
 # 摘要軸的兩支檔（`story/` 根目錄下，不在任何 `<kind>` 資料夾裡——這正是
@@ -103,6 +165,16 @@ def enum_for(kind: str, stem: str) -> tuple[str, ...] | None:
     if stem.startswith("_"):
         return DERIVED_SECTIONS.get(f"{kind}/{stem}")
     return DERIVED_SECTIONS.get(kind)
+
+
+def keys_for(kind: str, stem: str) -> tuple[str, ...] | None:
+    """(產物類別, 去掉 .ai.md 的檔名) → 該檔允許的 front-matter 鍵；無定義回 None。
+
+    **rollup 回 None**（見 `DERIVED_KEYS` 的註解：那三支已廢除，殘留偵測歸 `--emit`）。
+    """
+    if stem.startswith("_"):
+        return None
+    return DERIVED_KEYS.get(kind)
 
 
 def stray_sections(text: str, allowed: tuple[str, ...]) -> list[str]:
@@ -186,6 +258,13 @@ class ValidateStats:
     sections: int = 0
     blockquote_files: int = 0
     blockquote_lines: int = 0
+    # 2026-07-28（功能 14，V13）：front-matter 鍵的兩個數字**必須成對出現**——
+    # 只印「檢查了幾個鍵」等於用命中率冒充可用率（E2 06 補的推論）。
+    keys_checked: int = 0
+    keys_files: int = 0
+    keys_unknown: int = 0
+    keys_unenumerated: int = 0
+    unknown_key_files: list[tuple[Path, list[str]]] = field(default_factory=list)
 
     def render(self) -> str:
         return (
@@ -194,6 +273,9 @@ class ValidateStats:
             f"·**節枚舉對它們是空頭承諾**）；"
             f"其中 {self.skeleton} 支尚未封章的骨架跳過 front-matter 與 blockquote 檢查；"
             f"比對了 {self.sections} 個 `##` 節；"
+            f"front-matter 鍵：{self.keys_files} 支檔套鍵枚舉·共 {self.keys_checked} 個鍵"
+            f"（**{self.keys_unknown} 個是 schema 外的**）"
+            f"·{self.keys_unenumerated} 支檔無鍵枚舉可套；"
             f"掃了裁決 blockquote，{self.blockquote_files} 支檔命中"
             f"（{self.blockquote_lines} 行）"
         )
@@ -210,7 +292,7 @@ def validate_file(
     骨架跳過幾支要印在覆蓋率行，否則就是另一個報平安的守衛。
     """
     text = p.read_text(encoding="utf-8")
-    fm, body = _split_frontmatter(text)
+    fm, body = split_frontmatter(text)
     out: list[Problem] = []
     st = stats if stats is not None else ValidateStats()
     st.files += 1
@@ -230,8 +312,15 @@ def validate_file(
             st.blockquote_files += 1
             st.blockquote_lines += len(bq)
 
+    kind = classify(book, p)
+    stem = p.name[: -len(AI_SUFFIX)]
+
     if fm is not None:
-        keys = {m.group(1) for ln in fm if (m := _KEY_RE.match(ln.strip()))}
+        # **解析器換成 `md.front_matter`**（2026-07-28 功能 14，V13）。舊的
+        # `^([A-Za-z0-9_-]+):` **連中文鍵都看不到**——`00-摘要.ai.md` 的 `主線`／
+        # `題旨`／`基調`… 全是中文鍵，所以「front-matter 缺某鍵」這條檢查在摘要軸上
+        # 一直是空頭承諾（而 `summary-lint` 那一側是另一支工具、另一份 regex）。
+        keys = set(front_matter(text) or {})
         missing = [k for k in REQUIRED_KEYS if k not in keys]
         if missing:
             out.append(
@@ -241,9 +330,25 @@ def validate_file(
                     "重生後跑 `derived-sync stamp <該檔>` 封章，別手填",
                 )
             )
+        # **「不得有 schema 外的鍵」**（V13 的另一半）。`REQUIRED_KEYS` 只驗缺、
+        # 不驗多，於是一個沒有人定義過的鍵可以長出來並活很久——實測 `終局`
+        # （534 字元單行、零消費者、schema 從沒定義過）活過至少 4 個版本。
+        allowed_keys = keys_for(kind, stem) if kind else None
+        if allowed_keys is None:
+            st.keys_unenumerated += 1
+        else:
+            st.keys_files += 1
+            st.keys_checked += len(keys)
+            unknown = sorted(keys - set(allowed_keys))
+            if unknown:
+                # **聚合成整本一行**（03 重構輪拍板的判準：同一種病散在幾十支檔、
+                # 而且病因與修法完全相同時聚合）。實測一世之尊 **29 支檔命中**——
+                # 逐支報就是 29 行同型雜訊，會把真正該看的枚舉外節淹掉，而各軸
+                # lint 的「已廢除的欄」那一項本來就已經是聚合的。
+                st.keys_unknown += len(unknown)
+                st.unknown_key_files.append((p, unknown))
 
-    kind = classify(book, p)
-    allowed = enum_for(kind, p.name[: -len(AI_SUFFIX)]) if kind else None
+    allowed = enum_for(kind, stem) if kind else None
     # **`is not None` 不是 truthiness**：空 tuple 是一個合法的枚舉（`風格` ＝「不得有
     # 任何 `##` 節」，功能 07），而 `if allowed:` 會把它當成「沒有枚舉」——於是那支檔
     # 被算進 `fm_only`、stray 檢查整個跳過，**而輸出看起來完全正常**。
@@ -290,13 +395,37 @@ def validate_report(book: Path) -> tuple[list[Problem], ValidateStats]:
     for p in sorted(book.rglob(f"*{AI_SUFFIX}")):
         out += validate_file(book, p, stats)
         text = p.read_text(encoding="utf-8")
-        fm, _ = _split_frontmatter(text)
+        fm, _ = split_frontmatter(text)
         if fm is None:
             continue
         for lineno, chars in decision_blockquotes(text):
             total_chars += chars
             if chars > worst[0]:
                 worst = (chars, p, lineno)
+    # **schema 外的 front-matter 鍵聚合成整本一行**（V13，判準見 `validate_file`）。
+    if stats.unknown_key_files:
+        names = sorted({k for _, ks in stats.unknown_key_files for k in ks})
+        shown = "、".join(f"`{k}`" for k in names[:8]) + ("…" if len(names) > 8 else "")
+        worst_path, worst_keys = max(stats.unknown_key_files, key=lambda t: len(t[1]))
+        key_rel = (
+            worst_path.relative_to(book)
+            if worst_path.is_relative_to(book)
+            else worst_path
+        )
+        out.append(
+            Problem(
+                book,
+                f"{len(stats.unknown_key_files)} 支 .ai.md 有 schema 外的 front-matter 鍵："
+                f"共 {stats.keys_unknown} 個、{len(names)} 種（{shown}）"
+                f"；最多的一支 {key_rel}（{len(worst_keys)} 個）",
+                "衍生檔的 front-matter 是**封閉集合**（見各 `*.schema.md`）。"
+                "`REQUIRED_KEYS` 只驗缺不驗多，所以一個沒有人定義過的鍵可以長出來"
+                "並活很久——實測 `終局`（534 字元單行、零消費者、schema 從沒定義過）"
+                "活過至少 4 個版本。內容屬源檔散文或 story/參照/裁決流.md；"
+                "真的需要新欄就先改 schema，再登記進 `validate.DERIVED_KEYS`"
+                "（`meta-lint` 第 4 項驗兩份清單一致）",
+            )
+        )
     if stats.blockquote_files:
         rel = worst[1].relative_to(book) if worst[1].is_relative_to(book) else worst[1]
         out.append(

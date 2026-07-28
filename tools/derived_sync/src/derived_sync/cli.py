@@ -19,9 +19,31 @@ _MARK = {
     "fresh": "[ok]  ",
     "stale": "[STALE]",
     "unstamped": "[?]   ",
+    "skeleton": "[SKEL]",
     "orphan": "[ORPH]",
 }
 
+
+# ---------------------------------------------------------------- 輸出與 exit 契約
+#
+# **唯一真相在 `結構定義/共同約定.md`「輸出與 exit 契約」**（2026-07-28 功能 14）。
+# stdout 裝「人與 LLM 要看的一切」（覆蓋率行、問題、資訊、提示、投影輸出），
+# stderr **只裝執行錯誤**。exit：0 乾淨／1 有格式問題／**2 這本書還沒有這一層
+# （照樣印覆蓋率行）**。
+#
+# **這一輪把「合計 N 個格式問題」從 stderr 搬到 stdout**（V10）：在此之前 12 支
+# 指令用兩套慣例——6 支把問題印進 stderr、6 支把總數印進 stderr——而**零文件**。
+#
+# ⚠️ argparse 的用法錯誤也是 2（Python 標準行為，本輪不改）——分辨方式是
+# **stdout 有沒有覆蓋率行**，`meta-lint` 第 6 項驗的就是這一條。
+EXIT_CLEAN = 0
+EXIT_PROBLEMS = 1
+EXIT_LAYER_MISSING = 2
+
+_EMIT_HELP = (
+    "（投影模式）印出這一軸的 rollup 視圖＋覆蓋率＋舊 rollup 殘留偵測，"
+    "**不驗格式、一律 exit 0**（功能 12 抉擇 4 C：誰重算誰印）"
+)
 
 def _force_utf8() -> None:
     """Windows 主控台常是 cp950，會在印中文路徑時炸。強制 UTF-8 輸出。"""
@@ -40,11 +62,20 @@ def _print_sentinel(book: Path) -> None:
     幕綱、源檔該拆、衍生檔塞了不屬於它的東西、狀態格被當日誌。
 
     這不是「新鮮度」——兩者混在一起會讓 check 的契約變模糊，故分開印、分開計。
+
+    **覆蓋率行 2026-07-28（功能 14）補上，0 筆也印。** 在此之前這支在 `not findings`
+    時直接 `return`，而且它從不印「我掃了幾支檔」——**成長哨兵是全系統唯一沒有
+    覆蓋率行的守衛**（V3）。實測射程：一世之尊 282 支 `.md` 中 98 支在射程外，
+    **644,577 B ＝全書 24.9% 完全靜音，而 `check` 的結語是「0 個需處理」**。
+    十次「手寫路徑清單漏檔」每一次都會被這一行當場抓到（`story/大綱/` 不在名單時，
+    這一行會印「大綱 0 支」）。
     """
-    findings = run_sentinel(book)
-    if not findings:
-        return
+    findings, stats = run_sentinel(book)
     print("\n--- 成長哨兵（建議值，非門檻）---")
+    print(stats.render())
+    if not findings:
+        print("（無）")
+        return
     for f in findings:
         rel = f.path.relative_to(book) if f.path.is_relative_to(book) else f.path
         print(f"[!]    {f.kind:<6} {rel}  {f.detail}")
@@ -59,27 +90,48 @@ def _emit(fn, book: Path) -> int:
         report, _stats = fn(book)
     except (FileNotFoundError, ValueError, OSError) as e:
         print(f"讀取失敗：{e}", file=sys.stderr)
-        return 0  # 投影不擋路
+        return EXIT_CLEAN  # 投影不擋路
     print(report, end="")
     return 0
 
 
 def _cmd_check(args: argparse.Namespace) -> int:
+    """新鮮度。**`skeleton` 不計入需處理數**（2026-07-28 功能 14）。
+
+    在此之前「front-matter 完全沒有」（＝這支衍生檔從沒被產出過）與「有 front-matter
+    卻缺 `generated-from`」（＝重生了忘記封章）共用 `unstamped`，於是 `書本模板` 的
+    兩支骨架（`00-摘要.ai.md`／`風格.ai.md`）讓一支乾淨的模板永遠 exit 1——而抉擇 2 A
+    的 CI 閘門要拿它當「零成本的釘死」。
+
+    **一支從沒產出過的檔不可能 stale**，所以它不是新鮮度問題；它是「這本書還沒到
+    這一層」的逐檔版本，語意與 exit 2 同族。`validate` 早就這樣分了（`fm is None`
+    的檔跳過 front-matter 與 blockquote 檢查、記進 `skeleton`）。
+
+    **可見度不能因此掉**：`validate` 的 docstring 明文把這一格**委託給 `check`**
+    （「那個狀態 `check` 已經報成 `unstamped` 了，重複報是雜訊」），所以覆蓋率行
+    那一句「N 支尚未產出的骨架」是這條規則成立的必要條件，不是裝飾。
+    """
     results = check_book(args.book)
     if not results:
         print("（此書無 .ai.md 衍生檔）")
         _print_sentinel(args.book)
-        return 0
+        return EXIT_CLEAN
     problems = 0
+    skeletons = 0
     for r in results:
         rel = r.derived.relative_to(args.book)
         print(f"{_MARK.get(r.status, '?')} {r.status:<9} {rel}  ← {r.source}")
-        if r.status in ("stale", "unstamped", "orphan"):
+        if r.status == "skeleton":
+            skeletons += 1
+        elif r.status in ("stale", "unstamped", "orphan"):
             problems += 1
-    print(f"\n合計 {len(results)} 個衍生檔，{problems} 個需處理。", file=sys.stderr)
+    print(
+        f"\n合計 {len(results)} 個衍生檔"
+        f"（{skeletons} 支尚未產出的骨架·不計入需處理），{problems} 個需處理。"
+    )
     if not args.no_sentinel:
         _print_sentinel(args.book)
-    return 1 if problems else 0
+    return EXIT_PROBLEMS if problems else EXIT_CLEAN
 
 
 def _cmd_validate(args: argparse.Namespace) -> int:
@@ -98,8 +150,8 @@ def _cmd_validate(args: argparse.Namespace) -> int:
         label = "（全書聚合）" if str(rel) == "." else str(rel)
         print(f"[x] {label}  {p.detail}")
         print(f"       {p.hint}")
-    print(f"\n合計 {len(problems)} 個格式問題。", file=sys.stderr)
-    return 1
+    print(f"\n合計 {len(problems)} 個格式問題。")
+    return EXIT_PROBLEMS
 
 
 def _cmd_world_lint(args: argparse.Namespace) -> int:
@@ -118,8 +170,8 @@ def _cmd_world_lint(args: argparse.Namespace) -> int:
         rel = p.path.relative_to(args.book) if p.path.is_relative_to(args.book) else p.path
         print(f"[x] {rel}  {p.detail}")
         print(f"       {p.hint}")
-    print(f"\n合計 {len(problems)} 個格式問題。", file=sys.stderr)
-    return 1
+    print(f"\n合計 {len(problems)} 個格式問題。")
+    return EXIT_PROBLEMS
 
 
 def _cmd_char_lint(args: argparse.Namespace) -> int:
@@ -139,8 +191,8 @@ def _cmd_char_lint(args: argparse.Namespace) -> int:
         rel = p.path.relative_to(args.book) if p.path.is_relative_to(args.book) else p.path
         print(f"[x] {rel}  {p.detail}")
         print(f"       {p.hint}")
-    print(f"\n合計 {len(problems)} 個格式問題。", file=sys.stderr)
-    return 1
+    print(f"\n合計 {len(problems)} 個格式問題。")
+    return EXIT_PROBLEMS
 
 
 def _cmd_style_lint(args: argparse.Namespace) -> int:
@@ -167,8 +219,8 @@ def _cmd_style_lint(args: argparse.Namespace) -> int:
         rel = p.path.relative_to(args.book) if p.path.is_relative_to(args.book) else p.path
         print(f"[x] {rel}  {p.detail}")
         print(f"       {p.hint}")
-    print(f"\n合計 {len(problems)} 個格式問題。", file=sys.stderr)
-    return 1
+    print(f"\n合計 {len(problems)} 個格式問題。")
+    return EXIT_PROBLEMS
 
 
 def _cmd_summary_lint(args: argparse.Namespace) -> int:
@@ -198,8 +250,8 @@ def _cmd_summary_lint(args: argparse.Namespace) -> int:
         rel = p.path.relative_to(args.book) if p.path.is_relative_to(args.book) else p.path
         print(f"[x] {rel}  {p.detail}")
         print(f"       {p.hint}")
-    print(f"\n合計 {len(problems)} 個格式問題。", file=sys.stderr)
-    return 1
+    print(f"\n合計 {len(problems)} 個格式問題。")
+    return EXIT_PROBLEMS
 
 
 def _cmd_readiness(args: argparse.Namespace) -> int:
@@ -225,6 +277,12 @@ def _cmd_readiness_lint(args: argparse.Namespace) -> int:
     """
     problems, stats = readiness_lint_book(args.book)
     print(stats.render())
+    # **`story/參照/` 整個不在 ＝ 這本書還沒有這一層**（抉擇 6 A）：6 本書裡有 3 本
+    # 只有 `raw/`，對它們報「就緒.md 不存在」是對的，但那不是**格式問題**。
+    # 覆蓋率行照印（上面那一行），只是 exit 改成 2。
+    if not (args.book / "story" / "參照").is_dir():
+        print("——這本書還沒有 `story/參照/`（還沒到這一層）")
+        return EXIT_LAYER_MISSING
     if not problems:
         print("就緒軸格式合規。")
         return 0
@@ -232,8 +290,8 @@ def _cmd_readiness_lint(args: argparse.Namespace) -> int:
         rel = p.path.relative_to(args.book) if p.path.is_relative_to(args.book) else p.path
         print(f"[x] {rel}  {p.detail}")
         print(f"       {p.hint}")
-    print(f"\n合計 {len(problems)} 個格式問題。", file=sys.stderr)
-    return 1
+    print(f"\n合計 {len(problems)} 個格式問題。")
+    return EXIT_PROBLEMS
 
 
 def _cmd_stamp(args: argparse.Namespace) -> int:
@@ -276,14 +334,20 @@ def main(argv: list[str] | None = None) -> int:
         help="驗世界觀軸（front-matter 欄語意＋rollup 視圖＋伏筆歸一＋檔名引用）",
     )
     p_world.add_argument("--book", required=True, type=Path, help="書資料夾路徑")
-    p_world.set_defaults(func=_cmd_world_lint)
+    # **`--emit` 2026-07-28（功能 14）補上。** 在此之前 `world_lint_main` 的 docstring
+    # 寫著「與 `derived-sync world-lint` 完全等價」，而 `derived-sync world-lint --emit`
+    # 回 `error: unrecognized arguments`——**一句沒有人驗過的行為承諾**（V5）。
+    # 依 E1，宣稱等價就要有東西在驗它（`test_cli_equivalence.py`）。
+    p_world.add_argument("--emit", action="store_true", help=_EMIT_HELP)
+    p_world.set_defaults(func=_cmd_world_lint, emit_fn=emit_world)
 
     p_char = sub.add_parser(
         "char-lint",
         help="驗角色軸（源側存在性＋必填節不得是佔位＋front-matter 欄語意＋rollup 視圖）",
     )
     p_char.add_argument("--book", required=True, type=Path, help="書資料夾路徑")
-    p_char.set_defaults(func=_cmd_char_lint)
+    p_char.add_argument("--emit", action="store_true", help=_EMIT_HELP)
+    p_char.set_defaults(func=_cmd_char_lint, emit_fn=emit_characters)
 
     p_style = sub.add_parser(
         "style-lint",
@@ -324,11 +388,13 @@ def main(argv: list[str] | None = None) -> int:
 
     _force_utf8()
     args = ap.parse_args(argv)
+    if getattr(args, "emit", False):
+        return _emit(args.emit_fn, args.book)
     try:
         return args.func(args)
     except (FileNotFoundError, ValueError) as e:
         print(f"錯誤：{e}", file=sys.stderr)
-        return 1
+        return EXIT_ERROR
 
 
 def world_lint_main(argv: list[str] | None = None) -> int:
@@ -349,7 +415,7 @@ def world_lint_main(argv: list[str] | None = None) -> int:
     ap.add_argument(
         "--emit",
         action="store_true",
-        help="（投影模式）印出這一軸的 rollup 視圖＋覆蓋率＋舊 rollup 殘留偵測，**不驗格式、一律 exit 0**（功能 12 抉擇 4 C：誰重算誰印）",
+        help=_EMIT_HELP,
     )
     _force_utf8()
     args = ap.parse_args(argv)
@@ -359,7 +425,7 @@ def world_lint_main(argv: list[str] | None = None) -> int:
         return _cmd_world_lint(args)
     except (FileNotFoundError, ValueError) as e:
         print(f"錯誤：{e}", file=sys.stderr)
-        return 1
+        return EXIT_PROBLEMS
 
 
 def char_lint_main(argv: list[str] | None = None) -> int:
@@ -382,7 +448,7 @@ def char_lint_main(argv: list[str] | None = None) -> int:
     ap.add_argument(
         "--emit",
         action="store_true",
-        help="（投影模式）印出這一軸的 rollup 視圖＋覆蓋率＋舊 rollup 殘留偵測，**不驗格式、一律 exit 0**（功能 12 抉擇 4 C：誰重算誰印）",
+        help=_EMIT_HELP,
     )
     _force_utf8()
     args = ap.parse_args(argv)
@@ -392,7 +458,7 @@ def char_lint_main(argv: list[str] | None = None) -> int:
         return _cmd_char_lint(args)
     except (FileNotFoundError, ValueError) as e:
         print(f"錯誤：{e}", file=sys.stderr)
-        return 1
+        return EXIT_PROBLEMS
 
 
 def style_lint_main(argv: list[str] | None = None) -> int:
@@ -417,7 +483,7 @@ def style_lint_main(argv: list[str] | None = None) -> int:
         return _cmd_style_lint(args)
     except (FileNotFoundError, ValueError) as e:
         print(f"錯誤：{e}", file=sys.stderr)
-        return 1
+        return EXIT_PROBLEMS
 
 
 def summary_lint_main(argv: list[str] | None = None) -> int:
@@ -446,7 +512,7 @@ def summary_lint_main(argv: list[str] | None = None) -> int:
         return _cmd_summary_lint(args)
     except (FileNotFoundError, ValueError) as e:
         print(f"錯誤：{e}", file=sys.stderr)
-        return 1
+        return EXIT_PROBLEMS
 
 
 def readiness_main(argv: list[str] | None = None) -> int:
@@ -472,7 +538,7 @@ def readiness_main(argv: list[str] | None = None) -> int:
         return _cmd_readiness(args)
     except (FileNotFoundError, ValueError) as e:
         print(f"錯誤：{e}", file=sys.stderr)
-        return 1
+        return EXIT_PROBLEMS
 
 
 def readiness_lint_main(argv: list[str] | None = None) -> int:
@@ -496,7 +562,7 @@ def readiness_lint_main(argv: list[str] | None = None) -> int:
         return _cmd_readiness_lint(args)
     except (FileNotFoundError, ValueError) as e:
         print(f"錯誤：{e}", file=sys.stderr)
-        return 1
+        return EXIT_PROBLEMS
 
 
 if __name__ == "__main__":

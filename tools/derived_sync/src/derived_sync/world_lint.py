@@ -33,10 +33,11 @@ front-matter 欄，其中五個（`影響力`／`主從`／`維度`／`升格哨
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
-from .core import AI_SUFFIX, _split_frontmatter, lede
+from .core import AI_SUFFIX, lede
+from .md import FORESHADOW_RE, front_matter_of, section_body, split_frontmatter, table_rows
 
 # 2026-07-27（功能 05）**刪掉的四個宣告欄**＋01 已搬走的 `🧊水下`。
 # 留著它們不是「舊格式還能用」——是「schema 已經不宣稱它們機讀，而檔裡還寫著
@@ -52,12 +53,8 @@ FORESHADOW_KEY = "伏筆"
 # 那個漂移在 `維度` 欄刪掉之後只剩這一項守得到。
 DIMENSIONS = ("時間", "空間", "活動", "地點", "組織", "社會", "自身")
 
-_KEY_RE = re.compile(r"^([^\s:：]+)\s*[:：]\s*(.*)$")
-_H2_RE = re.compile(r"^##\s+(.+?)\s*$")
 # `伏筆: { 埋: [a, b], 收: [c] }`
 _FS_GROUP_RE = re.compile(r"(埋|收)\s*[:：]\s*\[([^\]]*)\]")
-# 幕綱的 `埋[[伏筆:x]]`／`收[[伏筆:x]]`（與 `beat-lint` 同一把尺）
-_BEAT_FS_RE = re.compile(r"\[\[伏筆[:：]([^\]]+)\]\]")
 # 散文裡的檔名引用：`` `X.ai.md` ``、`設定/世界觀/X.ai.md`
 _AI_REF_RE = re.compile(r"([^\s`（）()、，。／/]+)" + re.escape(AI_SUFFIX))
 
@@ -113,57 +110,6 @@ class WorldStats:
         )
 
 
-def _front_matter(p: Path) -> dict[str, str] | None:
-    fm, _ = _split_frontmatter(p.read_text(encoding="utf-8"))
-    if fm is None:
-        return None
-    out: dict[str, str] = {}
-    for line in fm:
-        m = _KEY_RE.match(line.strip())
-        if m:
-            out[m.group(1).strip()] = m.group(2).strip()
-    return out
-
-
-def _section_body(text: str, title: str) -> list[str]:
-    """取某個 `##` 節的內容行（節名以 `startswith` 比對，容許標題後加註記）。"""
-    out: list[str] = []
-    inside = False
-    for raw in text.replace("\r\n", "\n").split("\n"):
-        m = _H2_RE.match(raw.strip())
-        if m:
-            inside = m.group(1).strip().startswith(title)
-            continue
-        if inside:
-            out.append(raw)
-    return out
-
-
-def _table_rows(lines: list[str]) -> list[list[str]]:
-    """Markdown 表格的**資料列**（表頭與 `|---|` 分隔列都不算）。
-
-    判準是位置：`|---|` 分隔列**之後**的才是資料。不能只跳分隔列——那會把表頭
-    當成一筆資料，於是「主題」「維度」這兩個欄名被報成「指向不存在的主題」
-    （實作時實測到的第一版 bug）。表格缺分隔列時這裡回 0 列，那個狀態會出現在
-    覆蓋率行（「核心規則索引 0 列 vs 資料夾 4 支源檔」）而不是靜默通過。
-    """
-    rows: list[list[str]] = []
-    after_sep = False
-    for ln in lines:
-        s = ln.strip()
-        if not s.startswith("|"):
-            if not s:
-                after_sep = False  # 空行結束一張表
-            continue
-        cells = [c.strip() for c in s.strip("|").split("|")]
-        if cells and all(set(c) <= set("-: ") for c in cells):
-            after_sep = True
-            continue
-        if after_sep:
-            rows.append(cells)
-    return rows
-
-
 def topic_sources(book: Path) -> list[str]:
     """資料夾裡的主題名（源 `<主題>.md` 的 stem）＝這一軸的權威主題集合。
 
@@ -192,7 +138,7 @@ def foreshadow_registry(book: Path) -> tuple[set[str], int, int]:
     d = book / "story" / "幕綱"
     if d.is_dir():
         for p in sorted(d.glob("*.md")):
-            for m in _BEAT_FS_RE.finditer(p.read_text(encoding="utf-8")):
+            for m in FORESHADOW_RE.finditer(p.read_text(encoding="utf-8")):
                 beat_names.add(m.group(1).strip())
     obj = book / "story" / "物件"
     obj_names = {p.stem for p in obj.glob("*.md")} if obj.is_dir() else set()
@@ -222,7 +168,7 @@ def check_topics(book: Path, stats: WorldStats) -> list[Problem]:
         if p.name.startswith("_"):
             continue
         stats.topics += 1
-        fm = _front_matter(p)
+        fm = front_matter_of(p)
         if fm is None:
             # 尚未封章的骨架：`check` 已經報成 unstamped，重複報是雜訊（同 validate）
             continue
@@ -319,13 +265,13 @@ def check_rollup(book: Path, stats: WorldStats) -> list[Problem]:
         rollup = legacy
     stats.rollup_found = True
     text = rollup.read_text(encoding="utf-8")
-    if _split_frontmatter(text)[0] is None:
+    if split_frontmatter(text)[0] is None:
         # 尚未封章的骨架（`書本模板` 那份、或剛建的新書）：它的表裡是佔位列，
         # 逐項比對只會報一堆「幽靈列」。那個狀態 `check` 已經報成 unstamped，
         # 重複報是雜訊——同 `validate` 與本模組 check_topics 的骨架處置。
         return out
 
-    rows = _table_rows(_section_body(text, INDEX_SECTION))
+    rows = table_rows(section_body(text, INDEX_SECTION) or [])
     stats.index_rows = len(rows)
     listed = [r[0] for r in rows if r and r[0]]
     missing = [t for t in folder if t not in listed]
@@ -357,7 +303,7 @@ def check_rollup(book: Path, stats: WorldStats) -> list[Problem]:
                     )
                 )
 
-    dim_rows = _table_rows(_section_body(text, DIM_SECTION))
+    dim_rows = table_rows(section_body(text, DIM_SECTION) or [])
     stats.dim_rows = len(dim_rows)
     listed_dims = [r[0] for r in dim_rows if r and r[0]]
     dim_missing = [x for x in DIMENSIONS if x not in listed_dims]

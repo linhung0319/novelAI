@@ -21,6 +21,21 @@ class ScanError(Exception):
     """幕綱檔無法定位或解析。"""
 
 
+class LayerMissing(ScanError):
+    """**這本書還沒有這一層**——與「這本書的格式壞了」是兩件事。
+
+    **2026-07-28（功能 14，抉擇 6 A）新增。** 在此之前兩者共用 `ScanError` → exit 1，
+    而 6 本書裡有 **3 本**長期處在「還沒到那一層」（只有 `raw/`）：實測
+    `beat-lint --book gothic_witch` 印**一行**「掃描錯誤：找不到幕綱目錄」、
+    **連覆蓋率行都不印**、exit 1——與一支格式真的壞掉的書**完全不可分辨**。
+
+    它是 CI 的必要條件（抉擇 2 A）：不分開的話那 3 本純 raw 書會讓 CI 永遠紅。
+
+    契約（`共同約定.md`「輸出與 exit 契約」）：**exit 2，而且照樣印覆蓋率行**
+    （「掃了 0 支」）——`設計原則.md` E2「0 也印」在錯誤路徑上一樣成立。
+    """
+
+
 FIELDS = ("角色", "時空", "行動", "衝突", "結果", "前因", "伏筆", "結構階段")
 
 # 八欄裡有兩欄是**結構化連結欄**，不是散文：`前因` 只寫 `[[幕NNN]]`、`伏筆` 只寫
@@ -127,10 +142,10 @@ def load_book(book: Path) -> list[ArcBeats]:
     """
     d = book / "story" / "幕綱"
     if not d.is_dir():
-        raise ScanError(f"找不到幕綱目錄：{d}")
+        raise LayerMissing(f"找不到幕綱目錄：{d}")
     files = {p.stem: p for p in sorted(d.glob("*.md")) if _ARC_FILE_RE.match(p.stem)}
     if not files:
-        raise ScanError(f"{d} 下沒有 arcNN.md")
+        raise LayerMissing(f"{d} 下沒有 arcNN.md")
 
     order = _spine(spine_path(book))
     ranked = sorted(files, key=lambda a: (order.get(a, len(order)), a))

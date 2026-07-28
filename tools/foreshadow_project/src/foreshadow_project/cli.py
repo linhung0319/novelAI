@@ -13,8 +13,21 @@ from .project import (
     build,
     entering,
 )
-from .scan import Mark, ScanError
+from .scan import LayerMissing, Mark, ScanError
 
+
+# ---------------------------------------------------------------- 輸出與 exit 契約
+#
+# **唯一真相在 `結構定義/共同約定.md`「輸出與 exit 契約」**（2026-07-28 功能 14）。
+# stdout 裝「人與 LLM 要看的一切」（覆蓋率行、問題、資訊、提示、投影輸出），
+# stderr **只裝執行錯誤**。exit：0 乾淨／1 有格式問題／**2 這本書還沒有這一層
+# （照樣印覆蓋率行）**。
+#
+# ⚠️ argparse 的用法錯誤也是 2（Python 標準行為，本輪不改）——分辨方式是
+# **stdout 有沒有覆蓋率行**，`meta-lint` 第 6 項驗的就是這一條。
+EXIT_CLEAN = 0
+EXIT_PROBLEMS = 1
+EXIT_LAYER_MISSING = 2
 
 def _force_utf8() -> None:
     """Windows 主控台常是 cp950，會在印中文時炸。強制 UTF-8 輸出。"""
@@ -37,7 +50,10 @@ def _thread_line(t: Thread) -> str:
 
 
 def format_report(rep: Report, threads: list[Thread], title: str) -> str:
-    lines = [f"## {title}（掃 {len(rep.scanned_arcs)} 個 arc；零 LLM、可覆算）", ""]
+    lines = [
+        f"## {title}（掃 {len(rep.scanned_arcs)} 個 arc；{rep.spine_note}；零 LLM、可覆算）",
+        "",
+    ]
     if not threads:
         lines.append("（無符合條件的伏筆）")
     for t in threads:
@@ -111,12 +127,16 @@ def main(argv: list[str] | None = None) -> int:
         else:
             threads = rep.threads
             title = "全書伏筆帳"
+    except LayerMissing as e:
+        # **exit 2 ＝跑不動，而且照樣印覆蓋率行**（抉擇 6 A）。
+        print(f"檢查範圍：掃了 0 個 arc——這本書還沒有這一層（{e}）")
+        return EXIT_LAYER_MISSING
     except ScanError as e:
         print(f"投影錯誤：{e}", file=sys.stderr)
-        return 1
+        return EXIT_PROBLEMS
     except OSError as e:
         print(f"讀取失敗：{e}", file=sys.stderr)
-        return 1
+        return EXIT_PROBLEMS
 
     if args.open_only:
         threads = [t for t in threads if t.status != CLOSED]
@@ -130,7 +150,7 @@ def main(argv: list[str] | None = None) -> int:
         or rep.expired_unbuilt
         or rep.ice_suspect
     )
-    return 1 if has_problem else 0
+    return EXIT_PROBLEMS if has_problem else EXIT_CLEAN
 
 
 if __name__ == "__main__":

@@ -112,6 +112,19 @@ def _coverage_lines(sel: Selection) -> list[str]:
     return out
 
 
+# ---------------------------------------------------------------- 輸出與 exit 契約
+#
+# **唯一真相在 `結構定義/共同約定.md`「輸出與 exit 契約」**（2026-07-28 功能 14）。
+# stdout 裝「人與 LLM 要看的一切」（覆蓋率行、問題、資訊、提示、投影輸出），
+# stderr **只裝執行錯誤**。exit：0 乾淨／1 有格式問題／**2 這本書還沒有這一層
+# （照樣印覆蓋率行）**。
+#
+# ⚠️ argparse 的用法錯誤也是 2（Python 標準行為，本輪不改）——分辨方式是
+# **stdout 有沒有覆蓋率行**，`meta-lint` 第 6 項驗的就是這一條。
+EXIT_CLEAN = 0
+EXIT_PROBLEMS = 1
+EXIT_LAYER_MISSING = 2
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(
         description="依幕綱選取相關設定檔（零 LLM、可覆算）。"

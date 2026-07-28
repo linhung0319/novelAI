@@ -20,15 +20,14 @@ select.py`**（`parse_beats`／`_ROLE_FIELD_RE`／`load_entities`／`_hits`）�
 from __future__ import annotations
 
 import re
+
+from .marks import BEAT_HEAD_RE as _BEAT_HEAD_RE, NAME_RE
 from dataclasses import dataclass
 from pathlib import Path
 
 _ARC_FILE_RE = re.compile(r"^arc[0-9A-Za-z]+$")
-_BEAT_HEAD_RE = re.compile(r"^##\s*幕(\d+)\s*[·・]?\s*(.*)$")
 _ROLE_FIELD_RE = re.compile(r"^-\s*角色：\s*(.*)$")
 _FORESHADOW_FIELD_RE = re.compile(r"^-\s*伏筆：\s*(.*)$")
-# 與 `sources._FORESHADOW_RE` 同一份（擁有者：foreshadow_project/scan.py）
-_MARK_RE = re.compile(r"(?:埋|收)\[\[伏筆[:：]\s*([^\]]+?)\s*\]\]")
 
 
 class BeatLookupError(Exception):
@@ -113,7 +112,7 @@ def find_beat(book: Path, beat: int) -> BeatContext:
                 arc=p.stem,
                 beat=beat,
                 entities=hits,
-                foreshadows=list(dict.fromkeys(_MARK_RE.findall(fore_field))),
+                foreshadows=list(dict.fromkeys(NAME_RE.findall(fore_field))),
             )
     raise BeatLookupError(
         f"全書幕綱裡找不到 幕{beat:03d}（找的是 `## 幕{beat:03d}` 小節）"

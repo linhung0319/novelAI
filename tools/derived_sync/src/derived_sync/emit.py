@@ -27,7 +27,6 @@
 
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -40,6 +39,7 @@ from .char_lint import (
     source_names,
 )
 from .core import AI_SUFFIX, lede
+from .md import front_matter_of
 from .world_lint import DIMENSIONS, topic_sources
 
 
@@ -98,23 +98,6 @@ def legacy_section(
     return lines
 
 
-def _fm(p: Path) -> dict[str, str]:
-    """`.ai.md` 的 front-matter（缺檔或缺 front-matter 回空 dict）。"""
-    if not p.is_file():
-        return {}
-    text = p.read_text(encoding="utf-8")
-    if not text.startswith("---"):
-        return {}
-    _, _, rest = text.partition("---")
-    body, _, _ = rest.partition("---")
-    out: dict[str, str] = {}
-    for raw in body.splitlines():
-        k, sep, v = raw.partition(":")
-        if sep and k.strip():
-            out[k.strip()] = v.split("#", 1)[0].strip()
-    return out
-
-
 # ---------------------------------------------------------------- 角色清單
 
 CHAR_LEGACY = ("story/設定/角色/_index.ai.md", "story/設定/角色/_index.md")
@@ -147,7 +130,7 @@ def emit_characters(book: Path) -> tuple[str, EmitStats]:
     ]
     for name in names:
         stats.rows += 1
-        fm = _fm(d / f"{name}{AI_SUFFIX}")
+        fm = front_matter_of(d / f"{name}{AI_SUFFIX}") or {}
         one = entity_lede(d, name)
         if not one:
             stats.blank_ledes += 1

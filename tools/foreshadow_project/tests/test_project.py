@@ -7,7 +7,7 @@ from foreshadow_project.project import (
     build,
     entering,
 )
-from foreshadow_project.scan import ScanError, parse_spine, scan_arc
+from foreshadow_project.scan import LayerMissing, ScanError, parse_spine, scan_arc
 
 INDEX = """\
 # 幕綱索引
@@ -133,10 +133,15 @@ def test_spine_ordering_not_beat_number(tmp_path):
     assert spine == {"arc03": 0, "arc01": 1, "arc02": 2}
 
 
-def test_missing_index_raises(tmp_path):
+def test_missing_index_raises_layer_missing(tmp_path):
+    """**找不到 spine ＝這本書還沒有這一層**，不是掃描錯誤（功能 14，抉擇 6 A）。
+
+    `LayerMissing` 讓 CLI 分得出 exit 2；它與 `ScanError` 是兄弟不是父子，所以
+    這裡明確斷言型別——寫成 `pytest.raises(Exception)` 就等於沒驗到分類。
+    """
     book = tmp_path / "b"
     (book / "story" / "幕綱").mkdir(parents=True)
-    with pytest.raises(ScanError):
+    with pytest.raises(LayerMissing):
         build(book)
 
 

@@ -27,6 +27,7 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from .refs import MARK_RE
 from .scan import ScanError, read_text
 from .structure import parse_book
 
@@ -49,7 +50,6 @@ _FM_FENCE = "---"
 _H2_RE = re.compile(r"^##\s+(.+?)\s*$")
 _SEP_ROW_RE = re.compile(r"^\|[\s:|-]+\|$")
 _BEAT_NUM_RE = re.compile(r"幕(\d+)")
-_MARK_RE = re.compile(r"(埋|收)\[\[伏筆[:：]\s*([^\]]+?)\s*\]\]")
 _POV_ROLE_RE = re.compile(r"角色\s*[:：]\s*([^,，}]+)")
 
 # front-matter 必填六鍵（`章節.schema.md`「欄位說明」）。
@@ -605,7 +605,7 @@ def _lint_index(
         note = row.cell(6)
         if len(note) > NOTE_CHARS:
             long_notes.append((row.lineno, chapter, len(note)))
-        if _MARK_RE.search(note):
+        if MARK_RE.search(note):
             marked.append((row.lineno, chapter))
 
         if chapter.startswith(UNWRITTEN[0]) or chapter in BLANK:

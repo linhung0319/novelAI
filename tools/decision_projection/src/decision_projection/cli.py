@@ -13,6 +13,7 @@ from .parse import (
     parse_decisions,
     parse_pending,
     parse_spine,
+    spine_note,
     spine_path,
     select,
     select_pending,
@@ -27,6 +28,19 @@ STREAM_NAMES = ("裁決流.md", "裁決流.co.md")
 STREAM_NAME = STREAM_NAMES[0]
 PENDING_NAME = "待裁決.md"
 
+
+# ---------------------------------------------------------------- 輸出與 exit 契約
+#
+# **唯一真相在 `結構定義/共同約定.md`「輸出與 exit 契約」**（2026-07-28 功能 14）。
+# stdout 裝「人與 LLM 要看的一切」（覆蓋率行、問題、資訊、提示、投影輸出），
+# stderr **只裝執行錯誤**。exit：0 乾淨／1 有格式問題／**2 這本書還沒有這一層
+# （照樣印覆蓋率行）**。
+#
+# ⚠️ argparse 的用法錯誤也是 2（Python 標準行為，本輪不改）——分辨方式是
+# **stdout 有沒有覆蓋率行**，`meta-lint` 第 6 項驗的就是這一條。
+EXIT_CLEAN = 0
+EXIT_PROBLEMS = 1
+EXIT_LAYER_MISSING = 2
 
 def _force_utf8() -> None:
     """書內容是中文，主控台編碼（如 Windows cp950）不該決定工具能不能輸出。"""
@@ -162,8 +176,10 @@ def main(argv: list[str] | None = None) -> int:
             as_of_arc=args.as_of,
         )
     except FileNotFoundError as e:
-        print(f"找不到檔案：{e}", file=sys.stderr)
-        return 1
+        # **裁決流不在 ＝ 這本書還沒有這一層**（抉擇 6 A），不是執行錯誤。
+        # 覆蓋率行照印——「我掃了 0 列」本身就是最有用的那一筆訊息（E2）。
+        print(f"檢查範圍：掃了 0 列裁決——這本書還沒有這一層（{e}）")
+        return EXIT_LAYER_MISSING
     except ParseError as e:
         print(f"裁決流解析錯誤：{e}", file=sys.stderr)
         return 1
@@ -182,10 +198,12 @@ def main(argv: list[str] | None = None) -> int:
             pending_hit=len(picked_pending),
         )
     )
+    # **回退要看得見**（功能 14，V9）：12 承諾四支工具都印，實測只有 `beat-lint` 做到。
+    print(f"（資訊）{spine_note(args.book)}")
     for note in notes:
-        print(f"（資訊）{note}", file=sys.stderr)
+        print(f"（資訊）{note}")
     print(format_decisions(picked, args.target, args.active_only, picked_pending), end="")
-    return 0
+    return EXIT_CLEAN
 
 
 def stale_targets(book: Path, decisions: list[Decision]) -> list[str]:
@@ -245,11 +263,12 @@ def lint_main(argv: list[str] | None = None) -> int:
         print(f"（資訊）{n}")
     if not problems:
         print("裁決軸格式乾淨。")
-        return 0
-    print(f"發現 {len(problems)} 個問題：", file=sys.stderr)
+        return EXIT_CLEAN
+    # **問題進 stdout**（2026-07-28 功能 14，V10）——見 `共同約定.md` 輸出契約。
+    print(f"發現 {len(problems)} 個問題：")
     for p in problems:
-        print(f"  [x] {p}", file=sys.stderr)
-    return 1
+        print(f"  [x] {p}")
+    return EXIT_PROBLEMS
 
 
 if __name__ == "__main__":

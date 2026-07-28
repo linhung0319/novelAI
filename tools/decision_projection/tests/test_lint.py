@@ -188,4 +188,4 @@ def test_exit_code_1_on_problems(tmp_path, capsys):
     assert lint_main(["--book", str(book)]) == 1
     cap = capsys.readouterr()
     assert "檢查範圍：" in cap.out  # 覆蓋率行走 stdout
-    assert "發現 1 個問題" in cap.err  # 問題走 stderr
+    assert "發現 1 個問題" in cap.out  # 問題走 stdout（功能 14 的輸出契約）

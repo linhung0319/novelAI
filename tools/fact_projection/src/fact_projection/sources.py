@@ -32,6 +32,7 @@ from .fold import (
     KIND_STATE,
     Event,
     FoldError,
+    LayerMissing,
     parse_events,
 )
 from .objects import (
@@ -44,12 +45,9 @@ from .objects import (
     objects_dir,
     suggest_objects,
 )
+from .marks import NAME_RE
 from .ops import OpError, STATEFUL_DIMENSIONS, SET_DIMENSIONS, parse_ops
 
-# 伏筆標記。**這份 regex 的唯一真相在 `tools/foreshadow_project/src/foreshadow_project/
-# scan.py:_MARK_RE`**；工具間零相依（所有 tools/*/pyproject.toml 皆 dependencies = []），
-# 故此處複製最小片段。schema 用半形冒號，這裡連全形一起收，錯字不靜默漏掉。
-_FORESHADOW_RE = re.compile(r"(?:埋|收)\[\[伏筆[:：]\s*([^\]]+?)\s*\]\]")
 
 CHAPTER_SECTION = "本章事實"
 
@@ -165,7 +163,9 @@ def collect_events(
             )
 
     if legacy is None and not chapters.is_dir() and not objects_dir(book).is_dir():
-        raise FileNotFoundError(
+        # **這是「還沒到那一層」，不是「找不到檔」**（2026-07-28 功能 14，抉擇 6 A）：
+        # 一本只有 `raw/` 的書本來就不該有事實軸。呼叫端據此回 exit 2 並照印覆蓋率行。
+        raise LayerMissing(
             f"{book} 下既無 chapters/ 也無 story/{OBJECT_DIRNAME}/"
             f"（舊格式書則需 story/參照/{' 或 '.join(LEGACY_STREAM_NAMES)}）"
         )
@@ -215,7 +215,7 @@ def registered_propositions(book: Path) -> set[str]:
     d = book / "story" / "幕綱"
     if d.is_dir():
         for p in sorted(d.glob("*.md")):
-            names.update(_FORESHADOW_RE.findall(p.read_text(encoding=_ENCODING)))
+            names.update(NAME_RE.findall(p.read_text(encoding=_ENCODING)))
     names.update(o.name for o in load_objects(book))
     return names
 
@@ -334,7 +334,7 @@ def referenced_object_names(
     d = book / "story" / "幕綱"
     if d.is_dir():
         for p in sorted(d.glob("*.md")):
-            for name in _FORESHADOW_RE.findall(p.read_text(encoding=_ENCODING)):
+            for name in NAME_RE.findall(p.read_text(encoding=_ENCODING)):
                 out.setdefault(name, []).append(f"幕綱/{p.name}")
     return out
 
@@ -388,6 +388,9 @@ def lint_report(book: Path) -> tuple[list[str], LintStats]:
     try:
         events, _mode = collect_events(book, errors=errors)
         objs: list[ObjectFile] = load_objects(book, errors=errors)
+    except LayerMissing:
+        # **這本書還沒有這一層**——不是問題，交給 CLI 回 exit 2 並照印覆蓋率行。
+        raise
     except FileNotFoundError as e:
         return [str(e)], stats
     except FoldError as e:  # collect 模式理論上不該走到，保險

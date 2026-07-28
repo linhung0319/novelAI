@@ -25,6 +25,7 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from .refs import MISSING_HINT, format_missing, scan_md_refs
 from .scan import SPINE_FILES, ScanError, parse_spine, read_text, spine_path
 from .structure import EMPTY_VALUES, SKELETON_MARK, ArcStructure, arc_files, parse_book
 
@@ -84,10 +85,7 @@ _OUTLINE_POINTER_RE = re.compile(r"(01-大綱\.md|大綱/[^\s`）)]+\.md|大綱/
 # **這四個常數是 `outline.py` 第 9 項的最小複製**（套件內同層，但兩支 lint 的射程
 # 不同：那一支掃 `story/大綱/`，這一支掃 `story/幕綱/`）。射程刻意窄的理由見
 # `_check_destinations`。
-_MD_REF_RE = re.compile(r"`([^`\n]+?\.md)`")
-BOOK_PREFIXES = ("story/", "chapters/", "參照/", "幕綱/", "大綱/", "設定/", "物件/")
-_PLACEHOLDER_RE = re.compile(r"(arcNN|chNNNN|<[^>]+>|＜[^＞]+＞|NNNN|NNN)")
-_ARC_RANGE_RE = re.compile(r"arc(\d+)\s*[–—-]\s*arc(\d+)")
+# （四個常數 2026-07-28 搬進 `refs.py`——見上）
 
 
 @dataclass
@@ -372,32 +370,15 @@ def _check_destinations(book: Path, stats: LintStats, problems: list[str]) -> No
     d = book / "story" / BEAT_DIR_LABEL
     if not d.is_dir():
         return
-    missing: dict[str, set[str]] = {}
-    for p in sorted(d.glob("*.md")):
-        where = f"{BEAT_DIR_LABEL}/{p.name}"
-        for m in _MD_REF_RE.finditer(read_text(p)):
-            ref = m.group(1).strip()
-            if not ref.startswith(BOOK_PREFIXES):
-                continue
-            if ".schema." in ref or _PLACEHOLDER_RE.search(ref):
-                continue
-            if _ARC_RANGE_RE.search(ref) or "–" in ref or "—" in ref:
-                continue
-            stats.path_refs += 1
-            rel = ref[len("story/") :] if ref.startswith("story/") else ref
-            if (book / "story" / rel).is_file() or (book / ref).is_file():
-                continue
-            missing.setdefault(ref, set()).add(where)
+    items = [(f"{BEAT_DIR_LABEL}/{p.name}", read_text(p)) for p in sorted(d.glob("*.md"))]
+    checked, missing = scan_md_refs(items, book)
+    stats.path_refs += checked
     if not missing:
         return
     stats.path_missing = len(missing)
-    shown = "、".join(
-        f"`{r}`（{'、'.join(sorted(w))}）" for r, w in sorted(missing.items())[:4]
-    ) + ("…" if len(missing) > 4 else "")
+    shown = format_missing(missing)
     problems.append(
-        f"{BEAT_DIR_LABEL}/：{len(missing)} 個檔內指名的路徑不存在：{shown}"
-        f"——箭頭指向空氣，而箭頭本身格式完全合法（E1）。改成實際的路徑，"
-        f"或照 `書本模板/` 的骨架先建那支檔"
+        f"{BEAT_DIR_LABEL}/：{len(missing)} 個檔內指名的路徑不存在：{shown}——{MISSING_HINT}"
     )
 
 

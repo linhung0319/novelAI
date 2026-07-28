@@ -10,8 +10,34 @@ from .lint import lint_report
 from .motif import ArcMotif, Finding, detect, measure
 from .outline import lint_report as outline_lint_report
 from .playability import HOLLOW_SHARE_CAP, RUN_CAP, ArcPlayability, analyse
-from .scan import ScanError, load_book, load_pov
+from .scan import LayerMissing, ScanError, load_book, load_pov
 from .structure_project import project
+
+
+# ---------------------------------------------------------------- 輸出與 exit 契約
+#
+# **唯一真相在 `結構定義/共同約定.md`「輸出與 exit 契約」**（2026-07-28 功能 14）。
+# 三個碼與兩個通道，全套件同一份語意；`meta-lint` 第 6 項對 fixture 書實跑比對
+# stdout／stderr／exit。
+#
+# | 通道 | 裝什麼 |
+# |---|---|
+# | **stdout** | 覆蓋率行、問題、資訊、提示、投影輸出——**人與 LLM 要看的一切** |
+# | **stderr** | **只裝執行錯誤**（讀不到檔、解析炸掉） |
+#
+# **為什麼問題要從 stderr 搬到 stdout**（V10）：實測
+# `fact-lint --book 一世之尊 > report.txt` 只得到 2 行（412 B），而 206 個問題
+# （47,547 B）全部落進 stderr——**在一個由 LLM 驅動、routinely 重導輸出的系統裡，
+# 這是一個會安靜地讀成「乾淨」的介面**。
+EXIT_CLEAN = 0
+EXIT_PROBLEMS = 1
+# **exit 2 ＝「這本書還沒有這一層」**，而且**照樣印覆蓋率行**（抉擇 6 A）。
+# ⚠️ argparse 的**用法錯誤**也是 2（Python 標準行為，本輪不改）。
+# **分辨方式是 stdout 有沒有覆蓋率行**：跑不動會印「掃了 0 支」，用法錯誤只印
+# usage 到 stderr。`meta-lint` 第 6 項驗的就是這一條。
+EXIT_LAYER_MISSING = 2
+
+_EMPTY_COVERAGE = "檢查範圍：掃了 0 支——這本書還沒有這一層（{reason}）"
 
 
 def _force_utf8() -> None:
@@ -121,12 +147,15 @@ def main(argv: list[str] | None = None) -> int:
     try:
         arcs = load_book(args.book)
         pov = load_pov(args.book)
+    except LayerMissing as e:
+        print(_EMPTY_COVERAGE.format(reason=e))
+        return EXIT_LAYER_MISSING
     except ScanError as e:
         print(f"掃描錯誤：{e}", file=sys.stderr)
-        return 1
+        return EXIT_PROBLEMS
     except OSError as e:
         print(f"讀取失敗：{e}", file=sys.stderr)
-        return 1
+        return EXIT_PROBLEMS
 
     plays = [analyse(a, pov) for a in arcs]
     motifs = [measure(a, p.action_mean) for a, p in zip(arcs, plays)]
@@ -149,7 +178,7 @@ def main(argv: list[str] | None = None) -> int:
         p.hollow_share > HOLLOW_SHARE_CAP or p.hollow_runs or p.meta_beats
         for p in shown_plays
     )
-    return 1 if suspect else 0
+    return EXIT_PROBLEMS if suspect else EXIT_CLEAN
 
 
 CLEAN = "幕綱格式乾淨（幕號／前因／八欄／spine／分區）"
@@ -161,17 +190,20 @@ def _emit(fn, book: Path) -> int:
     """
     try:
         report, stats = fn(book)
+    except LayerMissing as e:
+        print(_EMPTY_COVERAGE.format(reason=e))
+        return EXIT_LAYER_MISSING
     except ScanError as e:
         print(f"掃描錯誤：{e}", file=sys.stderr)
-        return 0  # 投影不擋路：讀不到就說讀不到，不改變呼叫者的 exit code
+        return EXIT_CLEAN  # 投影不擋路：讀不到就說讀不到，不改變呼叫者的 exit code
     except OSError as e:
         print(f"讀取失敗：{e}", file=sys.stderr)
-        return 0
+        return EXIT_CLEAN
     # 覆蓋率行由投影自己嵌在表格與殘留節之間（同 `structure-project` 的第四節），
     # 這裡不再印一次——`stats` 留給測試斷言用。
     print(report, end="")
     _ = stats
-    return 0
+    return EXIT_CLEAN
 
 
 def lint_main(argv: list[str] | None = None) -> int:
@@ -198,12 +230,17 @@ def lint_main(argv: list[str] | None = None) -> int:
         return _emit(emit_beats, args.book)
     try:
         problems, stats = lint_report(args.book)
+    except LayerMissing as e:
+        # **exit 2 ＝跑不動，而且照樣印覆蓋率行**（抉擇 6 A）：
+        # 「我掃了 0 支」本身就是最有用的那一筆訊息（E2）。
+        print(_EMPTY_COVERAGE.format(reason=e))
+        return EXIT_LAYER_MISSING
     except ScanError as e:
         print(f"掃描錯誤：{e}", file=sys.stderr)
-        return 1
+        return EXIT_PROBLEMS
     except OSError as e:
         print(f"讀取失敗：{e}", file=sys.stderr)
-        return 1
+        return EXIT_PROBLEMS
 
     print(stats.render())
     for n in stats.notes:
@@ -212,11 +249,11 @@ def lint_main(argv: list[str] | None = None) -> int:
         print(f"（提示）{h}")
     if not problems:
         print(CLEAN)
-        return 0
-    print(f"發現 {len(problems)} 個問題：", file=sys.stderr)
+        return EXIT_CLEAN
+    print(f"發現 {len(problems)} 個問題：")
     for p in problems:
-        print(f"  [x] {p}", file=sys.stderr)
-    return 1
+        print(f"  [x] {p}")
+    return EXIT_PROBLEMS
 
 
 CH_CLEAN = "正文層格式乾淨（幕錨點／對應幕／front-matter／章序視圖）"
@@ -251,12 +288,17 @@ def ch_lint_main(argv: list[str] | None = None) -> int:
         return _emit(emit_chapters, args.book)
     try:
         problems, stats = ch_lint_report(args.book)
+    except LayerMissing as e:
+        # **exit 2 ＝跑不動，而且照樣印覆蓋率行**（抉擇 6 A）：
+        # 「我掃了 0 支」本身就是最有用的那一筆訊息（E2）。
+        print(_EMPTY_COVERAGE.format(reason=e))
+        return EXIT_LAYER_MISSING
     except ScanError as e:
         print(f"掃描錯誤：{e}", file=sys.stderr)
-        return 1
+        return EXIT_PROBLEMS
     except OSError as e:
         print(f"讀取失敗：{e}", file=sys.stderr)
-        return 1
+        return EXIT_PROBLEMS
 
     print(stats.render())
     for n in stats.notes:
@@ -265,11 +307,11 @@ def ch_lint_main(argv: list[str] | None = None) -> int:
         print(f"（提示）{h}")
     if not problems:
         print(CH_CLEAN)
-        return 0
-    print(f"發現 {len(problems)} 個問題：", file=sys.stderr)
+        return EXIT_CLEAN
+    print(f"發現 {len(problems)} 個問題：")
     for p in problems:
-        print(f"  [x] {p}", file=sys.stderr)
-    return 1
+        print(f"  [x] {p}")
+    return EXIT_PROBLEMS
 
 
 OUTLINE_CLEAN = (
@@ -307,12 +349,17 @@ def outline_lint_main(argv: list[str] | None = None) -> int:
         return _emit(emit_outline, args.book)
     try:
         problems, stats = outline_lint_report(args.book)
+    except LayerMissing as e:
+        # **exit 2 ＝跑不動，而且照樣印覆蓋率行**（抉擇 6 A）：
+        # 「我掃了 0 支」本身就是最有用的那一筆訊息（E2）。
+        print(_EMPTY_COVERAGE.format(reason=e))
+        return EXIT_LAYER_MISSING
     except ScanError as e:
         print(f"掃描錯誤：{e}", file=sys.stderr)
-        return 1
+        return EXIT_PROBLEMS
     except OSError as e:
         print(f"讀取失敗：{e}", file=sys.stderr)
-        return 1
+        return EXIT_PROBLEMS
 
     print(stats.render())
     for n in stats.notes:
@@ -321,11 +368,11 @@ def outline_lint_main(argv: list[str] | None = None) -> int:
         print(f"（提示）{h}")
     if not problems:
         print(OUTLINE_CLEAN)
-        return 0
-    print(f"發現 {len(problems)} 個問題：", file=sys.stderr)
+        return EXIT_CLEAN
+    print(f"發現 {len(problems)} 個問題：")
     for p in problems:
-        print(f"  [x] {p}", file=sys.stderr)
-    return 1
+        print(f"  [x] {p}")
+    return EXIT_PROBLEMS
 
 
 def structure_project_main(argv: list[str] | None = None) -> int:
@@ -353,15 +400,19 @@ def structure_project_main(argv: list[str] | None = None) -> int:
     _force_utf8()
     try:
         report, _stats = project(args.book, args.arc)
+    except LayerMissing as e:
+        # **投影也要能說「這本書還沒有這一層」**，而且照樣印覆蓋率（抉擇 6 A）。
+        print(_EMPTY_COVERAGE.format(reason=e))
+        return EXIT_LAYER_MISSING
     except ScanError as e:
         print(f"掃描錯誤：{e}", file=sys.stderr)
-        return 1
+        return EXIT_PROBLEMS
     except OSError as e:
         print(f"讀取失敗：{e}", file=sys.stderr)
-        return 1
+        return EXIT_PROBLEMS
 
     print(report, end="")
-    return 0
+    return EXIT_CLEAN
 
 
 if __name__ == "__main__":

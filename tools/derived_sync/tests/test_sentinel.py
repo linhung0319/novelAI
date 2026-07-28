@@ -496,7 +496,7 @@ def test_run_aggregates_all_four(tmp_path):
         LEGAL_CHAR_AI + "## 反派備註\nx\n", encoding="utf-8"
     )
     (book / "story" / "參照" / "結構.md").write_text("巨" * 5000 + "\n", encoding="utf-8")
-    kinds = {f.kind for f in run(book)}
+    kinds = {f.kind for f in run(book)[0]}
     # 這本 fixture 沒有裁決流，而上面四項的 hint 都叫人往那裡搬 → 第五類必然觸發。
     assert kinds == {
         "幕綱肥大",
@@ -508,7 +508,7 @@ def test_run_aggregates_all_four(tmp_path):
 
 
 def test_missing_dirs_do_not_crash(tmp_path):
-    assert run(tmp_path / "nonexistent") == []
+    assert run(tmp_path / "nonexistent")[0] == []
 
 
 # ------------------------------------------------ 目的地存在性（E1 新推論）
@@ -519,7 +519,7 @@ def test_destination_reported_when_hints_point_at_a_missing_file(tmp_path):
     照做會失敗」。"""
     book = _book(tmp_path)
     (book / "story" / "幕綱" / "arc09.md").write_text(_beats(5, 3000), encoding="utf-8")
-    findings = [f for f in run(book) if f.kind == "目的地不存在"]
+    findings = [f for f in run(book)[0] if f.kind == "目的地不存在"]
     assert len(findings) == 1
     assert "story/參照/裁決流.md" in findings[0].detail
     assert "幕綱肥大" in findings[0].detail
@@ -529,7 +529,7 @@ def test_destination_silent_when_it_exists(tmp_path):
     book = _book(tmp_path)
     (book / "story" / "幕綱" / "arc09.md").write_text(_beats(5, 3000), encoding="utf-8")
     (book / "story" / "參照" / "裁決流.md").write_text("# 裁決流\n", encoding="utf-8")
-    assert [f for f in run(book) if f.kind == "目的地不存在"] == []
+    assert [f for f in run(book)[0] if f.kind == "目的地不存在"] == []
 
 
 def test_legacy_destination_name_still_counts(tmp_path):
@@ -537,14 +537,14 @@ def test_legacy_destination_name_still_counts(tmp_path):
     book = _book(tmp_path)
     (book / "story" / "幕綱" / "arc09.md").write_text(_beats(5, 3000), encoding="utf-8")
     (book / "story" / "參照" / "裁決流.co.md").write_text("# 裁決流\n", encoding="utf-8")
-    assert [f for f in run(book) if f.kind == "目的地不存在"] == []
+    assert [f for f in run(book)[0] if f.kind == "目的地不存在"] == []
 
 
 def test_no_content_to_move_means_no_nagging(tmp_path):
     """**只在真的有內容要搬時才報。** 一支乾淨的書不該因為「你沒有裁決流」被念
     ——那就是製造下一個沒人看的警報。"""
     book = _book(tmp_path)
-    assert [f for f in run(book) if f.kind == "目的地不存在"] == []
+    assert [f for f in run(book)[0] if f.kind == "目的地不存在"] == []
 
 
 def test_retired_reference_files_scanned_under_both_namings(tmp_path):
@@ -668,3 +668,67 @@ def test_small_reference_files_are_silent(tmp_path):
     book = _book(tmp_path)
     (book / "story" / "參照" / "就緒.md").write_text("# 就緒\n| 設定層·世界觀 | 空白 |\n", encoding="utf-8")
     assert oversized_sources(book) == []
+
+
+# ---------------------------------------------------------------- 覆蓋率行（功能 14）
+#
+# **成長哨兵曾是全系統唯一沒有覆蓋率行的守衛。** 十次「手寫路徑清單漏檔」每一次都
+# 會被下面這幾個斷言當場抓到——`story/大綱/` 不在 `book_layout` 的名單時，`size["大綱"]`
+# 就是 0，而在此之前那個 0 沒有任何地方看得到。
+
+
+def test_coverage_line_is_printed_even_with_zero_findings(tmp_path):
+    """**0 也印。** 在功能 14 之前 `_print_sentinel` 在 0 筆時直接 `return`，
+    於是「哨兵掃了 0 支檔」與「哨兵掃過而一切正常」印出來完全相同。"""
+    book = _book(tmp_path)
+    findings, stats = run(book)
+    assert findings == []
+    line = stats.render()
+    assert line.startswith("掃描範圍：體積 ")
+    assert "行長" in line and "事實行" in line and "搬移目的地" in line
+
+
+def test_every_managed_axis_appears_in_the_coverage_line(tmp_path):
+    """**每一軸都要有一格，掃到 0 支也要有。** 一個不出現的軸 ＝ 下一次漏檔。"""
+    from derived_sync.book_layout import SIZE_AXES
+
+    _, stats = run(_book(tmp_path))
+    line = stats.render()
+    for axis in SIZE_AXES:
+        assert axis.label in line, f"`{axis.label}` 軸從覆蓋率行消失了"
+
+
+def test_deliberate_exemptions_look_different_from_zero(tmp_path):
+    """**「刻意不受管」與「忘了加」在清單上要長得不一樣**（功能 13 為 `raw/` 立的先例）。
+
+    正文源與 `raw/` 的體積是刻意豁免的，所以它們印的是「N 支·刻意豁免（理由）」
+    ——而且 N 仍然要數得出來，否則豁免與「掃描器根本走不進去」不可分辨。
+    """
+    book = _book(tmp_path)
+    (book / "chapters").mkdir(exist_ok=True)
+    (book / "chapters" / "ch0001.md").write_text("正文" * 100, encoding="utf-8")
+    (book / "raw").mkdir(exist_ok=True)
+    (book / "raw" / "靈感.md").write_text("靈感", encoding="utf-8")
+
+    _, stats = run(book)
+    assert stats.size["正文源"] == 1
+    assert stats.size["raw"] == 1
+    line = stats.render()
+    assert "正文源 1（**刻意豁免**：" in line
+    assert "raw 1（**刻意豁免**：" in line
+
+
+def test_the_axis_that_was_missed_nine_times_is_counted(tmp_path):
+    """`story/幕綱/_index.md`——第九次漏檔的那一支，而它就在既有函式已經走進去的
+    資料夾裡，還有一支綠色的測試把「它什麼都不會觸發」釘成預期行為。"""
+    book = _book(tmp_path)
+    (book / "story" / "幕綱" / "_index.md").write_text("- arc01：X\n", encoding="utf-8")
+    _, stats = run(book)
+    assert stats.size["幕綱索引"] == 1
+
+
+def test_missing_book_still_renders_a_coverage_line(tmp_path):
+    """書不存在時也要印——「我掃了 0 支」本身就是最有用的那一筆訊息。"""
+    _, stats = run(tmp_path / "nonexistent")
+    line = stats.render()
+    assert "幕綱 0" in line and "大綱 0" in line

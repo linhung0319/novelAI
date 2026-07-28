@@ -43,7 +43,8 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .core import AI_SUFFIX, _split_frontmatter, lede
+from .core import AI_SUFFIX, lede
+from .md import FORESHADOW_RE, front_matter_of, section_body, split_frontmatter, table_rows
 
 # 2026-07-27（功能 06 抉擇 1 B）**刪掉的三個宣告欄**＋01 已搬走的 `🧊水下`。
 # 留著它們不是「舊格式還能用」——是「schema 已經不宣稱它們機讀，而檔裡還寫著
@@ -97,10 +98,7 @@ _TOKEN_STRIP = "*`＊ 　"
 # （`被護的弱者`），逐一報就是新的警報疲勞來源。
 TOKEN_MIN_HITS = 3
 
-_KEY_RE = re.compile(r"^([^\s:：]+)\s*[:：]\s*(.*)$")
-_H2_RE = re.compile(r"^##\s+(.+?)\s*$")
 _FS_GROUP_RE = re.compile(r"(埋|收)\s*[:：]\s*\[([^\]]*)\]")
-_BEAT_FS_RE = re.compile(r"\[\[伏筆[:：]([^\]]+)\]\]")
 _ROLE_FIELD_RE = re.compile(r"^-\s*角色[:：]\s*(.*)$")
 _BULLET_RE = re.compile(r"^[-*+]\s+")
 
@@ -179,56 +177,6 @@ def char_dir(book: Path) -> Path:
     return book / "story" / "設定" / "角色"
 
 
-def _front_matter(p: Path) -> dict[str, str] | None:
-    fm, _ = _split_frontmatter(p.read_text(encoding="utf-8"))
-    if fm is None:
-        return None
-    out: dict[str, str] = {}
-    for line in fm:
-        m = _KEY_RE.match(line.strip())
-        if m:
-            out[m.group(1).strip()] = m.group(2).strip()
-    return out
-
-
-def _section_body(text: str, title: str) -> list[str] | None:
-    """某個 `##` 節的內容行；節不存在回 None（與「節在但空的」是兩件事）。"""
-    out: list[str] = []
-    found = inside = False
-    for raw in text.replace("\r\n", "\n").split("\n"):
-        m = _H2_RE.match(raw.strip())
-        if m:
-            inside = m.group(1).strip().startswith(title)
-            found = found or inside
-            continue
-        if inside:
-            out.append(raw)
-    return out if found else None
-
-
-def _table_rows(lines: list[str]) -> list[list[str]]:
-    """Markdown 表格的**資料列**（表頭與 `|---|` 分隔列都不算）。
-
-    判準是位置：`|---|` 分隔列**之後**的才是資料。形狀與取法同 `world_lint`
-    ——不能只跳分隔列，那會把表頭當成一筆資料。
-    """
-    rows: list[list[str]] = []
-    after_sep = False
-    for ln in lines:
-        s = ln.strip()
-        if not s.startswith("|"):
-            if not s:
-                after_sep = False  # 空行結束一張表
-            continue
-        cells = [c.strip() for c in s.strip("|").split("|")]
-        if cells and all(set(c) <= set("-: ") for c in cells):
-            after_sep = True
-            continue
-        if after_sep:
-            rows.append(cells)
-    return rows
-
-
 def source_names(book: Path) -> tuple[list[str], list[str], list[str]]:
     """資料夾裡的角色名 ＝ 這一軸的權威角色集合（C1：檔名即 ID）。
 
@@ -282,7 +230,7 @@ def foreshadow_registry(book: Path) -> tuple[set[str], int, int]:
     d = book / "story" / "幕綱"
     if d.is_dir():
         for p in sorted(d.glob("*.md")):
-            for m in _BEAT_FS_RE.finditer(p.read_text(encoding="utf-8")):
+            for m in FORESHADOW_RE.finditer(p.read_text(encoding="utf-8")):
                 beat_names.add(m.group(1).strip())
     obj = book / "story" / "物件"
     obj_names = {p.stem for p in obj.glob("*.md")} if obj.is_dir() else set()
@@ -426,14 +374,14 @@ def check_derived(book: Path, stats: CharStats) -> list[Problem]:
             continue
         stats.derived += 1
         text = p.read_text(encoding="utf-8")
-        fm = _front_matter(p)
+        fm = front_matter_of(p)
 
         # ---- 第 1 項：節內容（骨架也驗——空殼檔正是這一項的標的）
         file_ph = 0
         file_hollow = 0
         for title in SECTIONS:
             required = title in REQUIRED_SECTIONS
-            body = _section_body(text, title)
+            body = section_body(text, title)
             if body is None:
                 if required:
                     out.append(
@@ -628,12 +576,12 @@ def check_rollup(book: Path, stats: CharStats) -> list[Problem]:
         rollup = legacy
     stats.rollup_found = True
     text = rollup.read_text(encoding="utf-8")
-    if _split_frontmatter(text)[0] is None:
+    if split_frontmatter(text)[0] is None:
         # 尚未封章的骨架：表裡是佔位列，逐項比對只會報一堆幽靈列。那個狀態
         # `check` 已經報成 unstamped（同 validate／world_lint 的骨架處置）。
         return out
 
-    body = _section_body(text, ROLLUP_SECTION)
+    body = section_body(text, ROLLUP_SECTION)
     if body is None:
         out.append(
             Problem(
@@ -644,7 +592,7 @@ def check_rollup(book: Path, stats: CharStats) -> list[Problem]:
             )
         )
         return out
-    rows = _table_rows(body)
+    rows = table_rows(body)
     stats.rollup_rows = len(rows)
 
     listed = [r[COL_NAME] for r in rows if r and r[COL_NAME]]
@@ -684,7 +632,7 @@ def check_rollup(book: Path, stats: CharStats) -> list[Problem]:
         derived = d / f"{name}{AI_SUFFIX}"
         if not derived.is_file():
             continue
-        fm = _front_matter(derived)
+        fm = front_matter_of(derived)
         if fm is None:
             continue
         # 第 5 項：三欄 ≡ front-matter

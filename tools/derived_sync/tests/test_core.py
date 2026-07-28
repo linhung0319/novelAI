@@ -43,17 +43,30 @@ def test_stamp_makes_fresh_then_edit_makes_stale(tmp_path: Path) -> None:
     assert statuses["凱.ai.md"] == "stale"
 
 
-def test_unstamped_and_orphan(tmp_path: Path) -> None:
+def test_skeleton_unstamped_and_orphan(tmp_path: Path) -> None:
+    """**`skeleton` 與 `unstamped` 是兩件事**（2026-07-28 功能 14）。
+
+    front-matter 完全沒有 ＝這支檔從沒被產出過（`書本模板` 的骨架），**不可能
+    stale**，所以它不計入「需處理」；有 front-matter 卻缺 `generated-from` ＝
+    重生了忘記封章，那才是問題。在此之前兩者共用 `unstamped`，於是一支乾淨的
+    模板永遠 exit 1——而抉擇 2 A 的 CI 閘門要拿它當「零成本的釘死」。
+    """
     book = tmp_path / "書"
     _write(book / "story" / "設定" / "角色" / "艾拉.md", "艾拉。\n")
-    _write(  # 有源、未封章
+    _write(  # 有源、front-matter 完全沒有 → 尚未產出的骨架
         book / "story" / "設定" / "角色" / "艾拉.ai.md", "## 分析\n無 front-matter\n"
+    )
+    _write(book / "story" / "設定" / "角色" / "妙音.md", "妙音。\n")
+    _write(  # 有源、有 front-matter 卻缺 generated-from → 重生了忘記封章
+        book / "story" / "設定" / "角色" / "妙音.ai.md",
+        "---\n定位: 配角\n---\n## 需求四象限\n期盼：…\n",
     )
     _write(  # 無源 → orphan
         book / "story" / "設定" / "角色" / "幽靈.ai.md", "---\ngenerated-from: x\n---\n本體\n"
     )
     statuses = {s.derived.name: s.status for s in check_book(book)}
-    assert statuses["艾拉.ai.md"] == "unstamped"
+    assert statuses["艾拉.ai.md"] == "skeleton"
+    assert statuses["妙音.ai.md"] == "unstamped"
     assert statuses["幽靈.ai.md"] == "orphan"
 
 
@@ -131,7 +144,8 @@ def test_reference_file_with_a_source_behaves_normally(tmp_path):
     """`story/參照/` 不再是特例資料夾：有同名源就照常走 hash。"""
     book = _reference_book(tmp_path, "就緒.ai.md")
     (book / "story" / "參照" / "就緒.md").write_text("成熟度\n", encoding="utf-8")
-    assert [r.status for r in check_book(book)] == ["unstamped"]
+    # 那支 `.ai.md` 沒有 front-matter ＝尚未產出的骨架（功能 14 起與 `unstamped` 分開）
+    assert [r.status for r in check_book(book)] == ["skeleton"]
     stamp(book / "story" / "參照" / "就緒.ai.md")
     assert [r.status for r in check_book(book)] == ["fresh"]
 

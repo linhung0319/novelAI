@@ -56,7 +56,7 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .core import _split_frontmatter
+from .md import BEAT_HEAD_RE, KEY_RE, front_matter_of, section_body
 from .style_lint import style_dir
 from .validate import SUMMARY_DERIVED, SUMMARY_DIR, SUMMARY_SOURCE
 
@@ -101,15 +101,12 @@ ADHOC_SECTION = "臨場拍板"
 SETTLED_MARKS = ("已定案", "已鎖定", "已寫定")
 REJECTION_MARKS = ("捨棄", "排斥", "否決", "圓不回來", "作廢", "不走")
 
-_KEY_RE = re.compile(r"^([^\s:：]+)\s*[:：]\s*(.*)$")
-_H2_RE = re.compile(r"^##\s+(.+?)\s*$")
 # 「臨場拍板」節裡的一「條」＝**頂格**的編號或項目符號（縮排的是續行，見 `_source_notes`）。
 _TOP_ITEM_RE = re.compile(r"^(?:\d+[.)]|[-*+])\s+")
 # **`beat_metrics.scan._POV_RE` 的同一把尺**（第 4 項要驗的就是「那一支解析得出來」，
 # 所以這裡必須是逐字相同的 regex，不是等價的另一種寫法）。
 _POV_RE = re.compile(r"^視角結構:.*?POV\s*[:：]\s*([^,，}\s}]+)", re.MULTILINE)
 # 第 6 項的 registry 與引用。
-_BEAT_HEAD_RE = re.compile(r"^##\s*幕(\d+)")
 _BEAT_REF_RE = re.compile(r"幕(\d+)")
 _ARC_REF_RE = re.compile(r"(?<![A-Za-z0-9])(arc\d+)")
 # 第 7 項：**單位 token ＋阿拉伯數字要落在同一行**。形狀照抄 `style-lint` 第 4 項
@@ -196,43 +193,6 @@ def summary_paths(book: Path) -> tuple[Path, Path]:
     return d / SUMMARY_SOURCE, d / SUMMARY_DERIVED
 
 
-def _front_matter(p: Path) -> dict[str, str] | None:
-    """`.ai.md` 的 front-matter → 扁平 dict；沒有 front-matter 回 None。
-
-    **值要剝掉 `#` 之後的註解**：`摘要.schema.md` 的範例本身就在值後面寫註解
-    （`節奏檔位: { 卷一: 開頭段 }   # 只記起點·不滾動`），不剝的話第 5 項的
-    字串比對會對著一段註解比（同 `style_lint._front_matter`）。
-    """
-    fm, _ = _split_frontmatter(p.read_text(encoding="utf-8"))
-    if fm is None:
-        return None
-    out: dict[str, str] = {}
-    for line in fm:
-        m = _KEY_RE.match(line.strip())
-        if m:
-            out[m.group(1).strip()] = m.group(2).split("#", 1)[0].strip()
-    return out
-
-
-def _section_body(text: str, title: str) -> list[str] | None:
-    """某個 `##` 節的內容行；節不存在回 None（與「節在但空的」是兩件事）。
-
-    比對用 `startswith`——作者會在標題後加註記（`## 基調（氛圍／筆調）`、
-    `## 臨場拍板、非定版（待後續拍板，別鎖死）`）。取法同 `char_lint`。
-    """
-    out: list[str] = []
-    found = inside = False
-    for raw in text.replace("\r\n", "\n").split("\n"):
-        m = _H2_RE.match(raw.strip())
-        if m:
-            inside = m.group(1).strip().startswith(title)
-            found = found or inside
-            continue
-        if inside:
-            out.append(raw)
-    return out if found else None
-
-
 def _first_line(body: list[str] | None) -> str:
     """節的首句 ＝ 第一個非空、非 blockquote 的行。"""
     for ln in body or []:
@@ -294,7 +254,7 @@ def _parse_mapping(value: str) -> list[tuple[str, str]]:
     for part in parts:
         if not part:
             continue
-        m = _KEY_RE.match(part)
+        m = KEY_RE.match(part)
         out.append((m.group(1).strip(), m.group(2).strip()) if m else ("", part))
     return out
 
@@ -314,7 +274,7 @@ def beat_registry(book: Path) -> tuple[set[str], set[str]]:
         if not p.name.startswith("_"):
             arcs.add(p.stem)
         for ln in p.read_text(encoding="utf-8").splitlines():
-            m = _BEAT_HEAD_RE.match(ln.strip())
+            m = BEAT_HEAD_RE.match(ln.strip())
             if m:
                 beats.add(m.group(1))
     return beats, arcs
@@ -588,7 +548,7 @@ def _style_copy_state(book: Path, source_tone: str) -> str:
     style_src = style_dir(book) / "風格.md"
     if not style_src.is_file():
         return "未比對（無源 `風格.md`）"
-    body = _section_body(style_src.read_text(encoding="utf-8"), TONE_SECTION)
+    body = section_body(style_src.read_text(encoding="utf-8"), TONE_SECTION)
     if body is None:
         return "否"
     got = normalize_tone(_first_line(body))
@@ -631,7 +591,7 @@ def _source_notes(text: str, stats: SummaryStats) -> None:
             "摘要是唯一每支 skill 都無條件整檔讀的源檔"
         )
 
-    body = _section_body(text, ADHOC_SECTION)
+    body = section_body(text, ADHOC_SECTION)
     if body is None:
         return
     # 一「條」＝一個**頂格**的編號／項目符號，連同它底下所有縮排的續行。
@@ -670,7 +630,7 @@ def lint_book(book: Path) -> tuple[list[Problem], SummaryStats]:
         return problems, stats  # 沒有摘要軸的書（只有 raw/ 的書真的存在）
 
     source_text = src.read_text(encoding="utf-8") if src.is_file() else ""
-    tone_body = _section_body(source_text, TONE_SECTION) if source_text else None
+    tone_body = section_body(source_text, TONE_SECTION) if source_text else None
     source_tone = _first_line(tone_body)
     if _is_placeholder(source_tone):
         source_tone = ""  # 骨架的括號註記不是基調
@@ -707,7 +667,7 @@ def lint_book(book: Path) -> tuple[list[Problem], SummaryStats]:
     stats.derived = 1
 
     text = derived.read_text(encoding="utf-8")
-    fm = _front_matter(derived)
+    fm = front_matter_of(derived)
     if fm is None:
         # 尚未封章的骨架：`check` 已經報成 unstamped，重複報是雜訊
         #（同 validate／world-lint／char-lint／style-lint 的骨架處置）。

@@ -16,16 +16,14 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .scan import _ARC_FILE_RE, Beat, ScanError, read_text, scan_arc
+from .refs import MARK_RE
+from .scan import _ARC_FILE_RE, Beat, LayerMissing, ScanError, read_text, scan_arc
 
 # 分區（`幕綱.schema.md`「arc 檔的內部結構」）。四種以外的 `##` 都是未定義分區。
 PROMISE_HEAD = "本 arc 承諾"
 STATUS_HEAD = "本 arc 伏筆狀態"
 DESIGN_HEAD = "設計註"
 
-# **這份 regex 的唯一真相在 `tools/foreshadow_project/src/foreshadow_project/scan.py:_MARK_RE`**；
-# 工具間零相依，故複製最小片段。schema 用半形冒號，這裡連全形一起收，錯字不靜默漏掉。
-_MARK_RE = re.compile(r"(埋|收)\[\[伏筆[:：]\s*([^\]]+?)\s*\]\]")
 _BEAT_REF_RE = re.compile(r"\[\[幕(\d+)\]\]")
 
 _PROMISE_HEAD_RE = re.compile(rf"^##\s*{PROMISE_HEAD}\s*$")
@@ -145,7 +143,7 @@ def parse_arc(path: Path, arc: str) -> ArcStructure:
 
     # 幕內容（標記／引用）從八欄取，續行併回的邏輯只有 scan.py 一份。
     for b in out.beats:
-        for kind, name in _MARK_RE.findall(b.fields.get("伏筆", "")):
+        for kind, name in MARK_RE.findall(b.fields.get("伏筆", "")):
             out.marks.append(
                 Mark(kind=kind, name=name.strip(), beat=b.number, arc=arc, lineno=b.lineno)
             )
@@ -234,7 +232,7 @@ def parse_arc(path: Path, arc: str) -> ArcStructure:
 def arc_files(book: Path) -> dict[str, Path]:
     d = book / "story" / "幕綱"
     if not d.is_dir():
-        raise ScanError(f"找不到幕綱目錄：{d}")
+        raise LayerMissing(f"找不到幕綱目錄：{d}")
     return {p.stem: p for p in sorted(d.glob("*.md")) if _ARC_FILE_RE.match(p.stem)}
 
 
@@ -244,5 +242,5 @@ def parse_book(book: Path) -> list[ArcStructure]:
     """
     files = arc_files(book)
     if not files:
-        raise ScanError(f"{book / 'story' / '幕綱'} 下沒有 arcNN.md")
+        raise LayerMissing(f"{book / 'story' / '幕綱'} 下沒有 arcNN.md")
     return [parse_arc(p, a) for a, p in sorted(files.items())]

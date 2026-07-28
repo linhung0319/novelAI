@@ -1,0 +1,41 @@
+# 已知紅的測試 ＋ **登記在案的理由**（2026-07-28 功能 14，抉擇 2 A）。
+#
+# **雙向擋**（`.github/workflows/tools.yml`）：
+#   - 紅而**不在**清單裡 → fail（那是新的回歸）；
+#   - **在**清單裡卻變綠了 → 也 fail（一份過期的已知紅清單就是下一個
+#     「守衛壞了而沒有人知道」——`設計原則.md` E2 第八種形態）。
+#
+# **一個永遠紅的套件與關掉的套件效果相同**（03 已記）。所以進這份清單的門檻是：
+# 說得出**為什麼現在不修**，而不是「還沒空修」。
+
+[[known_red]]
+test = "tools/prose_metrics/tests/test_exposition.py::test_control_group_not_falsely_reported"
+reason = """
+`needs_corpora` 的 `skipif` **守錯對象**：它檢查 `芯片巫師/` 這個**資料夾**在不在（在），
+而測試要的是 `芯片巫師/chapters/`（不在——那本書只有 `raw/`）。所以它不是 skip，是 fail。
+
+**修法不在本輪**：把 guard 改成檢查 `chapters/` 之後這 6 支會變成 skip，而那正是
+`設計原則.md` E2 第七形態的鏡像——**測試是綠的，射程是空的**（功能 11 已量過一次
+同形：五支測試全用 `tmp_path` 造 `結構.ai.md`，而唯一的活書叫 `結構.md`）。
+真正的處置要連同「`prose-metrics` 的三組回歸語料該住哪」一起裁 → 功能 02 那一輪。
+"""
+
+[[known_red]]
+test = "tools/prose_metrics/tests/test_rhythm.py::test_control_book_shows_the_same_signature"
+reason = "同上：`_CONTROL = 芯片巫師` 沒有 `chapters/`，而 `skipif` 只檢查書資料夾在不在。"
+
+[[known_red]]
+test = "tools/prose_metrics/tests/test_rhythm.py::test_one_sentence_per_paragraph_is_the_corpus_norm"
+reason = "同上。"
+
+[[known_red]]
+test = "tools/prose_metrics/tests/test_rhythm.py::test_paragraph_density_fires_on_every_generated_group"
+reason = "同上。"
+
+[[known_red]]
+test = "tools/prose_metrics/tests/test_rhythm.py::test_sentence_length_dispersion_does_not_separate"
+reason = "同上。"
+
+[[known_red]]
+test = "tools/prose_metrics/tests/test_rhythm.py::test_no_overlap_between_good_and_generated"
+reason = "同上。"
