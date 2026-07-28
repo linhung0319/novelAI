@@ -592,3 +592,32 @@ def test_file_size_exemption_for_append_logs_survives(tmp_path):
         encoding="utf-8",
     )
     assert long_lines(book) == [] and bloated_fact_lines(book) == []
+
+
+# ------------------------------------------- `story/參照/` 的體積（2026-07-28 功能 10）
+
+def test_reference_file_size_fires(tmp_path):
+    """**第八次「四份手寫路徑清單漏檔」**：三支體積哨兵目標集 0/3 含 `story/參照/`。
+
+    實測代價是 **292,591 B** 的 `就緒儀表.md`——全書最大的一支檔、門檻的 11.7×
+    ——完全靜音，而 `long_lines` 早就在掃同一個資料夾（同一支檔的**行**）。
+    """
+    book = _book(tmp_path)
+    (book / "story" / "參照" / "就緒儀表.md").write_text("沿" * 30000, encoding="utf-8")
+    findings = [f for f in oversized_sources(book) if f.path.name == "就緒儀表.md"]
+    assert len(findings) == 1 and findings[0].kind == "源檔肥大"
+
+
+def test_reference_append_logs_are_exempt_from_size(tmp_path):
+    """append log 有投影工具可切片——**檔案大小**不受規範（行長仍受，見上）。"""
+    book = _book(tmp_path)
+    for name in ("事實流.md", "狀態事件流.md", "裁決流.md"):
+        (book / "story" / "參照" / name).write_text("- 幕001｜" + "長" * 30000, encoding="utf-8")
+    assert [f for f in oversized_sources(book) if f.path.parent.name == "參照"] == []
+
+
+def test_small_reference_files_are_silent(tmp_path):
+    """`就緒.md` 目標 < 1,500 B，門檻沿用 `SOURCE_BYTES` 綽綽有餘——不該亂叫。"""
+    book = _book(tmp_path)
+    (book / "story" / "參照" / "就緒.md").write_text("# 就緒\n| 設定層·世界觀 | 空白 |\n", encoding="utf-8")
+    assert oversized_sources(book) == []

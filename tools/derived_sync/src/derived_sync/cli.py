@@ -6,6 +6,8 @@ from pathlib import Path
 
 from .char_lint import lint_book as char_lint_book
 from .core import check_book, content_hash, source_digest_for_derived, stamp
+from .readiness import lint_book as readiness_lint_book
+from .readiness import project_book as readiness_project
 from .sentinel import run as run_sentinel
 from .style_lint import lint_book as style_lint_book
 from .summary_lint import lint_book as summary_lint_book
@@ -187,6 +189,40 @@ def _cmd_summary_lint(args: argparse.Namespace) -> int:
     return 1
 
 
+def _cmd_readiness(args: argparse.Namespace) -> int:
+    """就緒現況投影。**這不是閘門**——它只印，永遠 exit 0（同 `fact-project`）。
+
+    2026-07-28（功能 10）取代 `story/參照/就緒儀表.ai.md` 的三節「現況」：那三節
+    投影出來是 306 字元，而它們住的那支檔在一世之尊上是 128,371 字元（**419×**）。
+    可重生的四筆從此不落檔，不可重生的兩筆留在源 `story/參照/就緒.md`。
+    """
+    lines, stats = readiness_project(args.book)
+    print("\n".join(lines))
+    print(stats.render())
+    return 0
+
+
+def _cmd_readiness_lint(args: argparse.Namespace) -> int:
+    """就緒軸的格式閘門。與 `validate` 及其他四支軸 lint 分開跑、分開計。
+
+    `validate` 問「每支 `.ai.md` 的共通形狀對不對」；這支問的是一支**源檔**的形狀
+    ——狀態格是不是五 token 之一（結構判準，不是長度門檻）、清單是不是六條、
+    **有沒有第三節**（第三節就是日誌回來的入口），以及**舊 `就緒儀表` 撤掉了沒有**
+    （`設計原則.md` A5：撤銷要從檔案系統看得出來）。
+    """
+    problems, stats = readiness_lint_book(args.book)
+    print(stats.render())
+    if not problems:
+        print("就緒軸格式合規。")
+        return 0
+    for p in problems:
+        rel = p.path.relative_to(args.book) if p.path.is_relative_to(args.book) else p.path
+        print(f"[x] {rel}  {p.detail}")
+        print(f"       {p.hint}")
+    print(f"\n合計 {len(problems)} 個格式問題。", file=sys.stderr)
+    return 1
+
+
 def _cmd_stamp(args: argparse.Namespace) -> int:
     digest = stamp(args.derived, on=args.date)
     print(f"已封章 {args.derived.name}：generated-from={digest}")
@@ -249,6 +285,20 @@ def main(argv: list[str] | None = None) -> int:
     )
     p_summary.add_argument("--book", required=True, type=Path, help="書資料夾路徑")
     p_summary.set_defaults(func=_cmd_summary_lint)
+
+    p_readiness = sub.add_parser(
+        "readiness",
+        help="就緒現況投影（產物軸×深度／就緒清單／局部下沉；三節 0 也印，非門檻）",
+    )
+    p_readiness.add_argument("--book", required=True, type=Path, help="書資料夾路徑")
+    p_readiness.set_defaults(func=_cmd_readiness)
+
+    p_readiness_lint = sub.add_parser(
+        "readiness-lint",
+        help="驗就緒軸（`story/參照/就緒.md` 的狀態格枚舉＋清單形狀＋不得有第三節）",
+    )
+    p_readiness_lint.add_argument("--book", required=True, type=Path, help="書資料夾路徑")
+    p_readiness_lint.set_defaults(func=_cmd_readiness_lint)
 
     p_stamp = sub.add_parser("stamp", help="重生某 .ai.md 後，把源 hash 封回其 front-matter")
     p_stamp.add_argument("derived", type=Path, help="欲封章的 .ai.md 路徑")
@@ -367,6 +417,56 @@ def summary_lint_main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
     try:
         return _cmd_summary_lint(args)
+    except (FileNotFoundError, ValueError) as e:
+        print(f"錯誤：{e}", file=sys.stderr)
+        return 1
+
+
+def readiness_main(argv: list[str] | None = None) -> int:
+    """`readiness` 的獨立入口（同套件、自己一個指令）。
+
+    與 `derived-sync readiness` 完全等價。**它是投影不是閘門**，所以理由與前五支
+    的「新增一個要記得跑的閘門就是新增一個會被忘記的觸發時機」略有不同：六支
+    讀者 skill 每一輪都要跑它（它取代了「整檔讀 292,591 B 取 50 字元」那件事，
+    實測最壞讀取比 ≈5,850:1），指令名要短到不必查。
+    """
+    ap = argparse.ArgumentParser(
+        description="就緒現況投影：① 產物軸 × 深度的 20 格，逐格印「機械來源 ｜ "
+        "機械結果 ｜ 作者判斷」，**兩邊不一致印一行**；② 就緒清單六條，逐條印機械"
+        "前哨與覆蓋度（完整／**部分**／**未接**）；③ 局部下沉逐 arc（大綱／幕綱／"
+        "正文章數／`beat-test` 紀錄），由檔案系統與 `所屬arc` 重算。"
+        "**跨套件的機械來源印「未接」＋該跑的指令**（不 subprocess、不複製）。"
+        "三節全部 0 也印。零 LLM、可覆算、非門檻。"
+    )
+    ap.add_argument("--book", required=True, type=Path, help="書資料夾路徑")
+    _force_utf8()
+    args = ap.parse_args(argv)
+    try:
+        return _cmd_readiness(args)
+    except (FileNotFoundError, ValueError) as e:
+        print(f"錯誤：{e}", file=sys.stderr)
+        return 1
+
+
+def readiness_lint_main(argv: list[str] | None = None) -> int:
+    """`readiness-lint` 的獨立入口（同套件、自己一個指令）。
+
+    與 `derived-sync readiness-lint` 完全等價。理由同前五支：**新增一個要記得跑
+    的閘門，就是新增一個會被忘記的觸發時機**，所以它掛在八支寫者 skill 的落檔
+    步驟上，指令名要短到不必查。
+    """
+    ap = argparse.ArgumentParser(
+        description="就緒軸格式閘門：`story/參照/就緒.md`（A1 源檔）的"
+        "**源側存在性**、**恰兩節·不得有第三節**、狀態表**恰五欄·無備註欄**、"
+        "**恰五列 ≡ 五個產物軸**、**每格 ∈ 五 token 封閉枚舉**（結構判準，"
+        "不是長度門檻）、就緒清單恰六條、以及**舊 `就緒儀表` 撤掉了沒有**"
+        "（連同它的日誌搬去哪）。零 LLM、可覆算。"
+    )
+    ap.add_argument("--book", required=True, type=Path, help="書資料夾路徑")
+    _force_utf8()
+    args = ap.parse_args(argv)
+    try:
+        return _cmd_readiness_lint(args)
     except (FileNotFoundError, ValueError) as e:
         print(f"錯誤：{e}", file=sys.stderr)
         return 1

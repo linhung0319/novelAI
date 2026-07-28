@@ -290,3 +290,39 @@ def test_unknown_section_is_a_hint(tmp_path):
     problems, stats = lint_report(_book(tmp_path, arc01=ARC01, arc02=arc))
     assert problems == []
     assert any("未定義的 `##` 分區" in h for h in stats.hints)
+
+
+# --------------------------------------------------------------- 測試執行紀錄（功能 10）
+
+def test_beat_test_record_is_optional(tmp_path):
+    """**缺席合法、不計入問題數**——沒測過是真實狀態，報它就是把非門檻變成門檻。
+
+    缺幾支由覆蓋率行說（`0/2 支 arc`），**0 也印**。
+    """
+    problems, stats = lint_report(_book(tmp_path, arc01=ARC01, arc02=ARC02))
+    assert problems == []
+    assert (stats.test_records, stats.test_records_bad) == (0, 0)
+    assert "0/2 支 arc 有 `beat-test` 紀錄" in stats.render()
+
+
+def test_beat_test_record_well_formed(tmp_path):
+    arc = ARC01.replace("# arc01 · 起", "# arc01 · 起\nbeat-test: 2026-07-24·0高3中3低")
+    problems, stats = lint_report(_book(tmp_path, arc01=arc, arc02=ARC02))
+    assert problems == []
+    assert (stats.test_records, stats.test_records_bad) == (1, 0)
+
+
+def test_beat_test_record_rejects_prose(tmp_path):
+    """判準是**結構**：日期 ＋ 阿拉伯數字。中文數字與散文一律不算。"""
+    arc = ARC01.replace("# arc01 · 起", "# arc01 · 起\nbeat-test: 七月底跑過，結構沒問題")
+    problems, stats = lint_report(_book(tmp_path, arc01=arc, arc02=ARC02))
+    assert _only(problems, "不合形狀")
+    assert stats.test_records_bad == 1
+
+
+def test_beat_test_record_only_read_from_the_header(tmp_path):
+    """位置判準：設計註裡談 `beat-test:` 的散文不算紀錄（全檔掃會撈到它）。"""
+    arc = ARC02 + "\n## 設計註\n\nbeat-test: 這一輪先不跑，等 arc03 一起\n"
+    problems, stats = lint_report(_book(tmp_path, arc01=ARC01, arc02=arc))
+    assert not _only(problems, "不合形狀")
+    assert stats.test_records == 0

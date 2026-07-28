@@ -74,9 +74,25 @@ def test_missing_required_keys(tmp_path):
 
 
 def test_declarative_files_exempt_from_required_keys(tmp_path):
-    """就緒儀表／結構無單一源、不走 hash，本來就不該有 generated-from。"""
+    """`結構` 無單一源、不走 hash，本來就不該有 generated-from。
+
+    **2026-07-28（功能 10）射程縮成只剩它一支**：`就緒儀表` 已廢除（見下）。
+    這個豁免本身也是待解的——它因為**一個**理由（無單一源可 hash）關掉了**三項**
+    檢查，其中兩項與 hash 無關（`設計原則.md` E2 第七種形態）→ 功能 11／14。
+    """
+    book = _book(tmp_path, {"story/參照/結構.ai.md": "---\n更新: 2026-07-26\n---\n"})
+    assert validate_file(book, book / "story/參照/結構.ai.md") == []
+
+
+def test_retired_dashboard_is_no_longer_exempt(tmp_path):
+    """`就緒儀表.ai.md` 2026-07-28 起不再豁免——那支檔已廢除。
+
+    在此之前它是「**沒有任何命名能讓它被驗**」的那一支：舊名 `.md` 讓 `check_book`
+    的 `rglob("*.ai.md")` 掃不到，新名 `.ai.md` 讓這裡早退三次。
+    """
     book = _book(tmp_path, {"story/參照/就緒儀表.ai.md": "---\n更新: 2026-07-26\n---\n"})
-    assert validate_file(book, book / "story/參照/就緒儀表.ai.md") == []
+    (p,) = validate_file(book, book / "story/參照/就緒儀表.ai.md")
+    assert "generated-from" in p.detail
 
 
 # ------------------------------------------------------------ 節枚舉

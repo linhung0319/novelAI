@@ -36,6 +36,10 @@ _BULLET_RE = re.compile(r"^-\s*(.+?)\s*[：:]\s*(.*)$")
 _SUBITEM_RE = re.compile(r"^\s+-\s*(.+?)\s*$")
 _TAIL_HOOK_RE = re.compile(r"^-\s*幕尾鉤\s*[：:]")
 _SEP_ROW_RE = re.compile(r"^\|[\s:|-]+\|$")
+# 測試執行紀錄的宣告行（2026-07-28 功能 10 抉擇 3 A）。**只認檔頭**——第一個
+# `##` 之前，與 `幕綱.schema.md`「分區是硬規定」一致（檔頭是本 arc 的元資料區）。
+# 位置判準，不是內容判準：全檔掃會撈到設計註裡談 beat-test 的散文。
+_BEAT_TEST_RE = re.compile(r"^\s*beat-test\s*[：:]\s*(.*?)\s*$")
 
 # `⚠️ 尚未產出` ＝ `書本模板/` 的空骨架標記：檔案存在只是先把位置佔好。
 # 對骨架報「八欄全空、伏筆 x 不存在」是雜訊——但**跳過幾支要印出來**，否則就是
@@ -102,6 +106,8 @@ class ArcStructure:
     design_note_lines: int = 0
     unknown_sections: list[tuple[int, str]] = field(default_factory=list)
     tail_hook_beats: list[int] = field(default_factory=list)
+    # 檔頭的 `beat-test:` 宣告行（值, 行號）。沒有就是 None——**缺席是合法狀態**。
+    beat_test: tuple[str, int] | None = None
 
     @property
     def exclusions(self) -> tuple[str, ...]:
@@ -166,6 +172,11 @@ def parse_arc(path: Path, arc: str) -> ArcStructure:
         pending, items = None, []
 
     for i, raw in enumerate(text.splitlines(), start=1):
+        if section is None and out.beat_test is None:
+            # 檔頭（第一個 `##` 之前）：測試執行紀錄的宣告行。
+            head = _BEAT_TEST_RE.match(raw)
+            if head:
+                out.beat_test = (head.group(1), i)
         if raw.startswith("##"):
             _flush()
             head = _H2_RE.match(raw)

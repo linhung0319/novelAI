@@ -60,6 +60,21 @@ REQUIRED_KEYS = ("對應幕", "所屬arc", "POV", "基調參照", "風格", "狀
 POV_SUBKEYS = ("角色", "人稱", "距離")
 STATUS_VALUES = ("草稿", "已定稿")
 
+# 測試執行紀錄（2026-07-28 功能 10 抉擇 3 A 新增）。**選填——缺席合法、不計入問題數**：
+# 沒測過是一種真實狀態，把它報成問題等於把一個明訂非門檻的東西變成門檻（`write`
+# 的就緒提醒本來就是 non-blocking）。缺幾支由覆蓋率行說，**0 也印**。
+#
+# **判準是結構判準**：日期 ＋ `N高N中N低` 的阿拉伯數字。**不驗測試結果好不好**
+# ——那是 `write-test` 的事，一個閘門不該對內容有意見。中文數字不認（同
+# `style-lint` 第 4 項與 `summary-lint` 第 7 項的紀律）。
+#
+# **它在誕生當天就有消費者**（`設計原則.md` E1）：`write/SKILL.md` 步驟 2 的就緒
+# 提醒讀它、`readiness` 第 3 節逐 arc 印它；寫它的是 `write-test` 的收尾。在此之前
+# 這件事有**三份手抄、零比對、零格式**（就緒儀表狀態格／幕綱檔頭散文／測試報告
+# 不落檔），而 `write:81` 明文同時吃前兩份。
+TEST_RECORD_KEY = "write-test"
+TEST_RECORD_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})\s*[·・]\s*(\d+)高(\d+)中(\d+)低$")
+
 # `風格` 欄指向的檔住這裡（`風格.schema.md`「檔案佈局」）。
 # 2026-07-27（功能 07 抉擇 6 A）新增**目的地存在性**檢查：在此之前 93/93 章都寫
 # `風格.ai.md`，而**沒有任何一行驗那支檔在不在**——這一欄非空（上面 `REQUIRED_KEYS`）
@@ -158,6 +173,8 @@ class ChLintStats:
     normalize_candidates: int = 0
     style_refs: int = 0
     style_refs_dangling: int = 0
+    test_records: int = 0
+    test_records_bad: int = 0
     notes: list[str] = field(default_factory=list)
     hints: list[str] = field(default_factory=list)
 
@@ -173,7 +190,10 @@ class ChLintStats:
             f"{self.rows_checked} 列章序六欄（{self.rows_mismatch} 列不一致）、"
             f"{self.style_refs} 個 `風格` 欄指向的檔"
             f"（{self.style_refs_dangling} 個不存在）；\n"
-            f"          非標準錨點寫法 {self.normalize_candidates} 筆。"
+            f"          非標準錨點寫法 {self.normalize_candidates} 筆；\n"
+            f"          {self.test_records}/{self.metas} 支章衍生有 "
+            f"`{TEST_RECORD_KEY}` 紀錄（**格式不合 {self.test_records_bad} 支**"
+            f"·缺紀錄不計入問題數）。"
         )
 
 
@@ -457,6 +477,19 @@ def lint_report(book: Path) -> tuple[list[str], ChLintStats]:
             if not (style_dir / style_ref).is_file():
                 stats.style_refs_dangling += 1
                 dangling_style.setdefault(style_ref, []).append(meta.stem)
+
+        # 第 12 項：測試執行紀錄的**形狀**（2026-07-28 功能 10 抉擇 3 A）。
+        # **有寫才驗**——缺席合法，見 `TEST_RECORD_KEY` 的註解。
+        record = meta.keys.get(TEST_RECORD_KEY, "").strip()
+        if record:
+            stats.test_records += 1
+            if not TEST_RECORD_RE.match(record):
+                stats.test_records_bad += 1
+                problems.append(
+                    f"{where}：`{TEST_RECORD_KEY}: {record}` 不合形狀"
+                    f"——`YYYY-MM-DD·N高N中N低`（阿拉伯數字，中文數字不算）。"
+                    f"由 `write-test` 收尾時寫，`write` 的就緒提醒與 `readiness` 讀它"
+                )
 
         if meta.beats_form == "unparsed" and meta.beats_raw:
             problems.append(

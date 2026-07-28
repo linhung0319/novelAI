@@ -75,7 +75,7 @@ description: 當作者說「幫我設計一個角色／反派／新配角」「�
 
 7. **跑閘門**：`cd tools/derived_sync && uv run char-lint --book <書>`（＋`uv run derived-sync validate --book <書>`）。它會驗這一輪落檔的東西：必填節不是佔位、front-matter 六鍵的語意、`_index` 的列 ≡ 資料夾且三欄 ≡ 各檔 front-matter、形態沒有並存、伏筆名命中 registry。**覆蓋率行一律印、0 也印**——特別看「N 支源沒有衍生檔」與「M 個 slot 是佔位」這兩格。既有書的舊問題會一起被報（病例書不遷移），**本輪動到的那個角色不該出現在裡面**。
 
-8. **更新就緒儀表＋指路**：若 `story/參照/就緒儀表.ai.md` 有「設定層·角色」列，更新其成熟度；以「已追加、仍暫定」姿態呈現，提醒後續拆幕（`beat-sheet`）或寫正文（`write`）時此角色即可被引用。
+8. **更新就緒源檔＋指路**：更新 `story/參照/就緒.md`「設定層·角色」列的成熟度（**只准 `空白`／`草擬`／`就緒`／`已鎖定`／`—` 五個 token 之一**；理由 append 進 `story/參照/裁決流.md`），落檔後跑 `uv run --project <套件根>/tools/derived_sync readiness-lint --book <書>`；以「已追加、仍暫定」姿態呈現，提醒後續拆幕（`beat-sheet`）或寫正文（`write`）時此角色即可被引用。
 
 ## 邊界
 

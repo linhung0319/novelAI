@@ -24,6 +24,14 @@ style-lint = "derived_sync.cli:style_lint_main"
 # 而零實作——唯一的書填了非支援值、封了章、寫了 93 章）、基調的源↔衍生比對、
 # front-matter 收斂後的欄語意、幕號引用的目的地存在性。與前三支同套件同理由。
 summary-lint = "derived_sync.cli:summary_lint_main"
+# 就緒軸格式閘門：`story/參照/就緒.md`（A1 源檔）的狀態格五 token 封閉枚舉、
+# 恰兩節不得有第三節、五欄五列、清單六條，以及**舊 `就緒儀表` 撤掉了沒有**。
+# 它與前四支不同的是**它守的是一支源檔**（A6：無源衍生是要解掉的衝突，不是一種檔）。
+readiness-lint = "derived_sync.cli:readiness_lint_main"
+# 就緒現況投影（**不是閘門**）：產物軸×深度 20 格／就緒清單六條／局部下沉逐 arc，
+# 三節 0 也印。它取代 `就緒儀表.ai.md` 的三節現況——那三節投影出來 306 字元，
+# 而它們住的檔是 128,371 字元（419×）。跨套件的機械來源印「未接」＋該跑的指令。
+readiness = "derived_sync.cli:readiness_main"
 
 [dependency-groups]
 dev = ["pytest>=8"]

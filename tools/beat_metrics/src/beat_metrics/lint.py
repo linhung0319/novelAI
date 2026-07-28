@@ -49,6 +49,18 @@ _TRAILING_PAREN_RE = re.compile(r"^(.+?)\s*[（(][^（()）]*[)）]\s*$")
 # （`裁決流.schema.md` 沿革：更早的書可能仍是 `.co.md`）。
 DECISION_LOG = ("裁決流.md", "裁決流.co.md")
 
+# 測試執行紀錄（2026-07-28 功能 10 抉擇 3 A）。落點＝arc 檔**檔頭**的一行
+# `beat-test: 2026-07-24·0高3中3低`，解析在 `structure.parse_arc`。
+#
+# **選填——缺席合法、不計入問題數**：沒測過是一種真實狀態，把它報成問題等於把一個
+# 明訂非門檻的東西變成門檻。缺幾支由覆蓋率行說，**0 也印**。
+# **判準是結構判準**：日期 ＋ `N高N中N低` 的阿拉伯數字，**不驗測試結果好不好**
+# （中文數字不認，同 `style-lint` 第 4 項與 `summary-lint` 第 7 項的紀律）。
+# **消費者在誕生當天就指得出行號**（E1）：`write/SKILL.md` 步驟 2 的就緒提醒、
+# `readiness` 第 3 節；寫它的是 `beat-test` 的收尾。在此之前這件事有三份手抄、
+# 零比對、零格式（就緒儀表狀態格／幕綱檔頭散文／測試報告不落檔）。
+TEST_RECORD_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})\s*[·・]\s*(\d+)高(\d+)中(\d+)低$")
+
 
 @dataclass
 class LintStats:
@@ -77,6 +89,8 @@ class LintStats:
     promise_sections: int = 0
     exclusions: int = 0
     object_files: int = 0
+    test_records: int = 0
+    test_records_bad: int = 0
     notes: list[str] = field(default_factory=list)
     hints: list[str] = field(default_factory=list)
 
@@ -87,7 +101,10 @@ class LintStats:
             f"{self.status_rows} 列狀態表"
             f"（其中 {self.status_prose_rows} 列的伏筆名全書無標記·不入機械 diff）／"
             f"{self.promise_sections} 個承諾區／{self.exclusions} 條排除線／"
-            f"{self.object_files} 支物件檔；跳過 {self.skeletons} 支骨架"
+            f"{self.object_files} 支物件檔；"
+            f"{self.test_records}/{self.arcs} 支 arc 有 `beat-test` 紀錄"
+            f"（**格式不合 {self.test_records_bad} 支**·缺紀錄不計入問題數）；"
+            f"跳過 {self.skeletons} 支骨架"
         )
 
 
@@ -219,6 +236,20 @@ def lint_report(book: Path) -> tuple[list[str], LintStats]:
                 f"{a.arc}.md：缺「## 本 arc 承諾」分區"
                 f"（`幕綱.schema.md`「分區是硬規定」；下游 write／beat-test 以它為準，"
                 f"排除線也住這裡）"
+            )
+
+    # ---- 測試執行紀錄的形狀（2026-07-28 功能 10 抉擇 3 A）。**有寫才驗。**
+    for a in arcs:
+        if a.beat_test is None:
+            continue
+        value, lineno = a.beat_test
+        stats.test_records += 1
+        if not TEST_RECORD_RE.match(value):
+            stats.test_records_bad += 1
+            problems.append(
+                f"{a.arc}.md 第 {lineno} 行：`beat-test: {value}` 不合形狀"
+                f"——`YYYY-MM-DD·N高N中N低`（阿拉伯數字，中文數字不算）。"
+                f"由 `beat-test` 收尾時寫，`write` 的就緒提醒與 `readiness` 讀它"
             )
 
     # ---- 伏筆名：標記 vs 狀態表的近似名（V10）

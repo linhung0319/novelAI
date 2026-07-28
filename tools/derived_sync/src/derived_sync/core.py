@@ -35,7 +35,20 @@ def _is_rollup(p: Path) -> bool:
 # 綜合視圖）。過去為了避免被誤報 orphan 而刻意不叫 `.ai.md`——那是讓工具的
 # 實作細節決定命名慣例，方向反了：後綴是給作者看的「這個別改」訊號。
 # 2026-07-26 起改由本 predicate 承擔，命名回歸語意（見 共同約定.md 二）。
-DECLARATIVE_STEMS = frozenset({"就緒儀表", "結構"})
+#
+# **2026-07-28（功能 10）移除 `就緒儀表`**：那支檔已廢除——依 `設計原則.md` **A6**
+#（同輪新增），「不許人改 ＋ 沒有 inbound 重算規則」是一個**必須解掉的衝突**，
+# 不是第三種身分（「別改」的正當性完全來自「改了會被重生覆蓋」，沒有重算規則那個
+# 訊號就是空的）。它拆成了「小源檔 `story/參照/就緒.md`（`readiness-lint` 守）
+# ＋ `readiness` 投影」。**還帶著舊檔的書由 `readiness-lint` 第 7 項報**，不是在
+# 這裡靜靜地繼續豁免。
+#
+# **剩下的 `結構` 是功能 11 的題目**，A6 對它同樣適用（別重新推導）。連帶：本
+# predicate 的形狀也該改——它因為**一個**理由（無單一源可 hash）而在 `validate_file`
+# 早退**三次**（front-matter 必填鍵／裁決 blockquote／節枚舉），後兩項與 hash 完全
+# 無關（`設計原則.md` E2 第七種形態「豁免的射程比它的理由大」）。**正解是
+# `skip_hash(p)`，不是一個檔案級的 predicate**——實作交功能 14，本輪只縮射程。
+DECLARATIVE_STEMS = frozenset({"結構"})
 
 
 def _is_declarative(p: Path) -> bool:

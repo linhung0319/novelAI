@@ -96,6 +96,29 @@ def _outline_sources(book: Path) -> list[Path]:
     if d.is_dir():
         out += [p for p in sorted(d.glob("*.md")) if not p.name.startswith("_")]
     return out
+def _reference_sources(book: Path) -> list[Path]:
+    """`story/參照/` 底下**非 append log** 的檔（就緒／結構／各代舊名）。
+
+    **2026-07-28（功能 10）補進體積那一支目標集**。在此之前**三支體積哨兵目標集
+    0/3 含 `story/參照/`**，於是實測 **292,591 B** 的 `就緒儀表.md`——**全書最大的
+    一支檔**、`SOURCE_BYTES` 的 **11.7×**、`DERIVED_BYTES` 的 **24.4×**、佔全書
+    2,589,923 B 的 11.3%——完全靜音，而同一次 `check` 卻報了 32,650 B 的
+    `血刀頭陀.md`。`long_lines` 早就在掃這個資料夾（同一支檔的**行**），只有大小
+    那一份漏了它：**證據這不是刻意豁免，是每支函式各自手寫路徑清單。**
+
+    **這是「四份手寫路徑清單漏檔」的第八次**（03 補 `chapters/`、05 補設定層衍生
+    與源、08 補摘要兩支、09 補整個大綱軸），而這一次漏的是**全書最大的一支檔**。
+    **根因不在本輪修**，「這本書有哪些受管檔」的統一清單交功能 14。
+
+    **門檻沿用 `SOURCE_BYTES`，不新造第五級**：`就緒.md` 是源、目標 < 1,500 B，
+    門檻綽綽有餘；`結構.md`（實測 58,546 B）的形態是功能 11 的題目，本輪只讓它可見。
+    """
+    d = book / "story" / "參照"
+    if not d.is_dir():
+        return []
+    return [p for p in sorted(d.glob("*.md")) if _base_stem(p) not in APPEND_LOG_STEMS]
+
+
 _BEAT_HEAD_RE = re.compile(r"^##\s*幕(\d+)")
 _PAREN_RE = re.compile(r"（[^（）]*）")
 
@@ -257,6 +280,29 @@ def oversized_sources(book: Path, limit: int = SOURCE_BYTES) -> list[Finding]:
                     "「本 arc 不引爆哪條線」屬幕綱的 `## 本 arc 承諾`。"
                     "搬完仍超標，代表這一卷該收斂進 01-大綱.md 了"
                     "（併入的最後一步是 git mv 進 story/大綱/_已併入/）",
+                )
+            )
+    # `story/參照/` 的非 append-log 檔（2026-07-28 功能 10 補上，見 `_reference_sources`）。
+    # **hint 與前四類都不同**：這裡沒有「拆」也沒有「升級形態」可做——這個資料夾裝的
+    # 是綜合檔，它變大**一定**是因為裝了別人的東西（實測 `就緒儀表.md` 53.8% 是拍板
+    # 日誌、27.5% 是 `derived-sync check` 當場算得出來的東西、20.9% 是 transient TODO）。
+    for p in _reference_sources(book):
+        size = _size(p)
+        if size > limit:
+            out.append(
+                Finding(
+                    kind="源檔肥大",
+                    path=p,
+                    detail=f"{size} B（建議 ≤{limit}）",
+                    hint="`story/參照/` 的綜合檔**沒有拆檔也沒有升級形態這條路**，"
+                    "所以只有搬：作者拍板的理由與已駁回方案屬 "
+                    "story/參照/裁決流.md（`標的`＝該綜合檔）；"
+                    "「`derived-sync check` 全 fresh」「本輪動檔」「下一步」**直接刪**"
+                    "（工具當場重算／transient TODO）；成熟度判斷屬 "
+                    "story/參照/就緒.md 的五 token 狀態格，"
+                    "而「哪個 arc 下沉到哪一層」「幾筆待裁決」一律跑 "
+                    "`readiness`／`decision-project`，不落檔。"
+                    "**搬之前先印保真率交作者確認**（見 `就緒.schema.md`）",
                 )
             )
     return out

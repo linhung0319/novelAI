@@ -507,3 +507,42 @@ def test_missing_beat_sheet_is_a_hard_error(tmp_path):
     (tmp_path / "chapters").mkdir()
     with pytest.raises(ScanError):
         lint_report(tmp_path)
+
+
+# --------------------------------------------------------------- 測試執行紀錄（功能 10）
+
+def test_write_test_record_is_optional(tmp_path):
+    """**缺席合法、不計入問題數**——沒測過是真實狀態，缺幾支由覆蓋率行說（0 也印）。"""
+    problems, stats = lint_report(_book(tmp_path, CLEAN))
+    assert problems == []
+    assert (stats.test_records, stats.test_records_bad) == (0, 0)
+    assert "0/2 支章衍生有 `write-test` 紀錄" in stats.render()
+
+
+def test_write_test_record_well_formed(tmp_path):
+    book = _book(tmp_path, CLEAN)
+    p = book / "chapters" / "ch0001.ai.md"
+    p.write_text(
+        p.read_text(encoding="utf-8").replace(
+            "狀態: 草稿", "狀態: 草稿\nwrite-test: 2026-07-28·0高3中3低"
+        ),
+        encoding="utf-8",
+    )
+    problems, stats = lint_report(book)
+    assert problems == []
+    assert (stats.test_records, stats.test_records_bad) == (1, 0)
+
+
+def test_write_test_record_rejects_prose(tmp_path):
+    """判準是**結構**：日期 ＋ 阿拉伯數字。中文數字與讀感形容詞一律不算。"""
+    book = _book(tmp_path, CLEAN)
+    p = book / "chapters" / "ch0001.ai.md"
+    p.write_text(
+        p.read_text(encoding="utf-8").replace(
+            "狀態: 草稿", "狀態: 草稿\nwrite-test: 跑過了，沒什麼大問題"
+        ),
+        encoding="utf-8",
+    )
+    problems, stats = lint_report(book)
+    assert _only(problems, "不合形狀")
+    assert stats.test_records_bad == 1
