@@ -71,19 +71,80 @@ def test_skeleton_unstamped_and_orphan(tmp_path: Path) -> None:
 
 
 def test_rollup_stale_when_sibling_added(tmp_path: Path) -> None:
+    """多源 digest 機制本身仍在跑。
+
+    **fixture 的檔名 2026-07-29（功能 15）從 `_index.ai.md` 換掉**：那個名字現在在
+    `ABOLISHED_ROLLUPS` 裡，`check` 對它報 `abolished` 而不比新鮮度。**合法的 rollup
+    目前零支**，所以這一支測的是機制、不是任何一支活著的檔——而機制要留著，因為
+    `A6` 第 1 條路（「沒有源」是待驗證的宣稱）就是靠它成立的。
+    """
     book = tmp_path / "書"
     d = book / "story" / "設定" / "角色"
     _write(d / "凱.md", "凱。\n")
     _write(d / "艾拉.md", "艾拉。\n")
-    idx = _write(d / "_index.ai.md", "---\n---\n## 角色清單\n- 凱\n- 艾拉\n")
+    idx = _write(d / "_試作.ai.md", "---\n---\n## 角色清單\n- 凱\n- 艾拉\n")
 
     stamp(idx)
     statuses = {s.derived.name: s.status for s in check_book(book)}
-    assert statuses["_index.ai.md"] == "fresh"
+    assert statuses["_試作.ai.md"] == "fresh"
 
     _write(d / "新角色.md", "新角色。\n")  # 同層新增源 → rollup 應 stale
     statuses = {s.derived.name: s.status for s in check_book(book)}
-    assert statuses["_index.ai.md"] == "stale"
+    assert statuses["_試作.ai.md"] == "stale"
+
+
+# ------------------------------------------------- 已廢除的 rollup（2026-07-29 功能 15）
+# **診斷輪用 scratchpad 復現過的那一格，重構輪把它變成測試**（抉擇 7 A 逐字要求）：
+# 功能 12 廢除了五支 rollup，而 `_is_rollup` 是**檔名 pattern 級的通用機制**——只廢除了
+# 實例、沒有廢除機制。復現的結果是三件事同時成立：`world-lint` 印「格式合規」exit 0、
+# `validate` 印「所有 .ai.md 格式合規」、**`check` 主動報 `[STALE]` 要你去 `stamp` 它**。
+
+
+@pytest.mark.parametrize(
+    ("where", "name"),
+    [
+        (("chapters",), "_index.ai.md"),
+        (("story", "設定", "角色"), "_index.ai.md"),
+        (("story", "設定", "世界觀"), "_總覽.ai.md"),
+    ],
+)
+def test_a_revived_abolished_rollup_is_reported_abolished_not_stale(tmp_path, where, name):
+    """**回歸數字 ②**：復活一支已廢除的 rollup → 報 `abolished`，**不是 `stale`**。
+
+    `stale` 是最糟的那一格：它把「這支檔不該存在」講成「這支檔需要維護」，而作者
+    照著 `stamp` 就讓一支已廢除的檔**永久合法**了（`設計原則.md` A5：撤銷要從機制
+    看得出來，不能只由一句散文完成）。
+    """
+    book = tmp_path / "書"
+    d = book.joinpath(*where)
+    _write(d / "凱.md", "凱。\n")
+    rollup = _write(d / name, "---\n---\n## 清單\n- 凱\n")
+
+    statuses = {s.derived.name: s.status for s in check_book(book)}
+    assert statuses[name] == "abolished"
+
+    # 連「填對格式再封章」這條路也要堵掉——那正是實測會讓它永久合法的動作
+    with pytest.raises(ValueError, match="已於 .* 廢除，不必也不能封章"):
+        stamp(rollup)
+
+    # 而且**封章過的舊書一樣報**（不是只有沒封章的才報）：一世之尊那三支都是 fresh
+    _write(d / name, "---\ngenerated-from: deadbeef\ngenerated-at: 2026-07-01\n---\n## 清單\n")
+    statuses = {s.derived.name: s.status for s in check_book(book)}
+    assert statuses[name] == "abolished"
+
+
+def test_a_rollup_name_not_on_the_closed_list_still_goes_through_hash(tmp_path):
+    """**清單是封閉的**：不在上面的 `_*.ai.md` 照舊走 digest。
+
+    沒有這一支，「封閉清單」與「所有 rollup 都廢除了」不可分辨——而後者是錯的
+    （A6 第 1 條路要用多源 digest）。
+    """
+    book = tmp_path / "書"
+    d = book / "story" / "設定" / "角色"
+    _write(d / "凱.md", "凱。\n")
+    rollup = _write(d / "_別的彙總.ai.md", "---\n---\n## 清單\n")
+    stamp(rollup)
+    assert {s.derived.name: s.status for s in check_book(book)} == {"_別的彙總.ai.md": "fresh"}
 
 
 def test_stamp_preserves_body_and_other_frontmatter(tmp_path: Path) -> None:
@@ -172,7 +233,7 @@ def _dir_form_book(tmp_path: Path) -> Path:
         "---\n定位: 配角\n---\n## 需求四象限\n期盼：…\n",
     )
     _write(
-        book / "story" / "設定" / "角色" / "_index.ai.md",
+        book / "story" / "設定" / "角色" / "_試作.ai.md",
         "---\n---\n## 角色清單\n| 角色 |\n|---|\n| 凱 |\n",
     )
     return book
@@ -181,21 +242,21 @@ def _dir_form_book(tmp_path: Path) -> Path:
 def test_dir_form_source_can_be_stamped_and_is_not_orphan(tmp_path: Path) -> None:
     book = _dir_form_book(tmp_path)
     d = book / "story" / "設定" / "角色"
-    for name in ("凱.ai.md", "艾拉.ai.md", "_index.ai.md"):
+    for name in ("凱.ai.md", "艾拉.ai.md", "_試作.ai.md"):
         stamp(d / name)
     statuses = {s.derived.name: s.status for s in check_book(book)}
-    assert statuses == {"_index.ai.md": "fresh", "凱.ai.md": "fresh", "艾拉.ai.md": "fresh"}
+    assert statuses == {"_試作.ai.md": "fresh", "凱.ai.md": "fresh", "艾拉.ai.md": "fresh"}
 
 
 def test_editing_a_facet_makes_both_the_entity_and_the_rollup_stale(tmp_path: Path) -> None:
     book = _dir_form_book(tmp_path)
     d = book / "story" / "設定" / "角色"
-    for name in ("凱.ai.md", "艾拉.ai.md", "_index.ai.md"):
+    for name in ("凱.ai.md", "艾拉.ai.md", "_試作.ai.md"):
         stamp(d / name)
     (d / "凱" / "水下.md").write_text("其實不是他放的火。\n", encoding="utf-8")
     statuses = {s.derived.name: s.status for s in check_book(book)}
     assert statuses["凱.ai.md"] == "stale"
-    assert statuses["_index.ai.md"] == "stale"
+    assert statuses["_試作.ai.md"] == "stale"
     assert statuses["艾拉.ai.md"] == "fresh"
 
 

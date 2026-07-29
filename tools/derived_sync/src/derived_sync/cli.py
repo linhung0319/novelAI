@@ -21,6 +21,10 @@ _MARK = {
     "unstamped": "[?]   ",
     "skeleton": "[SKEL]",
     "orphan": "[ORPH]",
+    # **不叫 `[STALE]` 是重點**（2026-07-29 功能 15 抉擇 7 A）：一支已廢除的 rollup
+    # 報 stale ＝ 把「這支檔不該存在」講成「這支檔需要維護」，而作者照著 stamp 就讓
+    # 它永久合法了（`設計原則.md` A5：撤銷要從機制看得出來）。
+    "abolished": "[廢除]",
 }
 
 
@@ -118,16 +122,24 @@ def _cmd_check(args: argparse.Namespace) -> int:
         return EXIT_CLEAN
     problems = 0
     skeletons = 0
+    abolished = 0
     for r in results:
         rel = r.derived.relative_to(args.book)
         print(f"{_MARK.get(r.status, '?')} {r.status:<9} {rel}  ← {r.source}")
         if r.status == "skeleton":
             skeletons += 1
+        elif r.status == "abolished":
+            # **計入需處理數**（2026-07-29 功能 15，作者拍板）：一支已廢除的檔還在
+            # 就是一件待處理的事，不是一個中性事實。實測一世之尊因此從 0 → 3。
+            abolished += 1
+            problems += 1
+            print(f"        處置是**刪掉它**（`git rm {rel}`），不是重生、不是封章")
         elif r.status in ("stale", "unstamped", "orphan"):
             problems += 1
     print(
         f"\n合計 {len(results)} 個衍生檔"
-        f"（{skeletons} 支尚未產出的骨架·不計入需處理），{problems} 個需處理。"
+        f"（{skeletons} 支尚未產出的骨架·不計入需處理"
+        f"／**{abolished} 支已廢除的 rollup·計入**），{problems} 個需處理。"
     )
     if not args.no_sentinel:
         _print_sentinel(args.book)
@@ -393,8 +405,12 @@ def main(argv: list[str] | None = None) -> int:
     try:
         return args.func(args)
     except (FileNotFoundError, ValueError) as e:
+        # **`EXIT_ERROR` 從來沒有存在過**（2026-07-29 功能 15 撞到）：這條路徑在此之前
+        # 零觸發，所以那個 `NameError` 活著而沒有人知道——直到 `stamp` 對一支已廢除的
+        # rollup raise，錯誤處理自己先炸掉。**執行錯誤走 stderr、exit 1**（輸出與 exit
+        # 契約：exit 2 是「這本書還沒有這一層」，不是「你叫錯了」）。
         print(f"錯誤：{e}", file=sys.stderr)
-        return EXIT_ERROR
+        return EXIT_PROBLEMS
 
 
 def world_lint_main(argv: list[str] | None = None) -> int:
@@ -408,7 +424,8 @@ def world_lint_main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(
         description="世界觀軸格式閘門：驗 <主題>.ai.md 的 front-matter 欄語意"
         "（`主題` ≡ 檔名、已廢除的欄、伏筆名在 registry 裡）、"
-        "`_總覽.ai.md` 的核心規則索引 ≡ 資料夾與背景維度封閉七維、"
+        "每支源檔 H1 之後要有非空行（舊 `_總覽.ai.md` 2026-07-28 廢除，只報殘留；"
+        "主題清單與封閉七維改跑 `--emit`）、"
         "以及幕綱裡的檔名引用不懸空。零 LLM、可覆算。"
     )
     ap.add_argument("--book", required=True, type=Path, help="書資料夾路徑")
@@ -441,7 +458,8 @@ def char_lint_main(argv: list[str] | None = None) -> int:
         "`check` 在定義上看不到這一格）、必填節不得是佔位、"
         "`<名>.ai.md` 的 front-matter 欄語意（已廢除的欄／`定位`·`暫定` 枚舉／"
         "`所屬arc` 可解析／`伏筆` 命中既有 registry）、"
-        "`_index.ai.md` 的角色清單 ≡ 資料夾與各檔 front-matter、"
+        "每支源檔 H1 之後要有非空行（舊 `_index.ai.md` 2026-07-28 廢除，只報殘留；"
+        "角色清單改跑 `--emit`）、"
         "單檔與目錄形態不得並存、幕綱角色欄的未知 token。零 LLM、可覆算。"
     )
     ap.add_argument("--book", required=True, type=Path, help="書資料夾路徑")

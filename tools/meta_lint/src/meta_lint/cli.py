@@ -20,21 +20,31 @@ from pathlib import Path
 from .checks import (
     MetaStats,
     check_coverage_on_every_path,
+    check_entry_table,
+    check_kb_lists,
     check_named_commands,
     check_output_contract,
     check_parallel_lists,
     check_schema_guards,
+    check_skill_paths,
     check_triggers,
+    emit_guards,
+    emit_kb,
     project_duplicates,
     project_tests,
     project_thresholds,
 )
-from .repo import find_repo, packages, schema_files, skill_files, workflow_files
+from .repo import find_repo, kb_files, packages, schema_files, skill_files, workflow_files
 
 EXIT_CLEAN = 0
 EXIT_PROBLEMS = 1
 
-CLEAN = "工具鏈格式乾淨（指令觸發者／指名的指令存在／schema 守衛／平行清單／覆蓋率行／輸出契約）"
+CLEAN = (
+    "工具鏈格式乾淨（指令觸發者／指名的指令存在／schema 守衛／平行清單／覆蓋率行／"
+    "輸出契約／SKILL.md 的取用宣告／查詢入口表雙向／技法檔的三份清單）"
+)
+
+EMITS = {"guards": emit_guards, "kb": emit_kb}
 
 
 def _force_utf8() -> None:
@@ -47,12 +57,13 @@ def _force_utf8() -> None:
 
 
 def lint_repo(repo: Path, live: bool = True) -> tuple[list, MetaStats]:
-    """九項。第 1–6 項進問題數，第 7–9 項只印。"""
+    """十二項。第 1–6 與 10–12 項進問題數，第 7–9 項只印。"""
     stats = MetaStats()
     stats.packages = len(packages(repo))
     stats.skills = len(skill_files(repo))
     stats.schemas = len(schema_files(repo))
     stats.workflows = len(workflow_files(repo))
+    stats.kb_files = len(kb_files(repo))
 
     problems = (
         check_triggers(repo, stats)
@@ -61,6 +72,10 @@ def lint_repo(repo: Path, live: bool = True) -> tuple[list, MetaStats]:
         + check_parallel_lists(repo, stats)
         + check_coverage_on_every_path(repo, stats)
         + check_output_contract(repo, stats, live)
+        # 第 10–12 項（2026-07-29 功能 15）：對象是「讀」不是「寫」
+        + check_skill_paths(repo, stats)
+        + check_entry_table(repo, stats)
+        + check_kb_lists(repo, stats)
     )
     return problems, stats
 
@@ -71,8 +86,10 @@ def main(argv: list[str] | None = None) -> int:
         "（SKILL.md 的某一步或某支 workflow）；② 每個被指名的指令都存在；"
         "③ 每支 schema 指名的守衛存在且有「檢查器與觸發時機」節；"
         "④ 三份平行清單的產物集合一致；⑤ 每個 CLI 入口的路徑上都印得出覆蓋率行；"
-        "⑥ 輸出去向與 exit 語意（對 fixture 書實跑）。"
-        "另投影三項（只印）：⑦ 門檻常數與樣本數宣告；⑧ 同形實作份數；⑨ 測試狀態。"
+        "⑥ 輸出去向與 exit 語意（對 fixture 書實跑）；"
+        "⑦ SKILL.md 的書內路徑有落點、且不指向已廢除的檔；"
+        "⑧ 查詢入口表 ↔ SKILL.md 雙向；⑨ 技法檔的三份平行清單（含檔頭目錄）。"
+        "另投影三項（只印）：門檻常數與樣本數宣告／同形實作份數／測試狀態。"
         "**它不吃 `--book`**——它守的是 repo 自己。",
     )
     ap.add_argument(
@@ -86,6 +103,14 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="跳過要 subprocess 的第 6／9 項（快，但覆蓋率行會印「未接」——**不假裝乾淨**）",
     )
+    ap.add_argument(
+        "--emit",
+        choices=sorted(EMITS),
+        default=None,
+        help="印投影而不跑閘門（**一律 exit 0**）："
+        "`guards`＝22 個指令的閘門清單（取代 `共同約定.md` 八 的手抄 bullet）；"
+        "`kb`＝技法檔 ↔ 引用它的 skill（取代 `技巧知識庫/_index.md` 那一欄）",
+    )
     args = ap.parse_args(argv)
 
     _force_utf8()
@@ -94,6 +119,10 @@ def main(argv: list[str] | None = None) -> int:
     except FileNotFoundError as e:
         print(f"錯誤：{e}", file=sys.stderr)
         return EXIT_PROBLEMS
+
+    if args.emit:
+        print("\n".join(EMITS[args.emit](repo)))
+        return EXIT_CLEAN
 
     live = not args.no_live
     problems, stats = lint_repo(repo, live=live)

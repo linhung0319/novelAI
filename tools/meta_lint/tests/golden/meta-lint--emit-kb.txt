@@ -1,0 +1,35 @@
+## 技法檔的 skill 引用（27 支；**2 支零引用**）
+
+> **這是投影，不是閘門**（一律 exit 0）。機械來源＝grep 12 支 `SKILL.md` 的檔名提及。「何時查它」欄是**源**（重跑不會回來），留在 `技巧知識庫/_index.md`；這一欄是視圖，所以不落檔。
+
+| 技法檔 | 幾支 | 哪幾支 |
+|--------|------|--------|
+| `網文與文學取捨.md` | 11 | `beat-sheet`、`beat-test`、`character`、`develop`、`expand`、`organize`、`outline-test`、`revise`、`worldbuild`、`write`、`write-test` |
+| `世界觀與背景.md` | 8 | `beat-sheet`、`beat-test`、`character`、`develop`、`expand`、`worldbuild`、`write`、`write-test` |
+| `角色塑造.md` | 7 | `beat-sheet`、`beat-test`、`character`、`develop`、`organize`、`revise`、`write` |
+| `需求四象限.md` | 7 | `beat-sheet`、`beat-test`、`character`、`develop`、`expand`、`organize`、`write` |
+| `主題題旨.md` | 6 | `beat-sheet`、`beat-test`、`develop`、`organize`、`outline-test`、`write` |
+| `因果法則.md` | 6 | `beat-sheet`、`beat-test`、`expand`、`organize`、`write`、`write-test` |
+| `戲劇張力與懸念.md` | 6 | `beat-sheet`、`beat-test`、`expand`、`outline-test`、`revise`、`write` |
+| `伏筆與意外.md` | 5 | `beat-sheet`、`beat-test`、`expand`、`worldbuild`、`write` |
+| `結局類型.md` | 5 | `beat-sheet`、`beat-test`、`develop`、`organize`、`outline-test` |
+| `結構公式.md` | 5 | `beat-sheet`、`beat-test`、`expand`、`organize`、`outline-test` |
+| `修辭與字句鍛鍊.md` | 4 | `develop`、`revise`、`write`、`write-test` |
+| `創作流程.md` | 4 | `develop`、`organize`、`sync`、`write` |
+| `場景與情節推進.md` | 4 | `beat-test`、`expand`、`write`、`write-test` |
+| `字詞句法與抗生硬.md` | 4 | `develop`、`revise`、`write`、`write-test` |
+| `氛圍與筆調.md` | 4 | `develop`、`revise`、`write`、`write-test` |
+| `行文節奏與呼吸.md` | 4 | `develop`、`revise`、`write`、`write-test` |
+| `視角與敘事人稱.md` | 4 | `develop`、`revise`、`write`、`write-test` |
+| `動作場面寫作.md` | 3 | `revise`、`write`、`write-test` |
+| `對白.md` | 3 | `revise`、`write`、`write-test` |
+| `展示而非講述與五感描寫.md` | 3 | `revise`、`write`、`write-test` |
+| `心理描寫.md` | 3 | `revise`、`write`、`write-test` |
+| `敘事距離與DeepPOV.md` | 3 | `revise`、`write`、`write-test` |
+| `故事本質與要素.md` | 2 | `develop`、`organize` |
+| `選題與收斂.md` | 2 | `develop`、`outline-test` |
+| `畫面感與電影化.md` | 1 | `write` |
+| `角色關係網與群像.md` | 0 | **0 支** |
+| `角色魅力與登場.md` | 0 | **0 支** |
+
+**零引用的 2 支**：`角色關係網與群像.md`、`角色魅力與登場.md`——它們只服務答問檔位（`CLAUDE.md`「答問」那一格）。**這不是待修的洞**：要不要讓某支 skill 引用它們是內容決定，不是格式決定。

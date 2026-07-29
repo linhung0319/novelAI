@@ -213,7 +213,8 @@ def lint_main(argv: list[str] | None = None) -> int:
     """
     ap = argparse.ArgumentParser(
         description="幕綱格式閘門（零 LLM、可覆算）：幕號唯一與號段、`前因 [[幕NNN]]` "
-        "目標存在、八欄完整、`_index.md` spine 涵蓋、分區、伏筆近似名、設計註目的地。"
+        "目標存在、八欄完整、`_順序.md` 的 spine 涵蓋所有 arc（舊落點 `_index.md` "
+        "2026-07-28 廢除，只報殘留）、分區、伏筆近似名、設計註目的地。"
         "守的是「人破結構」那一側（`設計原則.md` B1），與 `derived-sync validate` 同類；"
         "內容好壞交 `beat-test`，漂移統計交 `beat-metrics`。",
     )
@@ -271,7 +272,8 @@ def ch_lint_main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(
         description="正文層格式閘門（零 LLM、可覆算）：幕錨點的幕號存在／章內單調／"
         "一幕不跨章／過渡錨點兩端／人性寫法正規化候選、`對應幕` ≡ 正文錨點集合、"
-        "章衍生檔 front-matter 六鍵、`_index.ai.md` 的視圖一致性與備註欄。"
+        "章衍生檔 front-matter 六鍵、`風格` 欄指向的檔存在（舊 `_index.ai.md` "
+        "2026-07-28 廢除，只報殘留；章序改跑 `--emit`）。"
         "守的是「人破結構」那一側（`設計原則.md` B1），與 `beat-lint`／"
         "`derived-sync validate` 同類；內容好壞交 `write-test`，漂移統計交 `prose-metrics`。",
     )
@@ -331,7 +333,8 @@ def outline_lint_main(argv: list[str] | None = None) -> int:
         description="大綱層格式閘門（零 LLM、可覆算）：節枚舉、檔頭狀態二選一、"
         "`本 arc 伏筆狀態` 的三欄意圖表、卷級方向的卷 token 唯一與指路紀律、"
         "`幕NNN`／`chNNNN`／`arcNN` 引用不懸空、`[[伏筆:x]]` 命中 registry、"
-        "`結局與題旨` 與 `本段收束與鉤子` 的形狀、`_index.md` 視圖 ≡ 資料夾、"
+        "`結局與題旨` 與 `本段收束與鉤子` 的形狀（舊 `_index.md` 2026-07-28 廢除，"
+        "只報殘留；arc 清單改跑 `--emit`）、"
         "檔內路徑的目的地存在、**`選用結構公式` 的公式名命中 `結構公式.md` registry "
         "且 α 不記沿革**。守的是「人破結構」那一側（`設計原則.md` B1），"
         "與 `beat-lint`／`ch-lint` 同類；內容好壞交 `outline-test`。",

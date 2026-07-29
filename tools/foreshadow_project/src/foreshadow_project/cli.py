@@ -109,7 +109,9 @@ def _reveal_summary(rep: Report) -> str:
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(
         description="伏筆投影：跨 arc 掃描配對 埋/收[[伏筆:x]]（零 LLM、可覆算）。"
-        "只認幕的「伏筆」欄為標記來源；定序走 幕綱/_index.md「全書順序」，不比幕號大小。"
+        "只認幕的「伏筆」欄為標記來源；定序走 幕綱/_順序.md 的「全書順序」"
+        "（舊落點 幕綱/_index.md 2026-07-28 廢除，仍可回退、而回退在覆蓋率行上看得見），"
+        "不比幕號大小。"
         "取代『為了配對伏筆而整批讀所有 arc 檔』。"
     )
     ap.add_argument("--book", required=True, type=Path, help="書資料夾路徑（含 story/）")

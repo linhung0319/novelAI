@@ -37,6 +37,42 @@ def _is_rollup(p: Path) -> bool:
     return p.name.startswith("_") and p.name.endswith(AI_SUFFIX)
 
 
+# **已廢除的 rollup**——檔名 → (哪一輪廢的, 內容現在跑什麼)。
+#
+# **為什麼要這一組（2026-07-29 功能 15，抉擇 7 A）。** 功能 12 廢除了五支 rollup，
+# 而它**只廢除了實例、沒有廢除機制**：上面那個 `_is_rollup` 是**檔名 pattern 級的
+# 通用判斷**，所以把任何一支 `_*.ai.md` 造回來、填對格式之後——
+#
+# - `world-lint` 印「世界觀軸格式合規」exit 0（覆蓋率行甚至把「rollup 有」印成一個
+#   中性事實）；
+# - `derived-sync validate` 印「所有 .ai.md 格式合規」；
+# - **`check` 主動報 `[STALE]`，要求你去 `stamp` 那支已廢除的檔。**
+#
+# 三件事同時成立，於是**作者把那一格修好，那支已廢除的檔就永久合法了**。依
+# `設計原則.md` **A5**，撤銷一支檔的身分必須**從機制看得出來**，不能只由 schema 與
+# SKILL.md 的一句散文完成。
+#
+# **它是 E2 第七形態的鏡像**：那一條是**豁免**的射程比它的理由大，這一條是**機制**的
+# 射程比它剩下的實例大——目前合法的 rollup **零支**，而機制照舊在跑。
+#
+# **這不是一份會漂移的機讀資料**：它是封閉的、不隨書也不隨 repo 成長，而且**新增一筆
+# 的時機就是廢除一支檔的時機**——同 `meta_lint._SUSPECT_SHAPES` 與 `結構公式.md` 的
+# registry 先例（功能 11 抉擇 4 B：封閉、不隨書成長）。
+#
+# **射程只到 `.ai.md`**：`幕綱/_index.md` 與 `大綱/_index.md` 是 `.md`，`check_book` 的
+# `rglob("*.ai.md")` 在定義上看不到它們——那兩支由 `beat-lint`／`outline-lint` 的殘留
+# 偵測報（**而那兩支目前仍是「照舊比對」的相容模式，不是存在性檢查** → 功能 12 的已知疑點）。
+ABOLISHED_ROLLUPS: dict[str, tuple[str, str]] = {
+    "_index.ai.md": ("2026-07-28 功能 12", "`ch-lint --emit`（章序）／`char-lint --emit`（角色清單）"),
+    "_總覽.ai.md": ("2026-07-28 功能 12", "`world-lint --emit`（主題清單＋封閉七維）"),
+}
+
+
+def abolished_rollup(p: Path) -> tuple[str, str] | None:
+    """這支檔是不是一支已廢除的 rollup。回 (哪一輪廢的, 改跑什麼)。"""
+    return ABOLISHED_ROLLUPS.get(p.name)
+
+
 # **「宣告式綜合檔」這個檔類 2026-07-28（功能 11）整個廢除。**
 #
 # 它曾是 `(會不會被覆蓋) × (人能不能改)` 那張 2×2 表外的第三格：AI 寫、作者不手改，
@@ -183,6 +219,12 @@ def _set_kv(fm: list[str], key: str, value: str) -> list[str]:
 def stamp(derived: Path, on: str | None = None) -> str:
     """算出 derived 的源 digest，寫回其 front-matter 的 generated-from/generated-at。
     回傳蓋上的 digest。skill 重生 .ai.md 後呼叫此函式封章（別手算 hash）。"""
+    if (info := abolished_rollup(derived)) is not None:
+        when, instead = info
+        raise ValueError(
+            f"{derived.name} 已於 {when} 廢除，不必也不能封章——內容跑 {instead}。"
+            "把這支檔刪掉（`git rm`）；它還在的話 `derived-sync check` 會一直報它"
+        )
     digest, _ = source_digest_for_derived(derived)
     if not digest and not _is_rollup(derived):
         raise ValueError(f"無法為 {derived.name} 計算源 digest（源檔缺失？）")
@@ -201,7 +243,7 @@ def stamp(derived: Path, on: str | None = None) -> str:
 class DerivedStatus:
     derived: Path
     source: str
-    status: str  # fresh | stale | unstamped | skeleton | orphan
+    status: str  # fresh | stale | unstamped | skeleton | orphan | abolished
 
 
 def check_book(book: Path) -> list[DerivedStatus]:
@@ -213,6 +255,13 @@ def check_book(book: Path) -> list[DerivedStatus]:
     """
     results: list[DerivedStatus] = []
     for derived in sorted(book.rglob(f"*{AI_SUFFIX}")):
+        # **已廢除的 rollup 不比新鮮度**（2026-07-29 功能 15）：報「這支檔已廢除」，
+        # 而不是報 stale 要你去 stamp 它。**報 stale 是最糟的一格**——它把「這支檔
+        # 不該存在」講成「這支檔需要維護」，而作者照著做就讓它永久合法了（A5）。
+        if (info := abolished_rollup(derived)) is not None:
+            when, instead = info
+            results.append(DerivedStatus(derived, f"（{when} 廢除 → {instead}）", "abolished"))
+            continue
         digest, desc = source_digest_for_derived(derived)
         if not digest and not _is_rollup(derived):
             results.append(DerivedStatus(derived, desc, "orphan"))

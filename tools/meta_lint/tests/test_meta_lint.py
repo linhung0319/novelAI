@@ -14,16 +14,33 @@ import pytest
 from meta_lint.checks import (
     MetaStats,
     check_coverage_on_every_path,
+    check_entry_table,
+    check_kb_lists,
     check_named_commands,
     check_parallel_lists,
     check_schema_guards,
+    check_skill_paths,
     check_triggers,
+    emit_guards,
+    emit_kb,
+    entry_table,
+    kb_referrers,
     load_known_red,
     project_duplicates,
     project_thresholds,
 )
 from meta_lint.cli import lint_repo
-from meta_lint.repo import commands, find_repo, packages
+from meta_lint.repo import (
+    ABOLISHED,
+    abolished_in,
+    abolished_mentions,
+    book_paths,
+    commands,
+    find_repo,
+    landing_places,
+    normalize_paths,
+    packages,
+)
 
 REPO = find_repo(Path(__file__))
 
@@ -229,3 +246,257 @@ def test_every_package_has_tests(pkg):
 def test_command_count_matches_the_registry():
     """22 個指令（21 ＋ `meta-lint`）。數字變了就是有人加/刪了 entry point。"""
     assert len(commands(REPO)) == 22
+
+
+# ================================================ 第 10–12 項（2026-07-29 功能 15）
+#
+# **對象是「讀」不是「寫」。** 前十四輪把每個產物軸的產出格式與守衛補齊了，而
+# 「誰在什麼時候把什麼讀進來」從來沒有被任何檢查器碰過一次。
+
+
+def test_no_skill_declaration_points_at_an_abolished_file():
+    """**回歸數字 ①**：修完之後，12 支 SKILL.md 對已廢除的檔報 **0 筆**。
+
+    診斷輪實測 24 條（9/12 支 skill 命中，一半是「重生它／封章它」的寫入命令），
+    而 `meta-lint` 當時的覆蓋率行印「散文裡的指令 token 197 個（**0 個 registry
+    查無**）」——**掃描對象是對的，掃描的欄位只有一格**。
+    """
+    stats = MetaStats()
+    problems = check_skill_paths(REPO, stats)
+    assert stats.skill_paths_abolished == 0, [p.detail for p in problems]
+    assert stats.skill_paths_unlanded == 0, [p.detail for p in problems]
+    assert stats.skill_paths > 0  # 0 條＝抓取器壞了，不是「都合格」
+    assert problems == []
+
+
+def test_the_entry_table_and_the_skills_agree_both_ways():
+    """V3 的守衛：查詢入口表（產物側）↔ 12 支 SKILL.md（skill 側）。"""
+    stats = MetaStats()
+    problems = check_entry_table(REPO, stats)
+    assert stats.entry_rows > 0
+    assert stats.entry_rows_unread == 0, [p.detail for p in problems]
+    assert stats.skill_axes_unlisted == 0, [p.detail for p in problems]
+
+
+def test_every_referenced_kb_file_has_a_core_toc():
+    """10/12 支 SKILL.md 寫著「先讀檔頭『目錄』標核心的小節」——**前提要為真**。"""
+    stats = MetaStats()
+    problems = check_kb_lists(REPO, stats)
+    assert stats.kb_without_toc == 0, [p.detail for p in problems]
+    assert problems == []
+
+
+def test_the_two_unreferenced_kb_files_are_visible_not_hidden():
+    """**「0 支」是儀表，不是待修的洞**（同功能 10 對「未接」的處置）。
+
+    `角色關係網與群像.md`／`角色魅力與登場.md` 實測零 skill 引用，而舊 `_index.md`
+    那一欄宣稱它們各有 6／7 支。這一支釘的是「投影看得見它們」，**不是**「它們必須
+    被接上」——要不要接是內容決定，重構輪刻意不動。
+    """
+    refs = kb_referrers(REPO)
+    assert refs["角色關係網與群像.md"] == set()
+    assert refs["角色魅力與登場.md"] == set()
+    assert any("0 支" in ln for ln in emit_kb(REPO))
+
+
+def test_both_projections_print_and_exit_zero_shaped():
+    """兩個 `--emit` 是投影：有表頭、有機械來源說明、0 也印。"""
+    g = "\n".join(emit_guards(REPO))
+    assert "| 指令 | 套件 | 守什麼 | 觸發者 | 覆蓋率行 |" in g
+    assert "argparse" in g and "pyproject.toml" in g
+    # **每一支指令都要有「守什麼」**——`fact-lint`／`object-lint` 是 f-string，
+    # 而「讀不到 description」在一份取代了手抄清單的投影上是一個真的洞
+    assert "讀不到 description" not in g
+    k = "\n".join(emit_kb(REPO))
+    assert "| 技法檔 | 幾支 | 哪幾支 |" in k
+
+
+# ---------------------------------------------------------------- 造出來的壞輸入
+#
+# 只在乾淨輸入上綠的檢查器測不出任何東西。
+
+
+def test_a_revived_abolished_file_in_a_skill_is_reported(tmp_path):
+    repo = _fake_repo(tmp_path, skill="重生 `story/設定/角色/_index.ai.md` 並封章\n")
+    stats = MetaStats()
+    problems = check_skill_paths(repo, stats)
+    assert stats.skill_paths_abolished == 1
+    assert any("已廢除" in p.detail for p in problems)
+
+
+def test_a_tombstoned_mention_on_the_same_line_is_allowed(tmp_path):
+    """**墓碑刻意只有一個 token**，而它要在**同一行**。"""
+    repo = _fake_repo(
+        tmp_path,
+        skill="`_index.ai.md` 2026-07-28 廢除，清單跑 `char-lint --emit`\n",
+    )
+    stats = MetaStats()
+    assert check_skill_paths(repo, stats) == []
+    assert stats.skill_paths_abolished == 0
+
+
+def test_a_tombstone_on_a_different_line_does_not_launder_it(tmp_path):
+    """下一行寫「廢除」救不了上一行的寫入命令——那正是實測 24 條裡最常見的形狀
+    （`character:16`／`:60` 命令重生，`:67` 才說它廢除了）。"""
+    repo = _fake_repo(
+        tmp_path,
+        skill="重生 `_index.ai.md` 並封章\n\n（其實 `_index.ai.md` 已廢除）\n",
+    )
+    stats = MetaStats()
+    assert len(check_skill_paths(repo, stats)) == 1
+    assert stats.skill_paths_abolished == 1
+
+
+def test_a_path_with_no_landing_place_is_reported(tmp_path):
+    repo = _fake_repo(tmp_path, skill="讀 `story/沒有這一層/東西.md`\n")
+    stats = MetaStats()
+    problems = check_skill_paths(repo, stats)
+    assert stats.skill_paths_unlanded == 1
+    assert any("沒有落點" in p.detail for p in problems)
+
+
+def test_the_kb_index_column_is_detected_as_a_leftover(tmp_path):
+    repo = _fake_repo(tmp_path)
+    kb = repo / "技巧知識庫"
+    kb.mkdir()
+    (kb / "_index.md").write_text(
+        "| 技法檔 | 層 | 何時查它 | 被哪些 skill 引用 |\n", encoding="utf-8"
+    )
+    (kb / "示範.md").write_text("# 示範\n## 目錄\n- **核心方法**：一 X\n", encoding="utf-8")
+    problems = check_kb_lists(repo, MetaStats())
+    assert any("被哪些 skill 引用" in p.detail for p in problems)
+
+
+def test_a_kb_file_without_a_toc_is_reported_only_when_referenced(tmp_path):
+    """**射程是「被引用的那幾支」**：沒有 skill 讀它，就沒有「前提為假」的問題。"""
+    repo = _fake_repo(tmp_path, skill="讀 `示範.md`\n")
+    kb = repo / "技巧知識庫"
+    kb.mkdir()
+    (kb / "示範.md").write_text("# 示範\n\n## 一、內容\n", encoding="utf-8")
+    (kb / "沒人讀.md").write_text("# 沒人讀\n\n## 一、內容\n", encoding="utf-8")
+    stats = MetaStats()
+    problems = check_kb_lists(repo, stats)
+    assert stats.kb_without_toc == 1
+    assert "`示範.md`" in problems[-1].detail and "沒人讀" not in problems[-1].detail
+
+
+def test_a_toc_without_the_word_core_is_still_reported(tmp_path):
+    """「有目錄」不等於「標了核心」——SKILL.md 那句規勸要的是後者。"""
+    repo = _fake_repo(tmp_path, skill="讀 `示範.md`\n")
+    kb = repo / "技巧知識庫"
+    kb.mkdir()
+    (kb / "示範.md").write_text("# 示範\n\n## 目錄\n- 一 X／二 Y\n\n---\n\n## 一、X\n", encoding="utf-8")
+    stats = MetaStats()
+    assert len(check_kb_lists(repo, stats)) == 1
+    assert stats.kb_without_toc == 1
+
+
+def test_an_incomplete_enumeration_in_claude_md_is_reported(tmp_path):
+    """**判準是位置不是總數**：同一行 ≥3 支＝列舉，1–2 支＝指路。"""
+    repo = _fake_repo(tmp_path)
+    kb = repo / "技巧知識庫"
+    kb.mkdir()
+    for n in ("甲.md", "乙.md", "丙.md", "丁.md"):
+        (kb / n).write_text(f"# {n}\n", encoding="utf-8")
+    doc = repo / "CLAUDE.md"
+
+    doc.write_text("方法（甲.md／乙.md／丙.md）\n", encoding="utf-8")  # 3 支＝列舉、漏 1
+    problems = check_kb_lists(repo, MetaStats())
+    assert any("丁.md" in p.detail for p in problems)
+
+    doc.write_text("公式名照 `甲.md` 的 registry 寫\n", encoding="utf-8")  # 1 支＝指路
+    assert not any(p.where == "CLAUDE.md" for p in check_kb_lists(repo, MetaStats()))
+
+
+def test_a_missing_entry_table_row_is_reported(tmp_path):
+    """SKILL.md 讀的路徑不在表裡、也不在豁免裡 → 報（**兩份清單都沒有它**）。"""
+    repo = _fake_repo(tmp_path, skill="讀 `story/設定/風格/風格.md`\n")
+    d = repo / "結構定義"
+    (d / "共同約定.md").write_text(
+        "## 八、context 取用契約\n\n### 成長型產物與各自的查詢入口\n\n"
+        "| 產物 | 為何成長 | 查詢入口 |\n|---|---|---|\n"
+        "| `chapters/*.ai.md` | 每章 | `fact-project` |\n\n"
+        "### 不受此限的\n\n- `raw/`：豁免查詢入口\n\n## 九、別的\n",
+        encoding="utf-8",
+    )
+    stats = MetaStats()
+    problems = check_entry_table(repo, stats)
+    assert stats.skill_axes_unlisted == 1
+    assert any("風格" in p.detail for p in problems)
+
+
+def test_a_row_with_no_reader_is_reported(tmp_path):
+    repo = _fake_repo(tmp_path, skill="（什麼都不讀）\n")
+    d = repo / "結構定義"
+    (d / "共同約定.md").write_text(
+        "## 八、context 取用契約\n\n### 成長型產物與各自的查詢入口\n\n"
+        "| 產物 | 為何成長 | 查詢入口 |\n|---|---|---|\n"
+        "| `story/物件/*.md` | 每次拍板 | `fact-project` |\n\n## 九、別的\n",
+        encoding="utf-8",
+    )
+    stats = MetaStats()
+    problems = check_entry_table(repo, stats)
+    assert stats.entry_rows == 1 and stats.entry_rows_unread == 1
+    assert any("沒有任何 SKILL.md 讀它" in p.detail for p in problems)
+
+
+def test_a_tombstoned_table_row_is_not_required_to_have_a_reader(tmp_path):
+    """墓碑列（`~~…~~ 廢除`）留在表上是刻意的指路，**不該被要求有讀者**。"""
+    repo = _fake_repo(tmp_path, skill="（什麼都不讀）\n")
+    d = repo / "結構定義"
+    (d / "共同約定.md").write_text(
+        "## 八、context 取用契約\n\n### 成長型產物與各自的查詢入口\n\n"
+        "| 產物 | 為何成長 | 查詢入口 |\n|---|---|---|\n"
+        "| ~~`story/大綱/_index.md`~~ **2026-07-28 廢除** | 曾經 | `outline-lint --emit` |\n\n"
+        "## 九、別的\n",
+        encoding="utf-8",
+    )
+    rows, _ = entry_table(repo)
+    assert rows == []
+
+
+# ---------------------------------------------------------------- 正規化的單元
+#
+# 這幾支釘的是實作時實測到的三個坑——每一個都讓閘門誤報或漏報。
+
+
+def test_braces_expand_rather_than_collapse():
+    """`{md,ai.md}` 收成 `*` 會讓摘要軸同時被報成「無讀者」與「不在表裡」。"""
+    assert normalize_paths("story/00-摘要.{md,ai.md}") == {
+        "story/00-摘要.md",
+        "story/00-摘要.ai.md",
+    }
+    assert normalize_paths("story/設定/{世界觀,角色}/<名>.ai.md") == {
+        "story/設定/世界觀/*.ai.md",
+        "story/設定/角色/*.ai.md",
+    }
+
+
+def test_the_star_survives_normalization():
+    """濾掉 `*` 會把 `story/設定/角色/*` 截成目錄、於是每支角色檔都被報。"""
+    assert book_paths("讀 `story/設定/角色/*` 與 `chapters/*.ai.md`") == {
+        "story/設定/角色/*",
+        "chapters/*.ai.md",
+    }
+
+
+def test_the_kb_index_is_not_mistaken_for_an_abolished_book_file():
+    """`技巧知識庫/_index.md` 是活的檢索入口——**唯一與已廢除檔撞名的那一支**。"""
+    assert "_index.md" in ABOLISHED
+    assert abolished_mentions("入口見 `技巧知識庫/_index.md`") == []
+    assert abolished_in("入口見 技巧知識庫/_index.md") == set()
+
+
+def test_a_tombstone_in_one_clause_does_not_cover_another():
+    """整串判墓碑會讓同一段 description 裡別的子句拿到免死金牌（實測 6 筆只抓到 4）。"""
+    assert abolished_in("驗已廢除的欄、`_index.ai.md` 的清單 ≡ 資料夾") == {"_index.ai.md"}
+    assert abolished_in("舊 `_index.ai.md` 2026-07-28 廢除，只報殘留") == set()
+
+
+def test_landing_places_come_from_two_sources():
+    """模板只有 15 支檔、沒有角色與世界觀資料夾——**只靠它會誤報**。"""
+    places, notes = landing_places(REPO)
+    assert "story/設定/角色" in places  # 來自 `SETTINGS_KINDS`，模板裡沒有
+    assert "story/幕綱" in places
+    assert "story/大綱/_已併入" in places  # 來自 `book_layout.OUTLINE_RETIRED`
+    assert len(notes) >= 3
