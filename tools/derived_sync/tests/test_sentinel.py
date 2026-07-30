@@ -58,7 +58,7 @@ def test_non_arc_files_in_beat_dir_ignored(tmp_path):
     接手的兩支見下面兩支姊妹測試。
     """
     book = _book(tmp_path)
-    (book / "story" / "幕綱" / "_index.md").write_text("巨" * 50000, encoding="utf-8")
+    (book / "story" / "幕綱" / "_順序.md").write_text("巨" * 50000, encoding="utf-8")
     assert beat_sheet_density(book) == []
 
 
@@ -68,16 +68,20 @@ def test_beat_index_size_is_measured(tmp_path):
     spine 的家、被 2 支 SKILL.md 整檔讀，**就在 `beat_sheet_density` 每次都會走進去
     的那個資料夾裡**。"""
     book = _book(tmp_path)
-    (book / "story" / "幕綱" / "_index.md").write_text("巨" * 30000, encoding="utf-8")
+    (book / "story" / "幕綱" / "_順序.md").write_text("巨" * 30000, encoding="utf-8")
     (f,) = oversized_sources(book)
-    assert f.path.name == "_index.md" and f.kind == "源檔肥大"
+    # **2026-07-30：射程含 `_順序.md`**（驗證輪階段 1c）。在此之前 `beat_index` 只認
+    # `_index.md`，而 spine 2026-07-28 就搬到 `_順序.md` 了——**活的那一支反而沒有
+    # 體積哨兵**：本測試檔頭記的「第九次四份手寫路徑清單漏檔」在同一個資料夾裡
+    # 復發了一次，只是換了檔名。
+    assert f.path.name == "_順序.md" and f.kind == "源檔肥大"
 
 
 def test_beat_index_hint_is_its_own(tmp_path):
     """四種寄居內容各有各的家，hint 要逐一指出來（`設計原則.md` 新增的 F4：
     schema 規定某欄只能裝 X 時，必須同時指出非 X 的內容該去哪）。"""
     book = _book(tmp_path)
-    (book / "story" / "幕綱" / "_index.md").write_text("巨" * 30000, encoding="utf-8")
+    (book / "story" / "幕綱" / "_順序.md").write_text("巨" * 30000, encoding="utf-8")
     (f,) = oversized_sources(book)
     assert "beat-lint --emit" in f.hint  # arc 概覽
     assert "選用結構公式" in f.hint  # 公式複本
@@ -89,11 +93,11 @@ def test_beat_index_row_uses_the_rollup_limit(tmp_path):
     """與 `大綱/_index.md` 同一把尺（400）——兩支都是「視圖 ≡ 資料夾」形狀而
     **不帶 `.ai.md`** 的索引。實測 9 行超過 400、最長 1,949。"""
     book = _book(tmp_path)
-    (book / "story" / "幕綱" / "_index.md").write_text(
+    (book / "story" / "幕綱" / "_順序.md").write_text(
         "- arc01：幕001–幕009（號段 001–100）　" + "概" * 500 + "\n", encoding="utf-8"
     )
     (f,) = long_lines(book)
-    assert f.path.name == "_index.md" and "400" in f.detail
+    assert f.path.name == "_順序.md" and "400" in f.detail
     # hint 不能沿用 `大綱/_index.md` 那一份：400 同時給四種檔用，limit 分不出病徵
     assert "8-gram 保真率只有 4.2–35.8%" in f.hint
     assert "n=11" not in f.hint
@@ -532,11 +536,18 @@ def test_destination_silent_when_it_exists(tmp_path):
     assert [f for f in run(book)[0] if f.kind == "目的地不存在"] == []
 
 
-def test_legacy_destination_name_still_counts(tmp_path):
-    """既有書仍是 `裁決流.co.md`（2026-07-27 前建的）——不該叫它再建一支。"""
+def test_the_legacy_destination_name_no_longer_counts(tmp_path):
+    """**舊名 `裁決流.co.md` 2026-07-30 起不算目的地**（驗證輪階段 1c）。
+
+    E1 要的是「目的地存在」，不是「有個叫這名字的檔存在」——`.co.md` 拿不到
+    `decision-lint`，讓它冒充目的地，就是把箭頭指向一支**沒有守衛**的檔。
+    實測活用戶 0：全 repo 沒有任何一支 `.co.md`。
+    """
     book = _book(tmp_path)
     (book / "story" / "幕綱" / "arc09.md").write_text(_beats(5, 3000), encoding="utf-8")
     (book / "story" / "參照" / "裁決流.co.md").write_text("# 裁決流\n", encoding="utf-8")
+    assert [f for f in run(book)[0] if f.kind == "目的地不存在"] != []
+    (book / "story" / "參照" / "裁決流.md").write_text("# 裁決流\n", encoding="utf-8")
     assert [f for f in run(book)[0] if f.kind == "目的地不存在"] == []
 
 
@@ -625,7 +636,7 @@ def test_feedback_section_lines_are_not_facts(tmp_path):
 def test_append_log_no_longer_exempt_from_line_length(tmp_path):
     """2026-07-27 前這裡整支檔豁免——但投影的粒度就是行，一行不可再切。"""
     book = _book(tmp_path)
-    (book / "story" / "參照" / "裁決流.co.md").write_text(
+    (book / "story" / "參照" / "裁決流.md").write_text(
         "- 幕002（arc01）· 少年 · 位置：" + "字" * 300 + "\n", encoding="utf-8"
     )
     assert [f.kind for f in bloated_fact_lines(book)] == ["事實行肥大"]
@@ -634,7 +645,7 @@ def test_append_log_no_longer_exempt_from_line_length(tmp_path):
 def test_file_size_exemption_for_append_logs_survives(tmp_path):
     """行長受管，但**檔案大小**仍不受管（有投影工具可切片）。"""
     book = _book(tmp_path)
-    (book / "story" / "參照" / "裁決流.co.md").write_text(
+    (book / "story" / "參照" / "裁決流.md").write_text(
         "".join(f"- 幕{i:03d}（arc01）· 少年 · 位置：走到某處\n" for i in range(400)),
         encoding="utf-8",
     )
@@ -722,7 +733,7 @@ def test_the_axis_that_was_missed_nine_times_is_counted(tmp_path):
     """`story/幕綱/_index.md`——第九次漏檔的那一支，而它就在既有函式已經走進去的
     資料夾裡，還有一支綠色的測試把「它什麼都不會觸發」釘成預期行為。"""
     book = _book(tmp_path)
-    (book / "story" / "幕綱" / "_index.md").write_text("- arc01：X\n", encoding="utf-8")
+    (book / "story" / "幕綱" / "_順序.md").write_text("- arc01：X\n", encoding="utf-8")
     _, stats = run(book)
     assert stats.size["幕綱索引"] == 1
 

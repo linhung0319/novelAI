@@ -12,6 +12,7 @@ from pathlib import Path
 
 import pytest
 from meta_lint.checks import (
+    CASE_BOOK,
     MetaStats,
     check_coverage_on_every_path,
     check_entry_table,
@@ -93,14 +94,31 @@ def test_every_gate_prints_a_coverage_line():
 def test_every_known_red_entry_carries_a_reason():
     """**進這份清單的門檻是「說得出為什麼現在不修」**，不是「還沒空修」。
 
-    允許「同上」這種明確的回指（六支是同一個根因），但**至少要有一筆寫出根因**
+    允許「同上」這種明確的回指（同一個根因的數支），但**至少要有一筆寫出根因**
     ——一份全是「同上」的清單指不出任何東西。
+
+    **空清單是合法的**（2026-07-30 起實際就是 0 筆）。舊版這裡寫 `assert reds`，
+    而那一行把「全綠」與「清單讀不到」壓成同一句紅字——**它自己就是 E2 第五格
+    （假陰性的鏡像：假陽性）**。兩件事分開釘：這一支管「有的話要有理由」，
+    `test_the_known_red_file_is_still_readable` 管「讀不讀得到」。
     """
     reds = load_known_red(REPO)
-    assert reds, "已知紅清單空了——那要嘛 6 支測試修好了（該刪清單），要嘛清單讀不到"
     for kr in reds:
         assert kr.test and kr.reason.strip(), kr.test
-    assert any(len(kr.reason.strip()) > 100 for kr in reds), "沒有任何一筆寫出根因"
+    if reds:
+        assert any(len(kr.reason.strip()) > 100 for kr in reds), "沒有任何一筆寫出根因"
+
+
+def test_the_known_red_file_is_still_readable():
+    """**空清單 ≠ 檔不見了。**
+
+    雙向擋的第一個方向（「紅而不在清單裡 → fail」）靠這支檔存在；檔被刪掉之後
+    `load_known_red` 回 `[]`，與「清單清空了」完全同形——那正是這一整輪在追的
+    「已遷移」與「守衛被關掉」共用一個綠燈。所以檔的存在性單獨釘一支。
+    """
+    p = REPO / "tools" / "meta_lint" / "known-red.toml"
+    assert p.is_file(), "known-red.toml 不見了——雙向擋的第一個方向從此不存在"
+    assert "known_red" in p.read_text(encoding="utf-8"), "清單的鍵不在，`.get` 會靜默回 []"
 
 
 def test_projections_print_even_when_nothing_is_wrong():
@@ -605,3 +623,48 @@ def test_landing_places_come_from_two_sources():
     assert "story/幕綱" in places
     assert "story/大綱/_已併入" in places  # 來自 `book_layout.OUTLINE_RETIRED`
     assert len(notes) >= 3
+
+
+# ------------------------------------------ 第 6 項的第 4 條契約：病例書不吐 traceback
+#
+# 2026-07-30（驗證輪階段 1c）新增。那一輪移除了成組的 legacy 讀取路徑，
+# 而拍板的硬驗收條件是「移除一條 legacy 讀取路徑必須降級成**被回報的問題**，
+# 絕不能降級成 traceback」。這兩支把那條條件從「有人手動跑一次」變成守衛。
+
+
+def test_the_case_book_scope_is_not_silently_empty():
+    """**射程非空。** 病例書不在 → 第 4 條契約整格消失，而輸出會長得像「都合格」。
+
+    這與 `test_the_real_repo_still_has_an_exit_two_sample` 是同一種釘法：
+    新守衛最容易的死法是「測試是綠的，射程是空的」（E2 第七形態的鏡像）。
+    `tools.yml` 也有一步 `test -d 一世之尊`，理由寫著「否則 17 份黃金檔的射程是
+    空的」——那句話從今天起多守一格。
+    """
+    assert (REPO / CASE_BOOK).is_dir(), (
+        f"病例書 `{CASE_BOOK}` 不在——第 6 項的第 4 條契約（不吐 traceback）"
+        "與 17 份黃金檔的射程同時變成空的"
+    )
+
+
+def test_the_case_book_is_the_only_one_with_prose():
+    """**它為什麼非得是這一本**：全 repo 只有它有正文。
+
+    第 4 條契約要驗的分支（`prose-metrics` 的成功輸出、93 支章衍生、11 支 arc 幕綱）
+    在別的書上一條都走不到——`書本模板` 與純 raw 書一律 exit 2 早退。
+    這一支釘住那個前提：哪天別的書也長出 `chapters/`，這一格可以改成自動挑選
+    （形狀照 `empty_book`），而在那之前硬編書名是誠實的。
+    """
+    # **判準是「有沒有 chNNNN.md」，不是「有沒有 chapters/」**：`書本模板/chapters/`
+    # 是骨架資料夾（空的），而空資料夾走不到 `prose-metrics` 的成功分支——
+    # 拿資料夾當判準正是 `prose_metrics` 那 6 支長期紅測試踩過的坑
+    # （`skipif` 檢查 `芯片巫師/` 在不在，而測試要的是 `芯片巫師/chapters/`）。
+    with_prose = sorted(
+        p.name
+        for p in REPO.iterdir()
+        if p.is_dir()
+        and not p.name.startswith((".", "_"))
+        and any((p / "chapters").glob("ch*.md"))
+    )
+    assert with_prose == [CASE_BOOK], (
+        f"有正文的書變成 {with_prose}——第 4 條契約的樣本可以（也應該）改成自動挑選"
+    )

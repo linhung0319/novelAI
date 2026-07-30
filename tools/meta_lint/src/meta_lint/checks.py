@@ -475,7 +475,18 @@ LIVE_COMMANDS: tuple[tuple[str, str, tuple[str, ...]], ...] = (
 #   投影 → 報表標題裡的 `（掃 N 個 arc…）`／`（N 個 arc；…）`／`合計 N 個衍生檔…`
 # **兩支統計工具（`beat-metrics`／`prose-metrics`）還沒有正式的覆蓋率行**——那是
 # 已登記的欠債（報告 §七 → 功能 02）；它們的報表標題算數，但那一格要記著。
-_SCOPE_MARKERS = ("檢查範圍", "掃描範圍", "掃描了", "（掃 ", "個 arc；", "合計 ")
+# **2026-07-30 補 ` 章；`**（驗證輪階段 1c）：`prose-metrics` 成功時印的是
+# `## <書名> 正文結構（93 章；零 LLM、可覆算）`——那是一條合格的覆蓋率行
+# （它說得出「我掃了幾章」），只是形狀與既有六個 marker 都不同。
+#
+# **為什麼拖到今天才發現**：第 6 項本來只跑 `書本模板`（無 chapters/ → exit 2 走
+# 「掃了 0 章」那條，命中 `檢查範圍`）與一本純 raw 書（同樣走 exit 2）——
+# **`prose-metrics` 的成功輸出從來沒有被這一項看過**。病例書是唯一一本有 93 章
+# 正文的書，把它加進第 4 條契約的當天，這一格就露出來了。
+#
+# 這與階段 0 擴 `情境測試/` 射程時抓到的是同一件事：**掃描對象是對的，
+# 而樣本沒有涵蓋那條分支**。
+_SCOPE_MARKERS = ("檢查範圍", "掃描範圍", "掃描了", "（掃 ", "個 arc；", "合計 ", " 章；")
 
 
 def _has_scope_line(out: str) -> bool:
@@ -483,6 +494,22 @@ def _has_scope_line(out: str) -> bool:
 
 
 CLEAN_BOOK = "書本模板"
+
+# **病例書**（2026-07-30 驗證輪階段 1c 新增）。它是第 4 條契約的樣本。
+#
+# 為什麼要一本「刻意壞掉」的書當 fixture：階段 1c 移除了成組的 legacy 讀取路徑
+# （spine 舊落點 ×4、舊單檔事實流、`裁決流.co.md`、`_arc_of` 雙格式），而拍板的
+# 驗收條件是——**移除一條 legacy 讀取路徑必須降級成「被回報的問題」，
+# 絕不能降級成 traceback**。這一條沒有守衛的話，下一次刪 legacy 分支時
+# 「它現在報什麼」只會在有人手動跑一次的時候才被看見。
+#
+# **這裡刻意不驗 exit 值等於幾**：那本書每一支指令報什麼，由 17 份黃金檔逐支釘死。
+# 本項只驗三件事——不 traceback、exit 在契約枚舉內、覆蓋率行照印。
+# **書名硬編碼是可接受的**（與 `empty_book` 的自動挑選不同）：`tools.yml` 有一步
+# `test -d 一世之尊`，理由寫著「否則 17 份黃金檔的射程是空的」——這本書的存在
+# 本來就是一個被明文守住的前提，而它一旦不在，本項印「未接」而不是「都合格」。
+CASE_BOOK = "一世之尊"
+_TRACEBACK_MARK = "Traceback (most recent call last)"
 
 
 def empty_book(repo: Path) -> str | None:
@@ -526,10 +553,11 @@ def _run(repo: Path, pkg: str, cmd: str, extra: tuple[str, ...], book: str):
 def check_output_contract(repo: Path, stats: MetaStats, live: bool) -> list[Problem]:
     """第 6 項：對 fixture 書實跑，比對 stdout／stderr／exit。
 
-    三條契約（唯一真相在 `結構定義/共同約定.md`「輸出與 exit 契約」）：
+    四條契約（唯一真相在 `結構定義/共同約定.md`「輸出與 exit 契約」）：
     1. **乾淨的書**：exit 0，且覆蓋率行在 **stdout**；
     2. **還沒到那一層的書**：**exit 2**，而且**照樣印覆蓋率行**；
     3. **stderr 只裝執行錯誤**——乾淨跑一次不該有任何 stderr。
+    4. **病例書不吐 traceback**（2026-07-30 驗證輪階段 1c 新增，見 `CASE_BOOK`）。
     """
     if not live:
         stats.live_skipped = True
@@ -553,10 +581,22 @@ def check_output_contract(repo: Path, stats: MetaStats, live: bool) -> list[Prob
     else:
         stats.notes.append(f"第 6 項的 exit 2 樣本：`{empty}`（有 `raw/`、無 `story/`，自動挑選）")
 
+    case = CASE_BOOK if (repo / CASE_BOOK).is_dir() else None
+    if case is None:
+        stats.hints.append(
+            f"第 6 項的**第 4 條契約未接**——找不到病例書 `{CASE_BOOK}`，"
+            "於是「移除 legacy 讀取路徑之後不吐 traceback」這一格本次沒有被驗到"
+        )
+    else:
+        stats.notes.append(
+            f"第 6 項的病例書：`{case}`（第 4 條契約＝不吐 traceback·exit 在契約內·照印覆蓋率行）"
+        )
+
     out: list[Problem] = []
     dirty: list[str] = []
     bad_exit: list[str] = []
     no_coverage: list[str] = []
+    tracebacks: list[str] = []
     for cmd, pkg, extra in LIVE_COMMANDS:
         label = " ".join((cmd, *extra))
         r = _run(repo, pkg, cmd, extra, CLEAN_BOOK)
@@ -575,6 +615,30 @@ def check_output_contract(repo: Path, stats: MetaStats, live: bool) -> list[Prob
                 bad_exit.append(f"{label}（{empty} → exit 1，而那本書只有 raw/）")
             if r2.returncode == 2 and not _has_scope_line(r2.stdout):
                 no_coverage.append(f"{label}（{empty}·exit 2 卻沒印覆蓋率行）")
+
+        if case is not None:
+            # **第 4 條契約**：病例書滿身紅字是它的價值，**吐 traceback 不是**。
+            # 這裡不驗 exit 等於幾（那由 17 份黃金檔逐支釘），只驗它在契約枚舉內。
+            r3 = _run(repo, pkg, cmd, extra, case)
+            stats.live_checked += 1
+            if _TRACEBACK_MARK in r3.stderr:
+                tracebacks.append(f"{label}（{case}）")
+            if r3.returncode not in (0, 1, 2):
+                bad_exit.append(f"{label}（{case} → exit {r3.returncode}）")
+            if not _has_scope_line(r3.stdout):
+                no_coverage.append(f"{label}（{case}·exit {r3.returncode} 卻沒印覆蓋率行）")
+
+    if tracebacks:
+        out.append(
+            Problem(
+                "輸出契約",
+                f"{len(tracebacks)} 支指令對病例書吐 traceback：" + "、".join(tracebacks),
+                "**移除一條 legacy 讀取路徑必須降級成「被回報的問題」，"
+                "絕不能降級成 traceback**（2026-07-30 驗證輪階段 1c 的硬驗收條件）。"
+                "報錯要說得出「舊落點在哪、新落點是哪支、怎麼搬」——"
+                "一個 raw errno 說不出這三件事裡的任何一件",
+            )
+        )
 
     if bad_exit:
         out.append(

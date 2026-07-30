@@ -39,7 +39,7 @@ def _book(tmp_path, objects: dict[str, str], arcs: dict[str, str] | None = None)
     (book / "chapters").mkdir(parents=True)
     beats = book / "story" / "幕綱"
     beats.mkdir(parents=True)
-    (beats / "_index.md").write_text(SPINE, encoding="utf-8")
+    (beats / "_順序.md").write_text(SPINE, encoding="utf-8")
     for name, body in (arcs or {"arc01.md": ARC01}).items():
         (beats / name).write_text(body, encoding="utf-8")
     d = book / "story" / "物件"
@@ -312,7 +312,7 @@ def test_object_lint_says_so_when_there_is_no_object_dir(tmp_path, capsys):
     """「我檢查了 0 支」要說出來，不能只印「乾淨」。"""
     book = tmp_path / "book"
     (book / "story" / "幕綱").mkdir(parents=True)
-    (book / "story" / "幕綱" / "_index.md").write_text(SPINE, encoding="utf-8")
+    (book / "story" / "幕綱" / "_順序.md").write_text(SPINE, encoding="utf-8")
     (book / "chapters").mkdir()
     object_lint_main(["--book", str(book)])
     out = capsys.readouterr().out

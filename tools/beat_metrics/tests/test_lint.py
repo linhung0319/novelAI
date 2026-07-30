@@ -77,12 +77,13 @@ ARC02 = """# arc02 · 承
 """
 
 
-def _book(tmp_path, index=INDEX, spine=SPINE, **arcs):
+def _book(tmp_path, index=None, spine=SPINE, **arcs):
     """`index=` 給索引檔，`spine=` 給順序檔；**傳 None ＝不建那一支**。
 
-    - `spine=None` → 測「舊書把 spine 留在 `_index.md`」的回退路徑。
-    - `index=None` → 測**索引檔廢除之後的新書**（功能 12 抉擇 1 A：五支 rollup
-      廢除，全書視圖改跑 `beat-lint --emit`）。
+    - `spine=None` → 測**新落點不在**（2026-07-30 起舊落點不再回退）。
+    - `index=None`（**預設**）→ 索引檔廢除之後的正常狀態（功能 12 抉擇 1 A：
+      五支 rollup 廢除，全書視圖改跑 `beat-lint --emit`）。傳 `INDEX` 進來就是在
+      造一本**還留著已廢除 rollup 的舊書**，那本身就是一筆問題（2026-07-30 起）。
     """
     d = tmp_path / "story" / "幕綱"
     d.mkdir(parents=True)
@@ -222,26 +223,39 @@ def test_spine_lives_in_its_own_file(tmp_path):
     _, stats = lint_report(_book(tmp_path, arc01=ARC01, arc02=ARC02))
     assert (stats.spine_file, stats.spine_legacy) == ("_順序.md", False)
     assert "spine 讀自 `_順序.md`" in stats.render()
-    assert "舊落點" not in stats.render()
+    assert "（舊落點已不在）" in stats.render()  # **0 也印**
 
 
-def test_legacy_spine_in_the_index_still_works_but_is_reported(tmp_path):
-    """舊書照抉擇 8 A 不遷移，所以**四支工具仍讀得到舊落點**——但回退要**可見**。
+def test_the_legacy_spine_location_is_no_longer_read(tmp_path):
+    """**舊落點 `_index.md` 的回退 2026-07-30 移除**（驗證輪階段 1c）。
 
-    系統在功能 10／11 記過「一句半真的相容承諾比沒有承諾更糟」（`共同約定.md` 那句
-    「工具兩種命名都吃」實測只對一支函式成立）。解法不是拒絕回退，是讓它在覆蓋率行
-    上是一個看得見的狀態，並報一行**只報不擋**的殘留。
+    2026-07-28 那一輪的處置是「不拒絕回退，讓它可見」，問題訊息裡寫著
+    「別讓它一直是提醒」。實測**提醒發了兩天、唯一走回退的書一個字沒動**，
+    而四份回退實作照樣活著（`beat_metrics`／`fact_projection`／
+    `decision_projection`／`foreshadow_project`）。活用戶只有 `一世之尊`。
+
+    現在舊落點**不讀**，於是這本書降級成「被回報的問題」——**不是 traceback**
+    （階段 1c 硬驗收條件 1），而訊息指得出舊檔在哪、怎麼搬。
     """
     legacy_index = INDEX + "- 全書順序：arc01 → arc02\n"
     problems, stats = lint_report(
         _book(tmp_path, index=legacy_index, spine=None, arc01=ARC01, arc02=ARC02)
     )
-    assert (stats.spine_file, stats.spine_legacy) == ("_index.md", True)
-    assert "spine 讀自 `_index.md`（**舊落點·回退**）" in stats.render()
-    hits = _only(problems, "還住在舊落點")
-    assert len(hits) == 1 and "_順序.md" in hits[0]
-    # 回退**不影響定序本身**：spine 的內容照樣被解析、涵蓋率照驗
-    assert not _only(problems, "未涵蓋")
+    assert stats.spine_legacy is True  # 墓碑：舊檔還在
+    assert "舊落點 `_index.md` 仍在·2026-07-30 起不讀" in stats.render()
+    hits = _only(problems, "不存在")
+    assert len(hits) == 1
+    assert "_順序.md" in hits[0] and "不讀它" in hits[0] and "git mv" in hits[0]
+
+
+def test_both_spine_locations_present_reads_only_the_new_one(tmp_path):
+    """兩支都在時只讀新的，**並報舊的那一支**——兩份定序漂移是下一個病。"""
+    legacy_index = INDEX + "- 全書順序：arc02 → arc01\n"  # 刻意與 SPINE 逆序
+    problems, stats = lint_report(
+        _book(tmp_path, index=legacy_index, arc01=ARC01, arc02=ARC02)
+    )
+    assert (stats.spine_file, stats.spine_legacy) == ("_順序.md", True)
+    assert len(_only(problems, "已廢除的 rollup 還在")) == 1
 
 
 def test_missing_spine_points_at_the_new_home(tmp_path):
@@ -253,7 +267,7 @@ def test_missing_spine_points_at_the_new_home(tmp_path):
     problems, stats = lint_report(
         _book(tmp_path, index=None, spine=None, arc01=ARC01, arc02=ARC02)
     )
-    assert stats.spine_file == "_順序.md"
+    assert stats.spine_file == ""  # 沒讀到就不寫「讀自」——那一句會是假的
     hits = _only(problems, "不存在")
     assert len(hits) == 1 and "幕綱/_順序.md" in hits[0]
 
@@ -263,7 +277,8 @@ def test_index_absent_is_not_a_problem(tmp_path):
     spine 住 `_順序.md`——兩件事都不需要那支檔。"""
     problems, stats = lint_report(_book(tmp_path, index=None, arc01=ARC01, arc02=ARC02))
     assert problems == []
-    assert (stats.index_rows, stats.index_mismatch) == (0, 0)
+    assert stats.index_retired is False
+    assert "已廢除的 `_index.md`：已不在" in stats.render()  # **0 也印**
     assert (stats.spine_file, stats.spine_legacy) == ("_順序.md", False)
 
 
@@ -315,9 +330,14 @@ def test_design_note_without_destination(tmp_path):
     problems, _ = lint_report(book)
     assert _only(problems, "裁決流.md` 不存在"), problems
 
+    # **舊名 `裁決流.co.md` 2026-07-30 起不算目的地**（驗證輪階段 1c）：E1 要的是
+    # 「目的地存在」，不是「有個叫這名字的檔存在」——`.co.md` 拿不到 `decision-lint`，
+    # 讓它冒充目的地，等於把箭頭指向一支沒有守衛的檔。
     ref = book / "story" / "參照"
     ref.mkdir(parents=True)
     (ref / "裁決流.co.md").write_text("# 裁決流\n", encoding="utf-8")
+    assert _only(lint_report(book)[0], "裁決流.md` 不存在")
+    (ref / "裁決流.md").write_text("# 裁決流\n", encoding="utf-8")
     assert _only(lint_report(book)[0], "裁決流") == []
 
 
@@ -419,104 +439,59 @@ def test_beat_test_record_only_read_from_the_header(tmp_path):
 # 的核心——為了比對而算出來的那一份，就是要印的那一份。
 
 
-def test_index_view_matches_folder(tmp_path):
-    """正例：兩支 arc 檔、兩列，乾淨。"""
-    problems, stats = lint_report(_book(tmp_path, arc01=ARC01, arc02=ARC02))
-    assert problems == []
-    assert (stats.index_rows, stats.index_mismatch, stats.index_unordered) == (2, 0, 0)
+def test_a_retired_rollup_is_reported_by_existence_not_compared(tmp_path):
+    """**2026-07-30（驗證輪階段 1c／1d）：從「照舊比對」改成存在性檢查。**
+
+    功能 12 廢除五支 rollup，並把兩支 `.md` 的殘留偵測交給本 lint 與 `outline-lint`
+    ——而實作出來的是「照舊比對」（`功能報告/15` 明文交回這一筆）。
+    照舊比對的後果是**工具叫作者去把一支已廢除的檔修好，而修好就等於讓它永久合法**
+    （`設計原則.md` A5，與 `ABOLISHED_ROLLUPS` 檔頭是同一句話，只是那裡守的是
+    `.ai.md`、這裡漏了 `.md`）。
+    """
+    problems, stats = lint_report(_book(tmp_path, index=INDEX, arc01=ARC01, arc02=ARC02))
+    assert stats.index_retired is True
+    assert "已廢除的 `_index.md`：**仍在**" in stats.render()
+    hits = _only(problems, "已廢除的 rollup 還在")
+    assert len(hits) == 1
+    assert "beat-lint --emit" in hits[0] and "_順序.md" in hits[0]
 
 
-def test_index_missing_a_row_fires(tmp_path):
-    """反例：資料夾有 arc02，索引沒列它——`beat-sheet` 就看不到那一段存在。"""
-    index = INDEX.replace("- arc02：幕101–幕101（號段 101–200）\n", "")
-    problems, stats = lint_report(_book(tmp_path, index, arc01=ARC01, arc02=ARC02))
-    assert _only(problems, "沒有列：arc02")
-    assert stats.index_mismatch == 1
+def test_a_retired_rollup_is_not_compared_against_the_folder(tmp_path):
+    """**內容不再被看**：漏列、幽靈列、幕號範圍不符、列序逆序——一律不報。
+
+    這些曾是四個獨立的問題（`test_index_missing_a_row_fires` 等），而它們問的都是
+    「這支已廢除的檔跟資料夾對不對得上」。那個問題不該再被問：唯一的答案是刪掉它。
+    那份重算沒有消失，它在 `beat-lint --emit`（功能 12 抉擇 4 C 給它的家）。
+    """
+    broken = "\n".join(
+        [
+            "# 幕綱索引",
+            "",
+            "- 選用結構公式：卷一整體＝起承轉合",       # 沒指路（舊第 4 項）
+            "- 全書順序：arc02 → arc01",
+            "- arc02：幕101–幕101（號段 101–200）",     # 列序逆序（舊第 3 項）
+            "- arc03：幕201–幕205（號段 201–300）",     # 幽靈列（舊第 1 項）
+            "",
+        ]
+    )  # 且完全沒有 arc01 那一列（漏列）
+    problems, _ = lint_report(_book(tmp_path, index=broken, arc01=ARC01, arc02=ARC02))
+    for gone in ("沒有列", "指向不存在的 arc 檔", "列序非遞增", "沒有指向大綱層的路徑指標"):
+        assert not _only(problems, gone), f"{gone} 不該再被報——那支檔已廢除"
+    assert len(_only(problems, "已廢除的 rollup 還在")) == 1
 
 
-def test_index_ghost_row_fires(tmp_path):
-    """反例：索引列了 arc03，而 `arc03.md` 不存在（雙向比對的另一半）。"""
-    index = INDEX + "- arc03：幕201–幕205（號段 201–300）\n"
-    problems, stats = lint_report(_book(tmp_path, index, arc01=ARC01, arc02=ARC02))
-    assert _only(problems, "指向不存在的 arc 檔：arc03")
-    assert stats.index_mismatch == 1
+def test_the_recomputation_moved_to_emit_not_away(tmp_path):
+    """**射程非空**：拿掉比對不等於拿掉那份重算。
 
+    「視圖 ≡ 資料夾」還在跑，只是改成**輸出**而不是**比對**——`beat-lint --emit`
+    印的就是原本為了比對而算出來的那一份。這一支釘住它真的還印得出 arc 列，
+    否則這一輪就是把一個守衛換成一句空話。
+    """
+    from beat_metrics.emit import emit_beats
 
-def test_index_span_mismatch_fires(tmp_path):
-    """**這一項是幕綱獨有的**：宣告的幕號範圍 ≠ 該檔實際的 min·max。
-    機械來源是 `arcNN.md` 的 `## 幕NNN` 標題，索引那一欄是視圖不是第二個家。"""
-    index = INDEX.replace("幕001–幕002", "幕001–幕009")
-    problems, stats = lint_report(_book(tmp_path, index, arc01=ARC01, arc02=ARC02))
-    assert _only(problems, "宣告 幕001–幕009，而 arc01.md 實際是 幕001–幕002")
-    assert (stats.index_spans, stats.index_span_mismatch) == (2, 1)
-
-
-def test_index_row_without_a_span_is_not_a_problem(tmp_path):
-    """schema 不強制每列都宣告範圍——但「比對了幾列」與「幾列根本沒得比」是**兩個
-    數字**（E2 的覆蓋率推論：只印前者＝用命中率冒充可用率）。"""
-    index = INDEX.replace("- arc02：幕101–幕101（號段 101–200）", "- arc02：（尚未拆幕）")
-    problems, stats = lint_report(_book(tmp_path, index, arc01=ARC01, arc02=ARC02))
-    assert problems == []
-    assert (stats.index_spans, stats.index_span_missing) == (1, 1)
-
-
-def test_index_row_order_must_increase(tmp_path):
-    """逆序的索引讓人以為那是「最近改過的」排序。**故事順序不寫在這裡**——
-    它是同層 `_順序.md` 的 `全書順序：`（實測 `大綱/_index.md` 已經逆序過）。"""
-    index = (
-        "# 幕綱索引\n\n"
-        "- 選用結構公式：見 `story/01-大綱.md` 的 `## 選用結構公式`\n"
-        "- 全書順序：arc01 → arc02\n"
-        "- arc02：幕101–幕101（號段 101–200）\n"
-        "- arc01：幕001–幕002（號段 001–100）\n"
-    )
-    problems, stats = lint_report(_book(tmp_path, index, arc01=ARC01, arc02=ARC02))
-    assert _only(problems, "列序非遞增 1 處（第一處：arc02 之後是 arc01）")
-    assert stats.index_unordered == 1
-
-
-def test_skeleton_arc_still_needs_its_row(tmp_path):
-    """骨架也在資料夾裡（同 `_check_spine` 的 `present`）：少一列，「這一段存在但
-    還沒動工」與「這一段不存在」看起來就一樣。但**它的幕號是佔位、不入區間比對**。"""
-    skeleton = "# arc02\n\n> ⚠️ **尚未產出**——本檔是空骨架。\n\n## 幕101 · （幕名）\n- 角色：\n"
-    problems, stats = lint_report(_book(tmp_path, arc01=ARC01, arc02=skeleton))
-    assert problems == []
-    assert (stats.index_rows, stats.index_mismatch) == (2, 0)
-    assert stats.index_spans == 1  # 只比了 arc01
-
-
-# ------------------------------------------- 選用結構公式只准指路（功能 12 步驟 4）
-#
-# 11 把權威給了大綱的 `## 選用結構公式`（`outline-lint` 第 12 項守），而實測幕綱索引
-# 這一行是**第三份**：310 字元，與大綱層 12 支檔的 8-gram 重疊只有 10.7%（比 11 廢掉
-# 的 `結構.md` 那份 16.6% 分歧得更厲害），且零守衛。**判準是路徑指標的有無，不是長度**
-# ——門檻是任意的（06 抉擇 5 A），指標不是。
-
-
-def test_formula_line_pointing_to_the_outline_is_clean(tmp_path):
-    problems, stats = lint_report(_book(tmp_path, arc01=ARC01, arc02=ARC02))
-    assert not _only(problems, "選用結構公式")
-    assert (stats.formula_lines, stats.formula_no_pointer) == (1, 0)
-
-
-def test_formula_line_restating_the_formula_fires(tmp_path):
-    """複述＝第三份真相。它可以很短也照樣報——判準不是長度。"""
-    index = INDEX.replace(
-        "- 選用結構公式：見 `story/01-大綱.md` 的 `## 選用結構公式`",
-        "- 選用結構公式：卷一整體＝起承轉合；arc05＝起承轉合套本 arc 一段",
-    )
-    problems, stats = lint_report(_book(tmp_path, index, arc01=ARC01, arc02=ARC02))
-    assert _only(problems, "沒有指向大綱層的路徑指標")
-    assert stats.formula_no_pointer == 1
-
-
-def test_formula_pointer_to_a_scoped_outline_also_counts(tmp_path):
-    """卷級分工之後公式可能住 scoped 大綱（09 抉擇 4 A），指那裡一樣算指路。"""
-    index = INDEX.replace(
-        "見 `story/01-大綱.md` 的 `## 選用結構公式`", "見 `story/大綱/` 各檔的 `## 選用結構公式`"
-    )
-    problems, stats = lint_report(_book(tmp_path, index, arc01=ARC01, arc02=ARC02))
-    assert stats.formula_no_pointer == 0
+    book = _book(tmp_path, index=None, arc01=ARC01, arc02=ARC02)
+    text, _ = emit_beats(book)
+    assert "arc01" in text and "arc02" in text
 
 
 # --------------------------------------- 檔內書內路徑的目的地存在（功能 12 步驟 2）
@@ -542,15 +517,16 @@ def test_dangling_book_path_in_an_arc_file_fires(tmp_path):
 def test_schema_and_placeholder_paths_are_not_destinations(tmp_path):
     """射程刻意窄（同 `outline-lint` 第 9 項）：不排除的話，一支完全合法的幕綱會
     因為引用了自己的 schema 而被報成目的地不存在。"""
-    index = INDEX + (
+    arc = ARC02 + (
         "\n> 依 `結構定義/幕綱.schema.md` 填寫；每個 arc 一支 `story/幕綱/arcNN.md`。\n"
     )
-    problems, stats = lint_report(_book(tmp_path, index, arc01=ARC01, arc02=ARC02))
+    problems, stats = lint_report(_book(tmp_path, arc01=ARC01, arc02=arc))
     assert problems == []
     assert stats.path_missing == 0
 
 
 def test_existing_book_paths_are_counted_not_reported(tmp_path):
     """覆蓋率行要能回答「我檢查了幾筆」——0 個問題不等於 0 筆檢查。"""
-    _, stats = lint_report(_book(tmp_path, arc01=ARC01, arc02=ARC02))
+    arc = ARC02 + "\n> 見 `story/01-大綱.md`。\n"
+    _, stats = lint_report(_book(tmp_path, arc01=ARC01, arc02=arc))
     assert stats.path_refs >= 1 and stats.path_missing == 0

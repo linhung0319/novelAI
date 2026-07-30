@@ -76,7 +76,7 @@ def test_legacy_absent_still_prints_a_line(tmp_path: Path):
 
 def test_legacy_present_prints_size_and_provenance(tmp_path: Path):
     """舊檔還在時要逐格印「這一格的機械來源是哪一支檔的哪一欄」（D3／A5 的驗收）。"""
-    report, stats = emit_beats(_book(tmp_path, arc01=ARC01, arc02=ARC02))
+    report, stats = emit_beats(_book(tmp_path, index=INDEX, arc01=ARC01, arc02=ARC02))
     assert len(stats.legacy) == 1 and stats.legacy[0][0] == "story/幕綱/_index.md"
     assert "舊檔：**在**" in report
     # 答不出來的那幾格要印出來，印出來才看得見它是源

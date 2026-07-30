@@ -37,7 +37,7 @@ from .constraints import (
     check_duplicates,
     parse_constraints,
 )
-from .fold import FoldError
+from .fold import FoldError, spine_path
 from .marks import BEAT_HEAD_RE, MARK_RE, REVEAL_TARGET_RE
 
 OBJECT_DIRNAME = "物件"
@@ -331,8 +331,13 @@ def unbuilt_arcs(book: Path) -> list[str]:
     arc 沒拆，那個名字很可能就在那裡面。沒有任何未拆 arc 可解釋時才是可疑點
     （`世界觀.schema.md` 檢查點的原文條件）。
     """
+    # **第五份 spine 讀取路徑**（2026-07-30 驗證輪階段 1b 才量到）：功能 12 記的是
+    # 「四份回退實作」（`beat_metrics`／`fact_projection`／`decision_projection`／
+    # `foreshadow_project` 各一份 `spine_path`），而這裡**直接硬編碼 `_index.md`**、
+    # 連回退函式都沒走，所以四份的盤點漏了它。同一個套件裡的 `fold.spine_path`
+    # 就在隔壁。**這正是「同形實作份數」那個指標量不到的那一種重複**——它不同形。
     d = book / "story" / "幕綱"
-    index = d / "_index.md"
+    index = spine_path(book)
     if not index.is_file():
         return []
     arcs: list[str] = []

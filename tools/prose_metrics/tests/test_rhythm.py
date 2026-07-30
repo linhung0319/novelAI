@@ -161,12 +161,21 @@ def test_thresholds_are_absolute_not_relative():
 
 _CORPUS = REPO / "examples"
 _KNOWN_BAD = REPO / "一世之尊"
-_CONTROL = REPO / "芯片巫師"
 _SIX = ["一世之尊", "詭秘之主", "極道天魔", "神秀之主", "從紅月開始", "我有一個修仙世界"]
 
+# 第二本生成書 `芯片巫師` 曾是**對照組**（另一本書、另一份風格檔、另一個文類，
+# 簽名一模一樣 ⇒ 病因不在風格檔）。**它的章節 2026-07-2x 被作者刪除**
+# （commit `a19bf0d`「只保留他們的 raw」），對照組因此永久消失——見本檔尾
+# `test_the_second_generated_book_is_gone`。
+#
+# **`skipif` 從此守它真正需要的東西**（2026-07-30 驗證輪階段 1d）。
+# 舊版檢查 `芯片巫師/` **資料夾**在不在（在，只剩 `raw/`），而測試要的是
+# `芯片巫師/chapters/`（不在）——於是它不是 skip，是 6 支長期紅測試，
+# 在 `known-red.toml` 躺了兩天。**守錯對象的 guard 比沒有 guard 更糟**：
+# 沒有 guard 至少壞得像壞的。
 needs_corpora = pytest.mark.skipif(
-    not (_CORPUS.is_dir() and _KNOWN_BAD.is_dir() and _CONTROL.is_dir()),
-    reason="回歸語料不在（本測試需要 repo 內的凍結 fixture）",
+    not ((_CORPUS / _SIX[0]).is_dir() and (_KNOWN_BAD / "chapters").is_dir()),
+    reason="回歸語料不在（本測試需要 examples/ 的六本 ＋ 一世之尊的 chapters/）",
 )
 
 
@@ -204,15 +213,6 @@ def test_known_bad_is_reported_on_every_arc():
 
 
 @needs_corpora
-def test_control_book_shows_the_same_signature():
-    """另一本書、另一份風格檔、另一個文類，簽名一模一樣——所以病因不在風格檔。"""
-    stats = _book_stats(_CONTROL)
-    assert {f.group for f in detect_rhythm(stats)} == {s.group for s in stats}
-    assert min(s.dash_density for s in stats) > 6.0
-    assert min(s.jolt_index for s in stats) > 1.5
-
-
-@needs_corpora
 def test_one_sentence_per_paragraph_is_the_corpus_norm():
     """句/段：六本 ≈1（段落就是句子），生成書 1.41–2.33——**第四項絕對門檻**。
 
@@ -221,7 +221,7 @@ def test_one_sentence_per_paragraph_is_the_corpus_norm():
     第二輪升為門檻——它是三項簽名之外唯一還有零重疊的量。
     """
     good = [s for b in _SIX for s in _corpus_stats(b)]
-    gen = _book_stats(_KNOWN_BAD) + _book_stats(_CONTROL)
+    gen = _book_stats(_KNOWN_BAD)
     assert max(s.sent_per_para for s in good) < SPP_CAP
     assert min(s.sent_per_para for s in gen) > SPP_CAP
 
@@ -235,7 +235,7 @@ def test_paragraph_density_never_fires_on_known_good(book):
 
 @needs_corpora
 def test_paragraph_density_fires_on_every_generated_group():
-    for book in (_KNOWN_BAD, _CONTROL):
+    for book in (_KNOWN_BAD,):
         stats = _book_stats(book)
         fired = {f.group for f in detect_rhythm(stats) if f.metric == "句/段"}
         assert fired == {s.group for s in stats}
@@ -266,7 +266,7 @@ def test_sentence_length_dispersion_does_not_separate():
         }
 
     good = [dispersion(s) for b in _SIX for s in _corpus_stats(b)]
-    gen = [dispersion(s) for s in _book_stats(_KNOWN_BAD) + _book_stats(_CONTROL)]
+    gen = [dispersion(s) for s in _book_stats(_KNOWN_BAD)]
     for axis in good[0]:
         floor = min(g[axis] for g in good)  # 不誤傷語料的下限最多只能訂到這裡
         assert min(x[axis] for x in gen) >= floor, f"{axis} 竟然分得開，回頭看檔頭那張表"
@@ -276,7 +276,7 @@ def test_sentence_length_dispersion_does_not_separate():
 def test_no_overlap_between_good_and_generated():
     """兩組之間沒有重疊區——絕對門檻因此成立，這是它與 drift.py 相對判準的分野。"""
     good = [s for b in _SIX for s in _corpus_stats(b)]
-    bad = _book_stats(_KNOWN_BAD) + _book_stats(_CONTROL)
+    bad = _book_stats(_KNOWN_BAD)
     assert max(s.dash_density for s in good) < min(s.dash_density for s in bad)
     assert max(s.jolt_index for s in good) < min(s.jolt_index for s in bad)
 
@@ -324,3 +324,46 @@ def test_thresholds_sit_in_the_gap():
     assert max(s.jolt_index for s in good) < JOLT_CAP < min(s.jolt_index for s in bad)
     assert max(s.sent_per_para for s in good) < SPP_CAP < min(s.sent_per_para for s in bad)
     assert max(s.echo_share for s in good) < ECHO_CAP
+
+
+# ---------------------------------------------------------------- 射程非空
+#
+# 兩支「射程非空」測試。它們針對的是 `設計原則.md` **E2 第七形態的鏡像**——
+# **測試是綠的，射程是空的**。上面那一整組回歸全部掛 `skipif`，而一個
+# 全部 skip 的檔案在 pytest 的輸出裡跟「都合格」長得幾乎一樣。
+
+
+def test_the_regression_corpora_scope_is_not_silently_empty():
+    """**這一組回歸真的有東西可跑**（不是全部 skip）。
+
+    這正是 `known-red.toml` 反對「把 guard 改成檢查 `chapters/`」的理由：
+    改對 guard 之後 6 支會變 skip，而 skip 是靜默的。答案不是不改 guard，
+    是**改對 guard ＋ 補一支說「射程空了」的測試**——這一支。
+    """
+    assert (_CORPUS / _SIX[0]).is_dir(), "examples/ 的六本語料不在，整組回歸沒有 known-good"
+    assert (_KNOWN_BAD / "chapters").is_dir(), "一世之尊/chapters/ 不在，整組回歸沒有生成組"
+    assert len(_book_stats(_KNOWN_BAD)) > 0, "一世之尊 掃出 0 個分段——生成組是空的"
+
+
+def test_the_second_generated_book_is_gone():
+    """**墓碑**：對照組（第二本生成書）的語料已不存在，而這件事要看得見。
+
+    `芯片巫師` 曾撐起一個獨立的論點——**另一本書、另一份風格檔、另一個文類，
+    節奏簽名一模一樣，所以病因不在風格檔**。它的章節在 commit `a19bf0d`
+    被作者刪除（「只保留他們的 raw」），那個論點從此沒有語料支撐，
+    對應的兩支測試（`test_control_book_shows_the_same_signature` 與
+    `test_exposition.py::test_control_group_not_falsely_reported`）
+    2026-07-30 隨之移除。
+
+    **這支測試是那兩支的墓碑，不是它們的替身。** 它擋的是「悄悄地少了一個論點」：
+    哪天 `芯片巫師/chapters/` 又長出來，這裡會紅，而紅字說的是
+    「對照組回來了，去把那兩支測試接回去」——不是「有東西壞了」。
+    """
+    control = REPO / "芯片巫師"
+    assert control.is_dir(), "芯片巫師/ 連資料夾都不在了——這支墓碑該一起刪"
+    assert not (control / "chapters").is_dir(), (
+        "芯片巫師/chapters/ 回來了：對照組語料重新存在。"
+        "請把 test_control_book_shows_the_same_signature 與 "
+        "test_exposition.py::test_control_group_not_falsely_reported 接回去"
+        "（git show a19bf0d^ 看被刪掉的內容），並移除這支墓碑。"
+    )

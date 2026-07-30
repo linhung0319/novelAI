@@ -38,6 +38,10 @@ EXIT_PROBLEMS = 1
 EXIT_LAYER_MISSING = 2
 
 _EMPTY_COVERAGE = "檢查範圍：掃了 0 支——這本書還沒有這一層（{reason}）"
+# **有這一層、但讀不動**（2026-07-30 驗證輪階段 1c）。與上一行**不是同一句話**：
+# 「還沒有這一層」是一種合法狀態，「有這一層而讀不動」是一個要修的問題。
+# 實測 `一世之尊` 在 spine 回退移除後正是後者——它有 11 支 arc 檔。
+_SCAN_FAILED_COVERAGE = "檢查範圍：掃了 0 支——這本書有這一層，但讀不動（見下）"
 
 
 def _force_utf8() -> None:
@@ -151,6 +155,10 @@ def main(argv: list[str] | None = None) -> int:
         print(_EMPTY_COVERAGE.format(reason=e))
         return EXIT_LAYER_MISSING
     except ScanError as e:
+        # **錯誤路徑上也要印覆蓋率行**（`設計原則.md` E2，2026-07-30 補）：在此之前
+        # 這條路 stdout **全空**，而一支印不出「我掃了幾筆」的工具，與一支被關掉的
+        # 工具在 log 上長得一樣。實測 `一世之尊` 移除 spine 回退後就落在這條路上。
+        print(_SCAN_FAILED_COVERAGE)
         print(f"掃描錯誤：{e}", file=sys.stderr)
         return EXIT_PROBLEMS
     except OSError as e:
@@ -194,6 +202,10 @@ def _emit(fn, book: Path) -> int:
         print(_EMPTY_COVERAGE.format(reason=e))
         return EXIT_LAYER_MISSING
     except ScanError as e:
+        # **錯誤路徑上也要印覆蓋率行**（`設計原則.md` E2，2026-07-30 補）：在此之前
+        # 這條路 stdout **全空**，而一支印不出「我掃了幾筆」的工具，與一支被關掉的
+        # 工具在 log 上長得一樣。實測 `一世之尊` 移除 spine 回退後就落在這條路上。
+        print(_SCAN_FAILED_COVERAGE)
         print(f"掃描錯誤：{e}", file=sys.stderr)
         return EXIT_CLEAN  # 投影不擋路：讀不到就說讀不到，不改變呼叫者的 exit code
     except OSError as e:
@@ -237,6 +249,10 @@ def lint_main(argv: list[str] | None = None) -> int:
         print(_EMPTY_COVERAGE.format(reason=e))
         return EXIT_LAYER_MISSING
     except ScanError as e:
+        # **錯誤路徑上也要印覆蓋率行**（`設計原則.md` E2，2026-07-30 補）：在此之前
+        # 這條路 stdout **全空**，而一支印不出「我掃了幾筆」的工具，與一支被關掉的
+        # 工具在 log 上長得一樣。實測 `一世之尊` 移除 spine 回退後就落在這條路上。
+        print(_SCAN_FAILED_COVERAGE)
         print(f"掃描錯誤：{e}", file=sys.stderr)
         return EXIT_PROBLEMS
     except OSError as e:
@@ -296,6 +312,10 @@ def ch_lint_main(argv: list[str] | None = None) -> int:
         print(_EMPTY_COVERAGE.format(reason=e))
         return EXIT_LAYER_MISSING
     except ScanError as e:
+        # **錯誤路徑上也要印覆蓋率行**（`設計原則.md` E2，2026-07-30 補）：在此之前
+        # 這條路 stdout **全空**，而一支印不出「我掃了幾筆」的工具，與一支被關掉的
+        # 工具在 log 上長得一樣。實測 `一世之尊` 移除 spine 回退後就落在這條路上。
+        print(_SCAN_FAILED_COVERAGE)
         print(f"掃描錯誤：{e}", file=sys.stderr)
         return EXIT_PROBLEMS
     except OSError as e:
@@ -358,6 +378,10 @@ def outline_lint_main(argv: list[str] | None = None) -> int:
         print(_EMPTY_COVERAGE.format(reason=e))
         return EXIT_LAYER_MISSING
     except ScanError as e:
+        # **錯誤路徑上也要印覆蓋率行**（`設計原則.md` E2，2026-07-30 補）：在此之前
+        # 這條路 stdout **全空**，而一支印不出「我掃了幾筆」的工具，與一支被關掉的
+        # 工具在 log 上長得一樣。實測 `一世之尊` 移除 spine 回退後就落在這條路上。
+        print(_SCAN_FAILED_COVERAGE)
         print(f"掃描錯誤：{e}", file=sys.stderr)
         return EXIT_PROBLEMS
     except OSError as e:
@@ -408,6 +432,10 @@ def structure_project_main(argv: list[str] | None = None) -> int:
         print(_EMPTY_COVERAGE.format(reason=e))
         return EXIT_LAYER_MISSING
     except ScanError as e:
+        # **錯誤路徑上也要印覆蓋率行**（`設計原則.md` E2，2026-07-30 補）：在此之前
+        # 這條路 stdout **全空**，而一支印不出「我掃了幾筆」的工具，與一支被關掉的
+        # 工具在 log 上長得一樣。實測 `一世之尊` 移除 spine 回退後就落在這條路上。
+        print(_SCAN_FAILED_COVERAGE)
         print(f"掃描錯誤：{e}", file=sys.stderr)
         return EXIT_PROBLEMS
     except OSError as e:

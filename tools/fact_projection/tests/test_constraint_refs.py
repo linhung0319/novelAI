@@ -16,7 +16,7 @@ def _book(tmp_path, rows: str = "| 口子開著 | 不得死、不得離位 | 幕
     book = tmp_path / "book"
     (book / "chapters").mkdir(parents=True)
     (book / "story" / "幕綱").mkdir(parents=True)
-    (book / "story" / "幕綱" / "_index.md").write_text(SPINE, encoding="utf-8")
+    (book / "story" / "幕綱" / "_順序.md").write_text(SPINE, encoding="utf-8")
     d = book / "story" / "物件"
     d.mkdir(parents=True)
     (d / "真觀.md").write_text(

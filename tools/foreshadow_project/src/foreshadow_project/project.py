@@ -72,41 +72,83 @@ def _pos(spine: dict[str, int], m: Mark) -> tuple[int, int]:
     return (spine[m.arc], m.beat)
 
 
-# spine 的落點（2026-07-28 功能 12 抉擇 2 A）：**新落點優先、舊落點回退**。
-# `全書順序：` 是 A1 源（作者的創作決定），2026-07-28 從索引檔搬進同層的 `_順序.md`
-# ——它原本與一支「視圖 ≡ 資料夾」的索引同居一檔（六問 Q0 的違反）。
-# 舊書照抉擇 8 A 不遷移，所以回退保留。
+# spine 的落點（2026-07-28 功能 12 抉擇 2 A；**回退 2026-07-30 移除**）。
 #
-# **「回退在覆蓋率行上是看得見的狀態」曾是 1/4 成立**（2026-07-28 功能 14 的 V9）：
-# 12 那一輪的承諾是四支工具都要讓回退可見，而只有 `beat-lint` 有 `spine_legacy` 欄
-# ——`fact-project`／`decision-project`／`foreshadow-project` **實作了回退但不印讀自
-# 哪裡**。一個看不見的回退與「這本書已經遷移完了」在輸出上完全相同。
-SPINE_FILES = ("_順序.md", "_index.md")
+# `全書順序：` 是作者的創作決定（哪一段先發生），沒有任何檔算得出來——它是 A1 源，
+# 而它原本住在一支被 `beat-lint` 當「視圖 ≡ 資料夾」驗的索引檔裡。一支檔同時裝
+# 「權威在自己身上的源」與「權威在別處的視圖」＝六問 Q0 的違反，所以 12 把它搬進
+# 同層的 `_順序.md`。
+#
+# **舊落點 `_index.md` 的回退（驗證輪階段 1c）移除。** 實測活用戶**只有 `一世之尊`**
+# ——`書本模板`／`驗證範例` 早就是 `_順序.md`，`harry_potter`／`gothic_witch`／
+# `芯片巫師` 沒有幕綱層。四份回退實作服務一本刻意不遷移的病例書。
+#
+# **它換成墓碑，不是換成靜默**：檔在就報「舊落點還在、2026-07-30 起不再讀」，
+# 並指出 `git mv` 那一行過去即可。依 `設計原則.md` A5，撤銷一個落點的身分要從
+# 機制看得出來——不讀又不報，會讓「這本書沒有 spine」與「這本書的 spine 住舊落點」
+# 變成同一句話。
+#
+# **回退活著的時候，這件事只有 1/4 成立**（功能 14 的 V9）：12 承諾四支工具都要讓
+# 回退可見，而只有 `beat-lint` 有 `spine_legacy` 欄。現在四支都印，因為墓碑就是輸出。
+SPINE_FILES = ("_順序.md",)
+RETIRED_SPINE_FILES = ("_index.md",)
 
 
 def spine_path(book: Path) -> Path:
+    """回 spine 檔的落點。**唯一落點**——不在時照樣回它，讓錯誤訊息指向該建的那支。"""
+    return book / "story" / "幕綱" / SPINE_FILES[0]
+
+
+def retired_spine_files(book: Path) -> list[Path]:
+    """還留在已廢除落點的 spine（`_index.md`）。**檔在就要說出來**（A5）。"""
     d = book / "story" / "幕綱"
-    for name in SPINE_FILES:
-        p = d / name
-        if p.is_file():
-            return p
-    return d / SPINE_FILES[0]
+    return [p for n in RETIRED_SPINE_FILES if (p := d / n).is_file()]
 
 
 def spine_note(book: Path) -> str:
-    """`spine 讀自 \\`X\\`` ——**走舊落點時要說出來**（功能 14，V9）。"""
+    """`spine 讀自 X` ——**舊落點還在時要說出來**（功能 14 V9；階段 1c 改墓碑）。"""
     p = spine_path(book)
-    legacy = "（**舊落點·回退**）" if p.name != SPINE_FILES[0] else ""
-    return f"spine 讀自 `{p.name}`{legacy}" if p.is_file() else "spine **找不到**"
+    if p.is_file():
+        return f"spine 讀自 `{p.name}`"
+    retired = retired_spine_files(book)
+    if retired:
+        return (
+            f"spine **找不到**（新落點 `{SPINE_FILES[0]}` 不在）；"
+            f"偵測到舊落點 `{retired[0].name}`——**2026-07-30 起不再讀它**，"
+            f"`git mv` 那一行過去即可"
+        )
+    return "spine **找不到**"
 
 
 def build(book: Path) -> Report:
     beats_dir = book / "story" / "幕綱"
     index = spine_path(book)
     if not index.is_file():
-        # **這是「還沒到那一層」，不是掃描錯誤**（2026-07-28 功能 14，抉擇 6 A）：
-        # 一本只有 `raw/` 的書本來就沒有幕綱。呼叫端據此回 exit 2 並照印覆蓋率行。
-        raise LayerMissing(f"找不到幕綱順序檔：{index}（舊書可能還住在 `_index.md`）")
+        # **兩種「找不到 spine」要分開**（2026-07-30 驗證輪階段 1c）：
+        #
+        # - 這本書**沒有幕綱層**（只有 `raw/`）→ `LayerMissing` → exit 2
+        #   「還沒到那一層」（2026-07-28 功能 14，抉擇 6 A）。
+        # - 這本書**有 11 支 arc 檔，只是 spine 住在已廢除的落點** → `ScanError`
+        #   → exit 1。回 exit 2 說「還沒有這一層」在這種書上**是假話**，
+        #   而假話比錯誤訊息難查——讀的人會以為那本書還沒開始拆幕。
+        #
+        # 這與 `fact_projection.sources.collect_events` 對舊單檔事實流做的判斷同形。
+        has_arcs = beats_dir.is_dir() and any(
+            _ARC_FILE_RE.match(p.stem) for p in beats_dir.glob("*.md")
+        )
+        retired = retired_spine_files(book)
+        if has_arcs or retired:
+            extra = (
+                f"。舊落點 `{retired[0].name}` 還在，但**2026-07-30 起不再讀它**"
+                f"——`git mv` 那一行過去即可"
+                if retired
+                else ""
+            )
+            raise ScanError(
+                f"這本書有幕綱層（{sum(1 for p in beats_dir.glob('*.md') if _ARC_FILE_RE.match(p.stem))}"
+                f" 支 arc 檔），但找不到順序檔 {index.name}{extra}"
+            )
+        raise LayerMissing(f"找不到幕綱順序檔：{index}")
     spine = parse_spine(index.read_text(encoding="utf-8"))
 
     scans: list[ArcScan] = []

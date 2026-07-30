@@ -26,7 +26,14 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from .refs import MISSING_HINT, format_missing, scan_md_refs
-from .scan import SPINE_FILES, ScanError, parse_spine, read_text, spine_path
+from .scan import (
+    SPINE_FILES,
+    ScanError,
+    parse_spine,
+    read_text,
+    retired_spine_files,
+    spine_path,
+)
 from .structure import EMPTY_VALUES, SKELETON_MARK, ArcStructure, arc_files, parse_book
 
 FIELDS = ("角色", "時空", "行動", "衝突", "結果", "前因", "伏筆", "結構階段")
@@ -46,9 +53,11 @@ _SPINE_RE = re.compile(r"全書順序：(.+)$")
 _TRAILING_PAREN_RE = re.compile(r"^(.+?)\s*[（(][^（()）]*[)）]\s*$")
 
 # 設計註的搬移目的地（`幕綱.schema.md`「設計註要搬走」）。
-# 2026-07-27（功能 04）`.co.md` 這個檔類廢除，正名 `裁決流.md`；舊名也吃
-# （`裁決流.schema.md` 沿革：更早的書可能仍是 `.co.md`）。
-DECISION_LOG = ("裁決流.md", "裁決流.co.md")
+# 2026-07-27（功能 04）`.co.md` 這個檔類廢除，正名 `裁決流.md`。
+# **舊名 2026-07-30（驗證輪階段 1c）從這個 tuple 移除**：實測 0 本書有 `.co.md`
+# 任何檔，而「目的地存在性」認舊名等於讓一支拿不到 `decision-lint` 的檔冒充目的地
+# ——E1 要的是「目的地存在」，不是「有個叫這名字的檔存在」。
+DECISION_LOG = ("裁決流.md",)
 
 # 測試執行紀錄（2026-07-28 功能 10 抉擇 3 A）。落點＝arc 檔**檔頭**的一行
 # `beat-test: 2026-07-24·0高3中3低`，解析在 `structure.parse_arc`。
@@ -71,15 +80,10 @@ TEST_RECORD_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})\s*[·・]\s*(\d+)高(\d+)中(
 # `beat-lint` 只讀 `全書順序：` 那一行，其餘 11,647 字元不看。
 BEAT_INDEX_NAME = "_index.md"
 BEAT_DIR_LABEL = "幕綱"
-# 列的形狀：`- arc01：幕001–幕009（號段 001–100）　起（…）`（`幕綱.schema.md`「索引檔」）
-_BEAT_INDEX_ROW_RE = re.compile(r"^-\s*(arc[0-9A-Za-z]+)\s*[：:]")
-_BEAT_SPAN_RE = re.compile(r"幕(\d+)\s*[–—－-]\s*幕(\d+)")
-# 選用結構公式那一行。**權威在大綱的 `## 選用結構公式`**（功能 11 定的家，
-# `outline-lint` 第 12 項守），本檔只准指路——見 `_check_index` 的第三段。
-_FORMULA_LINE_RE = re.compile(r"^-\s*選用結構公式\s*[：:]\s*(.*)$")
-# 指路＝帶一個指向大綱層的路徑指標。判準與 `outline-lint` 第 11 項「同卷其餘檔
-# 只准指路」同形（那一項驗的也是「提到它的那一行必須帶路徑指標」）。
-_OUTLINE_POINTER_RE = re.compile(r"(01-大綱\.md|大綱/[^\s`）)]+\.md|大綱/)")
+# 這三支解析索引列／幕號區間／選用公式行的 regex **2026-07-30 移除**（驗證輪階段
+# 1c／1d）：`_index.md` 廢除之後，本 lint 只驗它在不在，不再解析它的任何一行。
+# 那份「視圖 ≡ 資料夾」的重算仍然活著——它在 `beat-lint --emit` 裡，而那才是
+# 功能 12 給它的家（抉擇 4 C：誰重算誰印，同一行程式，結構上不可能漂）。
 
 # 檔內書內路徑的目的地存在性（`設計原則.md` E1「目的地承諾」推論）。
 # **這四個常數是 `outline.py` 第 9 項的最小複製**（套件內同層，但兩支 lint 的射程
@@ -117,29 +121,31 @@ class LintStats:
     object_files: int = 0
     test_records: int = 0
     test_records_bad: int = 0
-    # 幕綱索引（2026-07-28 功能 12）。**`index_span_missing` 要單獨印**：一列沒宣告
-    # 幕號範圍不是問題（schema 不強制），但「比對了幾列」與「幾列根本沒得比」是兩個
-    # 數字——只印前者就是用命中率冒充可用率（`設計原則.md` E2，06 補的推論）。
-    index_rows: int = 0
-    index_mismatch: int = 0
-    index_unordered: int = 0
-    index_spans: int = 0
-    index_span_mismatch: int = 0
-    index_span_missing: int = 0
-    formula_lines: int = 0
-    formula_no_pointer: int = 0
+    # 幕綱索引 `_index.md`（2026-07-28 功能 12 廢除）。**2026-07-30 起只剩一個
+    # 布林**：本項從「照舊比對」改成存在性檢查，那七個計數欄隨之消失——它們量的是
+    # 「一支已廢除的檔跟資料夾對不對得上」，而那個問題不該再被問（見 `_check_index`）。
+    # **0 也印**：覆蓋率行印「已廢除的 `_index.md`：已不在」，不是不印。
+    index_retired: bool = False
     path_refs: int = 0
     path_missing: int = 0
-    # spine 實際讀到哪一支檔（2026-07-28 功能 12 抉擇 2 A）。**要印出來**：
-    # 回退本身是一個要被看見的狀態，不是一句半真的相容承諾（功能 10／11 的教訓）。
+    # spine 讀到哪一支檔（2026-07-28 功能 12 抉擇 2 A）。**要印出來**：
+    # 落點本身是一個要被看見的狀態，不是一句半真的相容承諾（功能 10／11 的教訓）。
+    # `spine_legacy` 2026-07-30 起的語意變了——它不再是「這次走了回退」，
+    # 而是「**舊落點的檔還在，而工具已經不讀它了**」（墓碑）。**0 也印。**
     spine_file: str = ""
     spine_legacy: bool = False
     notes: list[str] = field(default_factory=list)
     hints: list[str] = field(default_factory=list)
 
     def render(self) -> str:
-        spine = f"spine 讀自 `{self.spine_file or '（找不到）'}`" + (
-            "（**舊落點·回退**）" if self.spine_legacy else ""
+        spine = (
+            f"spine 讀自 `{self.spine_file}`"
+            if self.spine_file
+            else f"spine **找不到**（新落點 `{SPINE_FILES[0]}` 不在）"
+        ) + (
+            "（**舊落點 `_index.md` 仍在·2026-07-30 起不讀**）"
+            if self.spine_legacy
+            else "（舊落點已不在）"
         )
         return (
             f"檢查範圍：{self.arcs} 支 arc／{self.beats} 幕／{self.refs} 條前因／"
@@ -148,10 +154,9 @@ class LintStats:
             f"（其中 {self.status_prose_rows} 列的伏筆名全書無標記·不入機械 diff）／"
             f"{self.promise_sections} 個承諾區／{self.exclusions} 條排除線／"
             f"{self.object_files} 支物件檔；"
-            f"索引 {self.index_rows} 列（不符資料夾 {self.index_mismatch}／"
-            f"列序非遞增 {self.index_unordered}／幕號範圍比對 {self.index_spans} 列"
-            f"·**不符 {self.index_span_mismatch}**·未宣告範圍 {self.index_span_missing}／"
-            f"選用公式行 {self.formula_lines} 行·**未指路 {self.formula_no_pointer}**）；"
+            f"已廢除的 `{BEAT_INDEX_NAME}`："
+            + ("**仍在**" if self.index_retired else "已不在")
+            + "；"
             f"{self.path_refs} 筆檔內書內路徑（**目的地不存在 {self.path_missing}**）；"
             f"{spine}；"
             f"{self.test_records}/{self.arcs} 支 arc 有 `beat-test` 紀錄"
@@ -184,27 +189,40 @@ def _check_spine(
     省下的是 133 字元，賭上的是系統宣稱了三個月的「arc 可亂序」自由度。見
     `docs/重構/02-待用構想.md`。
 
-    **回退可見**：舊書照抉擇 8 A 不遷移，所以 `_index.md` 仍讀得到；但覆蓋率行會
-    印實際讀的是哪一支，走回退時多報一行殘留（**只報不擋**）。系統在 10／11 罵過
-    「一句半真的相容承諾比沒有承諾更糟」——解法不是拒絕回退，是讓它可見。
+    **回退 2026-07-30（驗證輪階段 1c）移除，改成墓碑。** 2026-07-28～30 之間
+    `_index.md` 仍讀得到，而那正是「別讓它一直是提醒」的下場——提醒發了兩天，
+    唯一走回退的書一個字沒動，四份回退實作照樣活著。實測活用戶只有 `一世之尊`。
+    現在舊落點**不讀**，但**報**：墓碑那一格 0 也印，所以「已遷移」與「這支守衛
+    被關掉了」在輸出上分得開。
     """
     index = spine_path(book)
     where = f"幕綱/{index.name}"
-    stats.spine_file = index.name
+    # **只有真的讀到才記「讀自」**：舊版無條件寫檔名，於是新落點不存在時覆蓋率行
+    # 印「spine 讀自 `_順序.md`」而同一次輸出裡報「`_順序.md`：不存在」——
+    # 兩句話互相打臉，而其中一句是假的。
+    stats.spine_file = index.name if index.is_file() else ""
+    retired = retired_spine_files(book)
+    stats.spine_legacy = bool(retired)
     if not index.is_file():
-        problems.append(
+        detail = (
             f"幕綱/{SPINE_FILES[0]}：不存在"
             f"——「全書順序：」是四支工具共用的定序來源（`幕綱.schema.md`「順序檔」）"
         )
+        if retired:
+            detail += (
+                f"。**舊落點 `{retired[0].name}` 還在，但 2026-07-30 起四支工具都不讀它**"
+                f"——`全書順序：` 是 A1 源（arc 的故事順序是創作決定，沒有任何檔算得出來），"
+                f"而 `{retired[0].name}` 是一支被驗成「視圖 ≡ 資料夾」的索引，"
+                f"兩者同居一檔是六問 Q0 的違反。"
+                f"`git mv` 那一行過去即可（三行以內），這本書就會重新跑得動"
+            )
+        problems.append(detail)
         return
-    if index.name != SPINE_FILES[0]:
-        stats.spine_legacy = True
+    if retired:
         problems.append(
-            f"{where}：`全書順序：` 還住在舊落點——它是 A1 源"
-            f"（arc 的故事順序是創作決定，沒有任何檔算得出來），"
-            f"而 `{index.name}` 是一支被驗成「視圖 ≡ 資料夾」的索引。"
-            f"搬進同層的 `{SPINE_FILES[0]}`（三行以內）：`git mv` 那一行過去即可。"
-            f"**四支工具仍讀得到舊落點**，所以這是提醒不是停工——但別讓它一直是提醒"
+            f"幕綱/{retired[0].name}：舊落點還在（`全書順序：` 已於 2026-07-28 搬到 "
+            f"`{SPINE_FILES[0]}`，本書兩支都有）——**工具只讀新的**，"
+            f"舊的那一行不再有任何效力，刪掉以免兩份定序漂移"
         )
     text = read_text(index)
     try:
@@ -239,118 +257,37 @@ def _check_spine(
 def _check_index(
     book: Path, arcs: list[ArcStructure], stats: LintStats, problems: list[str]
 ) -> None:
-    """幕綱索引三項（2026-07-28 功能 12）：視圖 ≡ 資料夾／幕號範圍 ≡ 檔內 min·max／
-    列序遞增；外加「選用結構公式那一行只准指路」。
+    """幕綱索引 `_index.md` ＝**已廢除的 rollup**：只驗它在不在，不再照舊比對。
 
-    形狀照抄 `outline.py:_check_index`（大綱層第 3 項），**多一件事**：大綱的索引列
-    只有名稱與狀態，幕綱的索引列宣告了一個**可機械核對的區間**（`幕001–幕009`）。
-    那個區間的權威在 `arcNN.md` 自己的 `## 幕NNN` 標題，所以它是第 7 份「rollup
-    視圖 ≡ 資料夾」比對，也是**第一份把數值區間納入比對的**。
+    **2026-07-30（驗證輪階段 1c／1d）從「相容模式」改成存在性檢查。**
 
-    **這同時是投影器的核心**：`beat-lint --emit` 印的那一份，就是這裡為了比對而
-    算出來的那一份（抉擇 4 C：誰重算誰印，同一行程式，結構上不可能漂）。
+    功能 12（2026-07-28）廢除五支 rollup，而 `derived_sync.ABOLISHED_ROLLUPS` 的射程
+    只到 `.ai.md`（`check_book` 的 `rglob("*.ai.md")` 在定義上看不到 `.md`）。
+    那兩支 `.md`（`幕綱/_index.md`、`大綱/_index.md`）當時交給本 lint 與 `outline-lint`
+    的殘留偵測，**而實作出來的是「照舊比對」**——`功能報告/15` 明文交回這一筆。
 
-    實測一世之尊在此之前：arc 概覽對同名 `arcNN.md` 的 8-gram 保真率只有
-    4.2–35.8%，而**沒有任何東西會發現**（無視圖比對、無 hash、無 stamp）。
+    **照舊比對的實際後果**：工具對一支已廢除的檔報「你的視圖跟資料夾不一致」，
+    於是作者去**把它修好**——而修好一支已廢除的檔，就等於讓它永久合法
+    （`設計原則.md` **A5**：撤銷一支檔的身分必須從機制看得出來）。
+    這與 `ABOLISHED_ROLLUPS` 檔頭記的是同一句話，只是那裡守住了 `.ai.md`、
+    這裡漏了 `.md`。
+
+    所以現在：**檔在 → 報「已廢除，改跑 `beat-lint --emit`」；檔不在 → 什麼都不報**
+    （那是新書的正常狀態）。覆蓋率行照印墓碑那一格，**0 也印**。
     """
     index = book / "story" / BEAT_DIR_LABEL / BEAT_INDEX_NAME
     where = f"{BEAT_DIR_LABEL}/{BEAT_INDEX_NAME}"
-    # **視圖 ≡ 磁碟上有哪些 arc 檔，含骨架**（同 `_check_spine` 的 `present`）：
-    # 一支還沒拆幕的骨架仍然要有它的列，否則「這一段存在但還沒動工」與「這一段
-    # 不存在」在索引上看起來一樣。
-    folder = {a.arc for a in arcs}
     if not index.is_file():
-        return  # 不存在由 `_check_spine` 報（那一項先跑，訊息更準）
-    text = read_text(index)
-    if SKELETON_MARK in text:
-        stats.notes.append(f"{where}：骨架（`{SKELETON_MARK}`），視圖比對跳過")
         return
-
-    # 每 arc 的幕號區間——**用 `parse_book()` 已經算好的 beats，零額外解析**。
-    # **骨架不入比對**：它的 `## 幕NNN` 是佔位號，拿它當權威會把索引的正確值報成錯。
-    spans = {
-        a.arc: (min(b.number for b in a.beats), max(b.number for b in a.beats))
-        for a in arcs
-        if a.beats and not a.skeleton
-    }
-
-    rows: list[tuple[str, int, str]] = []  # (arc, lineno, 整列)
-    for i, raw in enumerate(text.splitlines(), start=1):
-        m = _BEAT_INDEX_ROW_RE.match(raw.strip())
-        if m:
-            rows.append((m.group(1), i, raw))
-    listed = [a for a, _, _ in rows]
-    stats.index_rows = len(rows)
-
-    # ---- 視圖 ≡ 資料夾（雙向）
-    missing = sorted(folder - set(listed))
-    extra = sorted(set(listed) - folder)
-    stats.index_mismatch = len(missing) + len(extra)
-    if missing:
-        problems.append(
-            f"{where}：{len(missing)} 支 arc 檔沒有列：{'、'.join(missing)}"
-            f"——索引是那個資料夾的視圖（`幕綱.schema.md`「索引檔」），"
-            f"而 spine 與它同居一檔：漏一列，`beat-sheet` 就看不到那一段存在"
-        )
-    if extra:
-        problems.append(
-            f"{where}：{len(extra)} 列指向不存在的 arc 檔：{'、'.join(extra)}"
-            f"——視圖 ≡ 資料夾（雙向）"
-        )
-
-    # ---- 幕號範圍 ≡ 檔內 min·max
-    for arc, lineno, raw in rows:
-        want = spans.get(arc)
-        if want is None:
-            continue  # 該 arc 還沒拆出幕號：索引可以先寫檔名列
-        m = _BEAT_SPAN_RE.search(raw)
-        if not m:
-            stats.index_span_missing += 1
-            continue  # 沒宣告區間不報——schema 不強制每列都寫（見覆蓋率行）
-        got = (int(m.group(1)), int(m.group(2)))
-        stats.index_spans += 1
-        if got != want:
-            stats.index_span_mismatch += 1
-            problems.append(
-                f"{where} 第 {lineno} 行：{arc} 宣告 幕{got[0]:03d}–幕{got[1]:03d}，"
-                f"而 {arc}.md 實際是 幕{want[0]:03d}–幕{want[1]:03d}"
-                f"——這一欄是視圖不是第二個家，機械來源是該檔的 `## 幕NNN` 標題"
-            )
-
-    # ---- 列序遞增（同 `outline-lint` 第 3 項：逆序的索引讓人以為那是「最近改過的」排序）
-    unordered = [
-        (listed[i - 1], listed[i]) for i in range(1, len(listed)) if listed[i] <= listed[i - 1]
-    ]
-    stats.index_unordered = len(unordered)
-    if unordered:
-        a, b = unordered[0]
-        problems.append(
-            f"{where}：列序非遞增 {len(unordered)} 處（第一處：{a} 之後是 {b}）"
-            f"——索引是視圖，序就是 arc 序。**故事順序不寫在這裡**，"
-            f"它是同層 `_順序.md` 的 `全書順序：`"
-        )
-
-    # ---- 選用結構公式那一行只准指路（2026-07-28 功能 12 步驟 4）
-    #
-    # 11 把選用公式的權威給了大綱的 `## 選用結構公式`（`outline-lint` 第 12 項守），
-    # 而實測**這一行是第三份**：310 字元，與大綱層 12 支檔的 8-gram 重疊只有 **10.7%**
-    # ——比 11 廢掉的 `結構.md` 那一份（16.6%）分歧得更厲害，且零守衛。
-    # **判準是路徑指標的有無，不是長度**：門檻是任意的（06 抉擇 5 A），指標不是。
-    for raw in text.splitlines():
-        m = _FORMULA_LINE_RE.match(raw.strip())
-        if not m:
-            continue
-        stats.formula_lines += 1
-        if not _OUTLINE_POINTER_RE.search(m.group(1)):
-            stats.formula_no_pointer += 1
-            problems.append(
-                f"{where}：`選用結構公式：` 那一行沒有指向大綱層的路徑指標"
-                f"——公式的權威是大綱的 `## 選用結構公式`"
-                f"（2026-07-28 功能 11 定的家，`outline-lint` 第 12 項守）。"
-                f"**本檔只指路、不複述**：寫成「見 `story/01-大綱.md` 的 "
-                f"`## 選用結構公式`」即可；集合差跑 `structure-project`"
-            )
-        break
+    stats.index_retired = True
+    problems.append(
+        f"{where}：**已廢除的 rollup 還在**（2026-07-28 功能 12 廢除五支 rollup）"
+        f"——全書視圖改跑 `beat-lint --emit`（同一份重算，不落檔），"
+        f"故事順序改住同層 `{SPINE_FILES[0]}` 的 `全書順序：`，"
+        f"選用結構公式的權威在大綱的 `## 選用結構公式`（`outline-lint` 第 12 項守）。"
+        f"**2026-07-30 起工具不再讀它的任何一行**——在此之前本項是「照舊比對」，"
+        f"而那會叫人去把一支已廢除的檔修好，修好就永久合法了（`設計原則.md` A5）"
+    )
 
 
 def _check_destinations(book: Path, stats: LintStats, problems: list[str]) -> None:

@@ -128,8 +128,8 @@ def check_chapter_scope(
     problems: list[str] = []
     checked: set[str] = set()
     for e in events:
-        if e.legacy or not e.origin:
-            continue  # 舊格式單檔沒有「所屬章」這回事
+        if not e.origin:
+            continue
         stem = e.origin.split("〔")[0]  # 去掉 ORPHAN_MARK
         meta = metas.get(stem)
         if meta is None or not meta.has_frontmatter:

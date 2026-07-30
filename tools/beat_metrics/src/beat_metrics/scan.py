@@ -147,32 +147,42 @@ def load_book(book: Path) -> list[ArcBeats]:
     if not files:
         raise LayerMissing(f"{d} 下沒有 arcNN.md")
 
-    order = _spine(spine_path(book))
+    order = _spine(spine_path(book), book)
     ranked = sorted(files, key=lambda a: (order.get(a, len(order)), a))
     return [scan_arc(files[a], a) for a in ranked]
 
 
-# spine 的落點（2026-07-28 功能 12 抉擇 2 A）。**新落點優先、舊落點回退。**
+# spine 的落點（2026-07-28 功能 12 抉擇 2 A；**回退 2026-07-30 移除**）。
 #
 # `全書順序：` 是作者的創作決定（哪一段先發生），沒有任何檔算得出來——它是 A1 源，
-# 而它原本住在一支被 `beat-lint` 當「視圖 ≡ 資料夾」驗的索引檔裡（`設計原則.md` A1
-# 同輪補的那句：有 lint 在驗它 ≡ 別的檔，那條 lint 就是一條 inbound 規則）。
-# 一支檔同時裝「權威在自己身上的源」與「權威在別處的視圖」＝六問 Q0 的違反。
+# 而它原本住在一支被 `beat-lint` 當「視圖 ≡ 資料夾」驗的索引檔裡。一支檔同時裝
+# 「權威在自己身上的源」與「權威在別處的視圖」＝六問 Q0 的違反，所以 12 把它搬進
+# 同層的 `_順序.md`。
 #
-# **回退不是靜默的**：`beat-lint` 的覆蓋率行印它實際讀到哪一支，舊落點還在時多印
-# 一行殘留。系統在功能 10／11 已經罵過「一句半真的相容承諾比沒有承諾更糟」——
-# 解法不是拒絕回退（病例書照抉擇 8 A 不遷移），是**讓回退可見**。
-SPINE_FILES = ("_順序.md", "_index.md")
+# **舊落點 `_index.md` 的回退（驗證輪階段 1c）移除。** 實測活用戶**只有 `一世之尊`**
+# ——`書本模板`／`驗證範例` 早就是 `_順序.md`，`harry_potter`／`gothic_witch`／
+# `芯片巫師` 沒有幕綱層。四份回退實作服務一本刻意不遷移的病例書。
+#
+# **它換成墓碑，不是換成靜默**：檔在就報「舊落點還在、2026-07-30 起不再讀」，
+# 並指出 `git mv` 那一行過去即可。依 `設計原則.md` A5，撤銷一個落點的身分要從
+# 機制看得出來——不讀又不報，會讓「這本書沒有 spine」與「這本書的 spine 住舊落點」
+# 變成同一句話。
+#
+# **回退活著的時候，這件事只有 1/4 成立**（功能 14 的 V9）：12 承諾四支工具都要讓
+# 回退可見，而只有 `beat-lint` 有 `spine_legacy` 欄。現在四支都印，因為墓碑就是輸出。
+SPINE_FILES = ("_順序.md",)
+RETIRED_SPINE_FILES = ("_index.md",)
 
 
 def spine_path(book: Path) -> Path:
-    """回實際要讀的 spine 檔。**兩個落點都不在時回新落點**，讓錯誤訊息指向該建的那支。"""
+    """回 spine 檔的落點。**唯一落點**——不在時照樣回它，讓錯誤訊息指向該建的那支。"""
+    return book / "story" / "幕綱" / SPINE_FILES[0]
+
+
+def retired_spine_files(book: Path) -> list[Path]:
+    """還留在已廢除落點的 spine（`_index.md`）。**檔在就要說出來**（A5）。"""
     d = book / "story" / "幕綱"
-    for name in SPINE_FILES:
-        p = d / name
-        if p.is_file():
-            return p
-    return d / SPINE_FILES[0]
+    return [p for n in RETIRED_SPINE_FILES if (p := d / n).is_file()]
 
 
 _SPINE_RE = re.compile(r"全書順序：(.+)$")
@@ -180,7 +190,7 @@ _ARC_TOKEN_RE = re.compile(r"arc[0-9A-Za-z]+")
 
 
 def parse_spine(text: str) -> dict[str, int]:
-    """`幕綱/_順序.md`（舊書：`_index.md`）的「全書順序」→ {arc: 排名}。
+    """`幕綱/_順序.md` 的「全書順序」→ {arc: 排名}。
 
     **這份解析的唯一真相在 `tools/fact_projection/src/fact_projection/fold.py:parse_spine`**；
     工具間零相依（所有 tools/*/pyproject.toml 皆 dependencies = []），故複製最小片段。
@@ -205,11 +215,19 @@ def parse_spine(text: str) -> dict[str, int]:
     raise ScanError("幕綱順序檔找不到可解析的『全書順序：』arc 序列")
 
 
-def _spine(index: Path) -> dict[str, int]:
+def _spine(index: Path, book: Path | None = None) -> dict[str, int]:
     if not index.is_file():
+        extra = ""
+        if book is not None and (retired := retired_spine_files(book)):
+            # **墓碑**：舊落點還在時要說出來，否則「這本書沒有 spine」與
+            # 「這本書的 spine 住在一個已經不讀的落點」會是同一句錯誤訊息。
+            extra = (
+                f"。舊落點 `{retired[0].name}` 還在，但**2026-07-30 起不再讀它**"
+                f"——`git mv` 那一行過去即可"
+            )
         raise ScanError(
             f"找不到幕綱順序檔：{index}"
-            f"（「全書順序：」是四支工具共用的定序來源；舊書可能還住在 `_index.md`）"
+            f"（「全書順序：」是四支工具共用的定序來源）{extra}"
         )
     return parse_spine(read_text(index))
 

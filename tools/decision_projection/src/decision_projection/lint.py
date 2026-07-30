@@ -65,16 +65,22 @@ class LintStats:
     targets: int = 0
     bad_targets: int = 0
     promoted: int = 0
+    retired_names: list[str] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
 
     def render(self) -> str:
         s = "有" if self.stream_exists else "**無**"
         q = "有" if self.pending_exists else "無"
+        # 舊名那一格 **0 也印**（E2）：「已不在」與「這支閘門沒在看」在輸出上必須
+        # 分得開，否則墓碑守衛被關掉的那天，輸出跟今天一模一樣。
+        retired = (
+            f"**{'、'.join(self.retired_names)} 仍在**" if self.retired_names else "已不在"
+        )
         return (
             f"檢查範圍：裁決流（{s}）{self.decisions} 列／"
             f"待裁決（{q}）{self.pending} 列；"
             f"標的 {self.targets} 個（{self.bad_targets} 個在書內找不到）；"
-            f"`已升為通則` {self.promoted} 列"
+            f"`已升為通則` {self.promoted} 列；舊名 `裁決流.co.md`：{retired}"
         )
 
 
@@ -168,7 +174,7 @@ def lint_report(book: Path) -> tuple[list[str], LintStats]:
 
     問題字串**一律以位置起頭**（`裁決流.md 第 N 行 …`），下游靠開頭分類。
     """
-    from .cli import resolve_pending, resolve_stream
+    from .cli import resolve_pending, resolve_stream, retired_stream_files
 
     problems: list[str] = []
     stats = LintStats()
@@ -177,6 +183,23 @@ def lint_report(book: Path) -> tuple[list[str], LintStats]:
         stream_path = resolve_stream(book)
     except FileNotFoundError:
         stream_path = None
+
+    # 舊名 `裁決流.co.md`（2026-07-27 功能 04 廢除該檔類，2026-07-30 移除讀取路徑）。
+    # **這一格是「移除讀取路徑」的另一半**：拿掉相容分支而不補墓碑，等於把
+    # 「這本書沒有裁決流」與「這本書的裁決流叫舊名、而且從此沒有任何工具讀它」
+    # 壓成同一句「無」——那是 `設計原則.md` A5 要擋的「撤銷看不出來」。
+    retired = retired_stream_files(book)
+    stats.retired_names = [p.name for p in retired]
+    for p in retired:
+        problems.append(
+            f"story/參照/{p.name}：**舊名 2026-07-30 起不再支援**"
+            f"（`.co.md` 這個檔類已於 2026-07-27 功能 04 廢除）。"
+            f"在此之前它是一句半真的相容承諾——`decision-project` 的查詢吃得動，"
+            f"而本閘門與 `derived-sync` 的掃描起點吃不動，"
+            f"於是這本書拿得到查詢、拿不到守衛。"
+            f"改名成 `裁決流.md` 即可，內容格式不變"
+        )
+
     pending_path = resolve_pending(book)
     stats.stream_exists = stream_path is not None
     stats.pending_exists = pending_path is not None

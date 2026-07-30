@@ -20,17 +20,20 @@ KINDS = (KIND_STATE, KIND_ANCHOR, KIND_CONSTRAINT)
 # 約束退場靠顯式解除，不加第 5 欄（見 結構定義/事實流.schema.md）。
 RELEASE_PREFIX = "（解除）"
 
-# **格式世代是逐行的，不是逐本書的。**
+# **「格式世代」欄 2026-07-30（驗證輪階段 1c）移除。**
 #
-# 2026-07-27 前，舊格式豁免是一個**整本書**的開關：`story/參照/` 底下只要存在一支
-# `狀態事件流.md`，純化三條與集合維度檢查就整本跳過，只印一行 stderr。實測後果＝
-# 一世之尊 206 個問題報 0，而且那 206 個一路長了 11 個 arc 沒人吭聲。
+# 它的沿革值得留著，因為它記錄了一個豁免被收窄兩次、最後歸零的完整過程：
 #
-# 現在世代跟著**那一行的來源**走：舊單檔事實流的行是 `legacy`，章 delta 的行是
-# `new`。差別只在**集合維度**（舊格式的 `知識前沿` 是自由 prose，那是刻意的）；
-# **純化三條對兩個世代一律照檢**——行長與夾帶是行本身的紀律，與它出生在哪一代無關。
-GEN_LEGACY = "legacy"
-GEN_NEW = "new"
+# 1. 2026-07-27 前，舊格式豁免是一個**整本書**的開關——`story/參照/` 底下只要存在
+#    一支 `狀態事件流.md`，純化三條與集合維度檢查就整本跳過，只印一行 stderr。
+#    實測後果：一世之尊 206 個問題報 0，而且那 206 個一路長了 11 個 arc 沒人吭聲。
+# 2. 2026-07-27 收窄成**逐行**：世代跟著那一行的來源走，差別只剩集合維度
+#    （舊格式的 `知識前沿` 是自由 prose）；純化三條兩代一律照檢。
+# 3. 2026-07-30 舊單檔事實流的**讀取路徑**移除（見 `sources.RETIRED_STREAM_NAMES`），
+#    於是 `legacy` 這個值**再也沒有生產者**——每一筆事件都出自章 delta。
+#
+# **一個沒有生產者的枚舉值，與一條永遠為真的 if 是同一件事。** 留著它只會讓下一個
+# 讀這段程式的人以為系統還吃兩種格式。事件的來源仍然說得出來——那是 `origin` 欄。
 
 
 class LayerMissing(FileNotFoundError):
@@ -56,17 +59,12 @@ class Event:
     name: str  # 狀態＝維度名；錨/約束＝〔〕內的名字
     content: str
     lineno: int
-    origin: str = ""  # 來源檔識別（ch0009／狀態事件流.md），供投影標注與報錯
+    origin: str = ""  # 來源檔識別（ch0009），供投影標注與報錯
     order: int = 0  # 跨檔全域序號；同位置的 tiebreak（取代單檔時代的 lineno）
-    generation: str = GEN_NEW  # 這一行屬哪個格式世代（見上 GEN_LEGACY 的說明）
 
     @property
     def released(self) -> bool:
         return self.content.startswith(RELEASE_PREFIX)
-
-    @property
-    def legacy(self) -> bool:
-        return self.generation == GEN_LEGACY
 
 
 # 位置從左端解析：幕NNN（arcAA）後第一個 · 為位置/實體分隔；實體之後（含名字內的 ·）全歸實體。
@@ -122,7 +120,6 @@ def parse_events(
     origin: str = "",
     start_order: int = 0,
     errors: list[str] | None = None,
-    generation: str = GEN_NEW,
 ) -> list[Event]:
     """解析事件行。
 
@@ -172,7 +169,6 @@ def parse_events(
                 lineno=i,
                 origin=origin,
                 order=start_order + len(events),
-                generation=generation,
             )
         )
     return events
@@ -181,33 +177,52 @@ def parse_events(
 _SPINE_RE = re.compile(r"全書順序：(.+)$")
 _ARC_TOKEN_RE = re.compile(r"arc[0-9A-Za-z]+")
 
-# spine 的落點（2026-07-28 功能 12 抉擇 2 A）：**新落點優先、舊落點回退**。
-# `全書順序：` 是 A1 源（作者的創作決定，沒有任何檔算得出來），2026-07-28 從索引檔
-# 搬進同層的 `_順序.md`——它原本與一支「視圖 ≡ 資料夾」的索引同居一檔。
-# 舊書照抉擇 8 A 不遷移，所以回退保留；**讓回退可見的責任在 `beat-lint`**。
-# **本檔是 `parse_spine` 的唯一真相**（其餘三支複製最小片段），這一段同理。
+# spine 的落點（2026-07-28 功能 12 抉擇 2 A；**回退 2026-07-30 移除**）。
 #
-# **「回退在覆蓋率行上是看得見的狀態」曾是 1/4 成立**（2026-07-28 功能 14 的 V9）：
-# 12 那一輪的承諾是四支工具都要讓回退可見，而只有 `beat-lint` 有 `spine_legacy` 欄
-# ——本支與 `decision-project`／`foreshadow-project` **實作了回退但不印讀自哪裡**。
-# 一個看不見的回退與「這本書已經遷移完了」在輸出上完全相同（見 `spine_note`）。
-SPINE_FILES = ("_順序.md", "_index.md")
+# `全書順序：` 是作者的創作決定（哪一段先發生），沒有任何檔算得出來——它是 A1 源，
+# 而它原本住在一支被 `beat-lint` 當「視圖 ≡ 資料夾」驗的索引檔裡。一支檔同時裝
+# 「權威在自己身上的源」與「權威在別處的視圖」＝六問 Q0 的違反，所以 12 把它搬進
+# 同層的 `_順序.md`。
+#
+# **舊落點 `_index.md` 的回退（驗證輪階段 1c）移除。** 實測活用戶**只有 `一世之尊`**
+# ——`書本模板`／`驗證範例` 早就是 `_順序.md`，`harry_potter`／`gothic_witch`／
+# `芯片巫師` 沒有幕綱層。四份回退實作服務一本刻意不遷移的病例書。
+#
+# **它換成墓碑，不是換成靜默**：檔在就報「舊落點還在、2026-07-30 起不再讀」，
+# 並指出 `git mv` 那一行過去即可。依 `設計原則.md` A5，撤銷一個落點的身分要從
+# 機制看得出來——不讀又不報，會讓「這本書沒有 spine」與「這本書的 spine 住舊落點」
+# 變成同一句話。
+#
+# **回退活著的時候，這件事只有 1/4 成立**（功能 14 的 V9）：12 承諾四支工具都要讓
+# 回退可見，而只有 `beat-lint` 有 `spine_legacy` 欄。現在四支都印，因為墓碑就是輸出。
+SPINE_FILES = ("_順序.md",)
+RETIRED_SPINE_FILES = ("_index.md",)
 
 
 def spine_path(book: Path) -> Path:
+    """回 spine 檔的落點。**唯一落點**——不在時照樣回它，讓錯誤訊息指向該建的那支。"""
+    return book / "story" / "幕綱" / SPINE_FILES[0]
+
+
+def retired_spine_files(book: Path) -> list[Path]:
+    """還留在已廢除落點的 spine（`_index.md`）。**檔在就要說出來**（A5）。"""
     d = book / "story" / "幕綱"
-    for name in SPINE_FILES:
-        p = d / name
-        if p.is_file():
-            return p
-    return d / SPINE_FILES[0]
+    return [p for n in RETIRED_SPINE_FILES if (p := d / n).is_file()]
 
 
 def spine_note(book: Path) -> str:
-    """`spine 讀自 \\`X\\`` ——**走舊落點時要說出來**（功能 14，V9）。"""
+    """`spine 讀自 X` ——**舊落點還在時要說出來**（功能 14 V9；階段 1c 改墓碑）。"""
     p = spine_path(book)
-    legacy = "（**舊落點·回退**）" if p.name != SPINE_FILES[0] else ""
-    return f"spine 讀自 `{p.name}`{legacy}" if p.is_file() else "spine **找不到**"
+    if p.is_file():
+        return f"spine 讀自 `{p.name}`"
+    retired = retired_spine_files(book)
+    if retired:
+        return (
+            f"spine **找不到**（新落點 `{SPINE_FILES[0]}` 不在）；"
+            f"偵測到舊落點 `{retired[0].name}`——**2026-07-30 起不再讀它**，"
+            f"`git mv` 那一行過去即可"
+        )
+    return "spine **找不到**"
 
 
 def parse_spine(text: str) -> dict[str, int]:
@@ -273,9 +288,8 @@ def project(
       逐筆套上去。這是「每筆 delta 只寫這一幕改變了什麼」得以成立的機制。
     - **純量維度**（其餘）與錨：序最新勝，逐字沿用原語意。
 
-    `set_dims` 預設空＝全部走覆蓋。**它只套在新格式的行上**（`generation`），
-    舊格式那幾行的 `知識前沿` 是自由 prose，折不成集合——這個判斷是**逐行**的，
-    不是整本書一個開關（見 `GEN_LEGACY` 的說明）。
+    `set_dims` 預設空＝全部走覆蓋。**2026-07-30 起它套在每一行上**——舊單檔
+    事實流的讀取路徑移除之後，「這一行折不成集合」這個豁免沒有生產者了。
 
     kinds=None 代表全開。active_only 剔除內容以「（解除）」起頭的 slot
     ——舊格式約束的退場靠顯式解除，見 結構定義/事實流.schema.md。
@@ -292,7 +306,7 @@ def project(
     for _p, e in kept:
         key = (e.entity, e.token)
         content, items = e.content, ()
-        if e.kind == KIND_STATE and e.name in set_dims and not e.legacy:
+        if e.kind == KIND_STATE and e.name in set_dims:
             where = f"{e.origin} 第 {e.lineno} 行" if e.origin else f"第 {e.lineno} 行"
             try:
                 merged = apply_ops(accum.get(key, []), parse_ops(e.content, e.name))

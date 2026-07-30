@@ -1,7 +1,7 @@
 import pytest
 from fact_projection.cli import format_projection, main
 from fact_projection.fold import parse_events, project
-from fact_projection.sources import collect_events, resolve_legacy_stream
+from fact_projection.sources import collect_events
 
 
 def _slots(target):
@@ -35,15 +35,25 @@ def test_format_orders_state_then_anchor_then_constraint():
     assert body[0].startswith("- 持有") and body[1].startswith("- 錨〔") and body[2].startswith("- 約束〔")
 
 
-def _make_book(tmp_path, stream_name="事實流.md", body=None):
+def _make_book(tmp_path, body=None):
+    """事實住 `chapters/chNNNN.ai.md` 的「## 本章事實」——**唯一落點**。
+
+    2026-07-30（驗證輪階段 1c）改：在此之前這份 fixture 把事實寫進
+    `story/參照/事實流.md`，於是**整個 `test_cli.py` 測的都是那條舊格式讀取路徑**
+    ——而那條路徑的活用戶只有 `一世之尊`（`設計原則.md` E2 第七形態的鏡像：
+    測試是綠的，射程是空的）。
+    """
     book = tmp_path / "book"
     (book / "story" / "參照").mkdir(parents=True)
     (book / "story" / "幕綱").mkdir(parents=True)
-    (book / "story" / "參照" / stream_name).write_text(
-        body or "# 事實流\n- 幕009（arcF）· 哈利 · 持有：斗篷遭沒收（此後無）\n",
+    (book / "chapters").mkdir(parents=True)
+    (book / "chapters" / "ch0001.md").write_text("正文\n", encoding="utf-8")
+    (book / "chapters" / "ch0001.ai.md").write_text(
+        "---\n對應幕: [幕001, 幕012]\n所屬arc: arcF\n---\n## 本章事實\n"
+        + (body or "- 幕009（arcF）· 哈利 · 持有：＋〔隱形斗篷〕\n"),
         encoding="utf-8",
     )
-    (book / "story" / "幕綱" / "_index.md").write_text(
+    (book / "story" / "幕綱" / "_順序.md").write_text(
         "- 全書順序：arcF（幕001–幕012）\n", encoding="utf-8"
     )
     return book
@@ -53,7 +63,7 @@ def test_main_reads_book_and_prints(tmp_path, capsys):
     book = _make_book(tmp_path)
     rc = main(["--book", str(book), "--as-of", "幕011（arcF）"])
     out = capsys.readouterr().out
-    assert rc == 0 and "沒收" in out and "as-of 幕011（arcF）" in out
+    assert rc == 0 and "隱形斗篷" in out and "as-of 幕011（arcF）" in out
 
 
 def test_main_bad_asof_format_returns_1(tmp_path, capsys):
@@ -76,29 +86,60 @@ def test_main_bad_kinds_returns_1(tmp_path, capsys):
     assert rc == 1 and "未知類型" in capsys.readouterr().err
 
 
-# ------------------------------------------------ 舊格式相容（既有書不遷移）
+# --------------------------- 舊單檔事實流：讀取路徑 2026-07-30 移除（驗證輪階段 1c）
+#
+# **本輪代價最大的一筆刪除。** 那條路徑的活用戶只有 `一世之尊`，而那本書的事實層
+# 覆蓋率是 **0**（93 章 0 章用 `## 本章事實`）——它的事實軸完全靠這條路徑活著。
+# 已拍板的前提：「`一世之尊/` 留原地，接受它從此跑不動」。
+# 代價要**被記錄**而不是被發現，所以刪除的另一半是墓碑。
 
-def test_legacy_prefers_new_name(tmp_path):
+
+def test_the_retired_single_file_stream_is_not_read(tmp_path):
+    """舊檔裡的事實**不再進投影**。"""
     book = _make_book(tmp_path)
-    (book / "story" / "參照" / "狀態事件流.md").write_text("# 舊檔\n", encoding="utf-8")
-    assert resolve_legacy_stream(book).name == "事實流.md"
+    (book / "story" / "參照" / "狀態事件流.md").write_text(
+        "- 幕003（arcF）· 哈利 · 位置：舊格式那筆\n", encoding="utf-8"
+    )
+    events, mode = collect_events(book)
+    assert mode == "retired"
+    assert not [e for e in events if "舊格式那筆" in e.content]
 
 
-def test_legacy_falls_back_to_older_name(tmp_path):
-    """一世之尊等既有書不遷移，仍須跑得動（見 事實流.schema.md 舊格式相容）。"""
-    book = _make_book(tmp_path, stream_name="狀態事件流.md")
-    assert resolve_legacy_stream(book).name == "狀態事件流.md"
-    rc = main(["--book", str(book), "--as-of", "幕011（arcF）"])
-    assert rc == 0
+def test_the_retired_stream_is_a_tombstone_not_silence(tmp_path, capsys):
+    """**留著一支沒有工具讀的檔比刪掉它危險**——作者以為那些事實還在生效。
+
+    形狀照抄 2026-07-27 對 `約束.co.md` 的處置（`RETIRED_CONSTRAINT_NAMES`）：
+    報成落點錯，不靜默忽略。
+    """
+    book = _make_book(tmp_path)
+    (book / "story" / "參照" / "狀態事件流.md").write_text(
+        "- 幕003（arcF）· 哈利 · 位置：舊格式那筆\n", encoding="utf-8"
+    )
+    notes: list[str] = []
+    collect_events(book, orphans=notes)
+    (hit,) = [n for n in notes if "狀態事件流.md" in n]
+    assert "2026-07-30 起不再讀" in hit
+    assert "本章事實" in hit and "沒有任何工具在讀" in hit
 
 
-def test_legacy_absent_returns_none(tmp_path):
-    book = tmp_path / "empty"
+def test_a_book_whose_only_facts_are_retired_is_not_called_layer_missing(tmp_path):
+    """**「還沒有這一層」與「這一層住在已廢除的落點」是兩件事。**
+
+    回 exit 2 說「還沒有這一層」會是假話——那本書有 93 章的事實，只是沒有人讀。
+    """
+    book = tmp_path / "old"
     (book / "story" / "參照").mkdir(parents=True)
-    assert resolve_legacy_stream(book) is None
+    (book / "story" / "參照" / "狀態事件流.md").write_text(
+        "- 幕003（arcF）· 哈利 · 位置：舊格式那筆\n", encoding="utf-8"
+    )
+    notes: list[str] = []
+    events, mode = collect_events(book, orphans=notes)  # 不 raise LayerMissing
+    assert events == [] and mode == "retired"
+    assert [n for n in notes if "狀態事件流.md" in n]
 
 
 def test_no_source_at_all_raises(tmp_path):
+    """射程非空的鏡像：真的什麼都沒有時，還是要回「還沒到那一層」。"""
     book = tmp_path / "empty"
     (book / "story" / "參照").mkdir(parents=True)
     with pytest.raises(FileNotFoundError, match="物件"):

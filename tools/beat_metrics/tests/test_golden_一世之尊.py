@@ -73,13 +73,23 @@ def test_the_case_book_is_still_red():
     assert sum("缺「## 本 arc 承諾」分區" in p for p in problems) == 10
     assert sum("疑似同一條伏筆的兩個名字" in p for p in problems) == 4
     assert sum("裁決流.md` 不存在" in p for p in problems) == 1
-    # 2026-07-28（功能 12）新增的兩筆：
-    #   ① `選用結構公式` 的**第三份**——310 字元，與大綱層 12 支檔的 8-gram 重疊
-    #      只有 10.7%（比 11 廢掉的 `結構.md` 那份 16.6% 分歧得更厲害），而它零守衛。
-    #   ② spine 還住在舊落點——病例書照抉擇 8 A 不遷移，所以這一筆會一直在。
-    #      **它是「回退可見」的活體證據**：四支工具照樣讀得到，而它不是靜默的。
-    assert sum("沒有指向大綱層的路徑指標" in p for p in problems) == 1
-    assert sum("還住在舊落點" in p for p in problems) == 1
+    # **2026-07-30（驗證輪階段 1c／1d）換掉的那兩筆。** 問題總數仍是 17，但其中
+    # 兩筆從「這支已廢除的檔內容不對」變成「這支已廢除的檔還在」：
+    #
+    #   舊 ①「`選用結構公式` 那一行沒有指向大綱層的路徑指標」
+    #   舊 ②「spine 還住在舊落點（**四支工具仍讀得到**）」
+    #        ↓
+    #   新 ①「`_順序.md` 不存在」＋墓碑指出舊落點還在、而工具已經不讀它
+    #   新 ②「`_index.md`：已廢除的 rollup 還在」
+    #
+    # **這正是這一輪要的形狀轉換**：從「工具安靜地容納舊格式」變成「工具大聲說
+    # 這本書是舊格式」。舊 ① 之所以消失不是因為它被修好了，是因為**它問錯了問題**
+    # ——對一支已廢除的檔挑內容毛病，等於叫人去把它修好，而修好就永久合法了
+    # （`設計原則.md` A5）。
+    assert sum("沒有指向大綱層的路徑指標" in p for p in problems) == 0
+    assert sum("還住在舊落點" in p for p in problems) == 0
+    assert sum("2026-07-30 起四支工具都不讀它" in p for p in problems) == 1
+    assert sum("已廢除的 rollup 還在" in p for p in problems) == 1
 
 
 def test_the_clean_baseline_is_also_pinned():
@@ -93,17 +103,21 @@ def test_the_clean_baseline_is_also_pinned():
     assert (stats.marks, stats.mark_names) == (18, 15)
     assert stats.status_rows == 53
     assert not [p for p in problems if "指向不存在的幕" in p or "重複——幕號" in p]
-    # 2026-07-28（功能 12）補的三項在這本書上**全部乾淨**，而那不是「沒接上」：
-    #   索引 11 列 ≡ 11 支 arc 檔，且 11 列全部宣告了幕號範圍、11/11 與檔內 min·max 相符；
-    #   80 筆檔內書內路徑 0 懸空——**含那 4 處 `參照/結構.md`**，因為病例書不遷移、
-    #   那支檔還在磁碟上（它會在遷移那天變成懸空，殘留偵測走 `structure-project` 第五節）。
-    assert (stats.index_rows, stats.index_mismatch, stats.index_unordered) == (11, 0, 0)
-    assert (stats.index_spans, stats.index_span_mismatch, stats.index_span_missing) == (11, 0, 0)
+    # 80 筆檔內書內路徑 0 懸空——**含那 4 處 `參照/結構.md`**，因為病例書不遷移、
+    # 那支檔還在磁碟上（它會在遷移那天變成懸空，殘留偵測走 `structure-project` 第五節）。
     assert (stats.path_refs, stats.path_missing) == (80, 0)
-    # spine 走回退，而**定序本身沒壞**（涵蓋率照驗、0 筆未涵蓋）——那正是
-    # 「回退可見」與「回退是錯的」的差別。
-    assert (stats.spine_file, stats.spine_legacy) == ("_index.md", True)
-    assert not [p for p in problems if "未涵蓋" in p or "沒有對應的" in p]
+    # **索引那七個計數欄 2026-07-30 移除**：它們量的是「一支已廢除的檔跟資料夾對不對
+    # 得上」，而那個問題不該再被問。剩下一個布林——**0 也印**（見 `render()`）。
+    assert stats.index_retired is True
+    # **`spine_file` 空字串是這本書現在的真相**：新落點 `_順序.md` 不在，而舊落點
+    # 不再讀。空字串與「讀自某支檔」分得開，正是這一欄存在的理由。
+    assert (stats.spine_file, stats.spine_legacy) == ("", True)
+    # **這一格是這一輪最貴的一筆**：拿掉回退之後，這本書的**定序沒了**——
+    # `beat-metrics`／`fact-project`／`foreshadow-project` 對它從此跑不動。
+    # 那是已拍板的代價（「`一世之尊/` 留原地，接受它從此跑不動」），
+    # 而代價要**被記錄**，不是被發現。`test_no_command_traceback_on_the_case_book`
+    # 釘住它降級成 exit ∈ {0,1}、不是 traceback。
+    assert "未涵蓋" not in "".join(problems)
 
 
 def test_coverage_line_admits_what_the_machine_cannot_see():

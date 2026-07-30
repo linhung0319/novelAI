@@ -39,7 +39,7 @@ def _book(tmp_path, chapters: dict[str, str] | None = None, entities=("少年", 
     (book / "chapters").mkdir(parents=True)
     (book / "story" / "幕綱").mkdir(parents=True)
     (book / "story" / "設定" / "角色").mkdir(parents=True)
-    (book / "story" / "幕綱" / "_index.md").write_text(SPINE, encoding="utf-8")
+    (book / "story" / "幕綱" / "_順序.md").write_text(SPINE, encoding="utf-8")
     (book / "story" / "幕綱" / "arc01.md").write_text(ARC01, encoding="utf-8")
     for name in entities:
         (book / "story" / "設定" / "角色" / f"{name}.md").write_text("略\n", encoding="utf-8")

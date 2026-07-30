@@ -56,7 +56,7 @@ ARC02 = """\
 def _book(tmp_path, *, arc03: str | None = None):
     book = tmp_path / "book"
     (book / "story" / "幕綱").mkdir(parents=True, exist_ok=True)  # 同一 test 可重建
-    (book / "story" / "幕綱" / "_index.md").write_text(INDEX, encoding="utf-8")
+    (book / "story" / "幕綱" / "_順序.md").write_text(INDEX, encoding="utf-8")
     (book / "story" / "幕綱" / "arc01.md").write_text(ARC01, encoding="utf-8")
     (book / "story" / "幕綱" / "arc02.md").write_text(ARC02, encoding="utf-8")
     if arc03 is not None:

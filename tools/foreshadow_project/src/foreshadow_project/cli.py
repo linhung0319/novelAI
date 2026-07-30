@@ -134,6 +134,10 @@ def main(argv: list[str] | None = None) -> int:
         print(f"檢查範圍：掃了 0 個 arc——這本書還沒有這一層（{e}）")
         return EXIT_LAYER_MISSING
     except ScanError as e:
+        # **錯誤路徑上也要印覆蓋率行**（`設計原則.md` E2，2026-07-30 補）。
+        # 在此之前這條路只往 stderr 吐一行，stdout **全空**——而一支印不出
+        # 「我掃了幾筆」的工具，與一支被關掉的工具在 log 上長得一樣。
+        print("檢查範圍：掃了 0 個 arc——這本書的幕綱層跑不動（見下）")
         print(f"投影錯誤：{e}", file=sys.stderr)
         return EXIT_PROBLEMS
     except OSError as e:

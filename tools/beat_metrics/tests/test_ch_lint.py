@@ -98,7 +98,7 @@ def _book(tmp_path, chapters=None, index_rows=None, arcs=None, style=True):
         )
     beats = tmp_path / "story" / "幕綱"
     beats.mkdir(parents=True)
-    (beats / "_index.md").write_text(INDEX, encoding="utf-8")
+    (beats / "_順序.md").write_text(INDEX, encoding="utf-8")
     for name, text in (arcs or {"arc01": ARC01, "arc02": ARC02}).items():
         (beats / f"{name}.md").write_text(text, encoding="utf-8")
 
@@ -266,7 +266,7 @@ def test_four_digit_beat_number_is_not_truncated(tmp_path):
         )
     }
     book = _book(tmp_path, ch, arcs={"arc11": arc11})
-    (book / "story" / "幕綱" / "_index.md").write_text(
+    (book / "story" / "幕綱" / "_順序.md").write_text(
         "# 幕綱索引\n\n- 全書順序：arc11\n", encoding="utf-8"
     )
     problems, stats = lint_report(book)

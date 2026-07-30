@@ -18,19 +18,57 @@ def _make_book(tmp_path, body=STREAM, name="裁決流.md"):
     return book
 
 
-def test_legacy_name_still_resolves(tmp_path):
-    """`.co.md` 這個檔類 2026-07-27 廢除（功能 04，依 `設計原則.md` A4），
-    但既有書不必為改名動書內檔（比照 就緒儀表.md / .ai.md 雙吃）。"""
+def test_the_retired_name_is_no_longer_read(tmp_path):
+    """**舊名 `裁決流.co.md` 的讀取路徑 2026-07-30 移除**（驗證輪階段 1c）。
+
+    2026-07-27（功能 04）廢除 `.co.md` 這個檔類之後，這裡曾保留「既有書不必為
+    改名動書內檔」的回退。實測活用戶 **0**——沒有任何一本書有 `.co.md` 任何檔。
+    而它是 `共同約定.md:42` 那條半真承諾的一半：**查詢吃得動、閘門吃不動**，
+    於是走舊名的書拿得到查詢、拿不到守衛，兩邊都印綠燈。
+    """
     book = _make_book(tmp_path, name="裁決流.co.md")
-    assert resolve_stream(book).name == "裁決流.co.md"
-    assert main(["--book", str(book)]) == 0
+    with pytest.raises(FileNotFoundError) as e:
+        resolve_stream(book)
+    assert "不再支援" in str(e.value) and "裁決流.md" in str(e.value)
 
 
-def test_new_name_wins_when_both_exist(tmp_path):
-    """新舊並存時取新名。**2026-07-27 前這個優先序是相反的**（`.co.md` 贏）。"""
+def test_removing_the_read_path_degrades_to_a_reported_problem(tmp_path):
+    """**降級成「被回報的問題」，不是 traceback**（階段 1c 硬驗收條件 1）。
+
+    `decision-project` 對舊名的書回 exit 2（這本書還沒有這一層），而訊息指名
+    舊檔在、要改成什麼——**不是 `FileNotFoundError` 冒到終端機**。
+    """
+    book = _make_book(tmp_path, name="裁決流.co.md")
+    assert main(["--book", str(book)]) == 2
+
+
+def test_the_retired_name_is_a_tombstone_not_silence(tmp_path, capsys):
+    """墓碑：檔在就報，而且 `decision-lint` 的覆蓋率行**0 也印**。
+
+    移除相容分支而不補墓碑，會把「這本書沒有裁決流」與「這本書的裁決流叫舊名、
+    從此沒有工具讀它」壓成同一句「無」——`設計原則.md` A5 要擋的正是這個。
+    """
+    from decision_projection.cli import lint_main
+
+    book = _make_book(tmp_path, name="裁決流.co.md")
+    rc = lint_main(["--book", str(book)])
+    out = capsys.readouterr().out
+    assert rc == 1
+    assert "裁決流.co.md 仍在" in out
+    assert "不再支援" in out
+
+
+def test_the_tombstone_line_prints_zero_too(tmp_path, capsys):
+    """射程非空的鏡像：沒有舊檔時那一格印「已不在」，不是不印。
+
+    只在檔還在時才印，就是把「已遷移」與「這支守衛被關掉了」變成同一個綠燈
+    （`設計原則.md` E2）。
+    """
+    from decision_projection.cli import lint_main
+
     book = _make_book(tmp_path)
-    (book / "story" / "參照" / "裁決流.co.md").write_text("# 舊檔\n", encoding="utf-8")
-    assert resolve_stream(book).name == "裁決流.md"
+    lint_main(["--book", str(book)])
+    assert "舊名 `裁決流.co.md`：已不在" in capsys.readouterr().out
 
 
 def test_main_prints_all(tmp_path, capsys):
@@ -109,7 +147,7 @@ SPINE = "- 全書順序：arc07（幕701–幕799）→ arc11（幕1001–幕109
 
 def _with_spine(book):
     (book / "story" / "幕綱").mkdir(parents=True, exist_ok=True)
-    (book / "story" / "幕綱" / "_index.md").write_text(SPINE, encoding="utf-8")
+    (book / "story" / "幕綱" / "_順序.md").write_text(SPINE, encoding="utf-8")
     return book
 
 

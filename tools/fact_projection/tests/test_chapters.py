@@ -20,7 +20,7 @@ def _book(tmp_path, chapters: dict[str, str]):
     book = tmp_path / "book"
     (book / "chapters").mkdir(parents=True)
     (book / "story" / "幕綱").mkdir(parents=True)
-    (book / "story" / "幕綱" / "_index.md").write_text(SPINE, encoding="utf-8")
+    (book / "story" / "幕綱" / "_順序.md").write_text(SPINE, encoding="utf-8")
     for name, body in chapters.items():
         (book / "chapters" / name).write_text(body, encoding="utf-8")
         if name.endswith(".ai.md"):

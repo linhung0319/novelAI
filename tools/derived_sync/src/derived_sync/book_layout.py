@@ -76,13 +76,18 @@ SETTINGS_DERIVED_LINE_CHARS = 800
 SETTINGS_SOURCE_LINE_CHARS = 600
 
 # 有投影工具可切片的檔——**檔案大小**不受規範（行長仍受）。含各代舊檔名。
-APPEND_LOG_STEMS = frozenset({"事實流", "狀態事件流", "裁決流", "裁決流.co"})
+# 2026-07-30（驗證輪階段 1c）移除 `裁決流.co`：`.co.md` 這個檔類 2026-07-27 廢除，
+# 而它的豁免活到今天；實測 0 本書有它。與 `sentinel.APPEND_LOG_STEMS` 一起收。
+APPEND_LOG_STEMS = frozenset({"事實流", "狀態事件流", "裁決流"})
 
 OUTLINE_FULL = ("story", "01-大綱.md")
 OUTLINE_DIR = ("story", "大綱")
 OUTLINE_INDEX = "_index.md"
 OUTLINE_RETIRED = "_已併入"
 BEAT_DIR = ("story", "幕綱")
+# `_順序.md` 是活的（spine，A1 源）；`_index.md` 是 2026-07-28 功能 12 廢除的 rollup。
+# **兩支都要量體積**（見 `beat_index`）——活的那一支才是新書會長大的那一支。
+BEAT_SPINE = "_順序.md"
 BEAT_INDEX = "_index.md"
 REFERENCE_DIR = ("story", "參照")
 CHAPTERS_DIR = "chapters"
@@ -179,9 +184,16 @@ def beat_arcs(book: Path, arc_re) -> list[Path]:
     return [p for p in sorted(d.glob("*.md")) if arc_re.match(p.stem)]
 
 
-def beat_index(book: Path) -> Path | None:
-    p = book.joinpath(*BEAT_DIR, BEAT_INDEX)
-    return p if p.is_file() else None
+def beat_index(book: Path) -> list[Path]:
+    """`story/幕綱/` 底下**非 arc 檔**的那幾支：`_順序.md`（活的）＋`_index.md`（已廢除）。
+
+    **2026-07-30（驗證輪階段 1c）從單支改成清單。** 在此之前它只認 `_index.md`，
+    而 2026-07-28 功能 12 把 spine 搬進 `_順序.md` 之後，**活的那一支反而沒有任何
+    體積哨兵**——這正是本函式當初補上時記的「第九次四份手寫路徑清單漏檔」，
+    **在同一個資料夾裡復發了一次，只是換了檔名**。
+    """
+    d = book.joinpath(*BEAT_DIR)
+    return [p for n in (BEAT_SPINE, BEAT_INDEX) if (p := d / n).is_file()]
 
 
 def reference_sources(book: Path) -> list[Path]:

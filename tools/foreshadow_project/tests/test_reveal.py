@@ -30,7 +30,7 @@ def _book(tmp_path, objects: dict[str, str] | None = None, settings: dict[str, s
     book = tmp_path / "book"
     beats = book / "story" / "幕綱"
     beats.mkdir(parents=True, exist_ok=True)
-    (beats / "_index.md").write_text(INDEX, encoding="utf-8")
+    (beats / "_順序.md").write_text(INDEX, encoding="utf-8")
     (beats / "arc01.md").write_text(ARC01, encoding="utf-8")
     if all_built:
         (beats / "arc02.md").write_text(ARC02, encoding="utf-8")

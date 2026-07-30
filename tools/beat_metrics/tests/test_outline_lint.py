@@ -22,7 +22,7 @@ def _book(tmp_path: Path) -> Path:
     (book / "story" / "大綱").mkdir(parents=True)
     (book / "story" / "幕綱").mkdir(parents=True)
     (book / "chapters").mkdir(parents=True)
-    (book / "story" / "幕綱" / "_index.md").write_text(
+    (book / "story" / "幕綱" / "_順序.md").write_text(
         "# 幕綱索引\n全書順序：arc01 → arc02\n", encoding="utf-8"
     )
     (book / "story" / "幕綱" / "arc01.md").write_text(
@@ -467,7 +467,7 @@ def test_registry_not_connected_means_the_check_is_skipped_not_passed(tmp_path: 
     book = tmp_path / "孤島" / "書"
     (book / "story" / "大綱").mkdir(parents=True)
     (book / "story" / "幕綱").mkdir(parents=True)
-    (book / "story" / "幕綱" / "_index.md").write_text(
+    (book / "story" / "幕綱" / "_順序.md").write_text(
         "# 幕綱索引\n全書順序：arc01\n", encoding="utf-8"
     )
     (book / "story" / "幕綱" / "arc01.md").write_text("# arc01\n\n## 本 arc 承諾\n", encoding="utf-8")
@@ -516,7 +516,7 @@ def test_registry_problems_surface_as_problems(tmp_path: Path):
     book = tmp_path / "書"
     (book / "story" / "大綱").mkdir(parents=True)
     (book / "story" / "幕綱").mkdir(parents=True)
-    (book / "story" / "幕綱" / "_index.md").write_text(
+    (book / "story" / "幕綱" / "_順序.md").write_text(
         "# 幕綱索引\n全書順序：arc01\n", encoding="utf-8"
     )
     (book / "story" / "幕綱" / "arc01.md").write_text("# arc01\n\n## 本 arc 承諾\n", encoding="utf-8")

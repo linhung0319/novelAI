@@ -23,10 +23,23 @@ from .parse import (
 # 依 `設計原則.md` A4：檔的第二個位元（程式會不會解析它）由**有沒有檢查器**
 # 承擔，不由副檔名承擔。補上 `decision-lint` 之後，裁決流與幕綱、物件檔同格
 # （可解析＋不被覆蓋＋有 lint），不需要獨立字位。
-# 舊名 `裁決流.co.md` 保留相容——既有書不必為改名動書內檔。
-STREAM_NAMES = ("裁決流.md", "裁決流.co.md")
-STREAM_NAME = STREAM_NAMES[0]
+STREAM_NAME = "裁決流.md"
 PENDING_NAME = "待裁決.md"
+
+# **舊名 `裁決流.co.md` 的讀取路徑 2026-07-30（驗證輪階段 1c）移除。**
+#
+# 它是 `共同約定.md:42` 那條「**一句半真的相容承諾**」的來源：查詢（本支的
+# `resolve_stream` ＋ `parse._segments` 的後綴剝除）吃得動舊名，而 `decision-lint`
+# 與 `derived-sync` 的掃描起點只認 `.md`／`.ai.md`。**半真的承諾比沒有承諾更糟**
+# ——舊名的書拿得到查詢、拿不到守衛，而兩者的輸出都是綠的。
+#
+# 實測活用戶 **0**：全 repo（5 本書）沒有任何一支 `裁決流.co.md`，也沒有任何一支
+# `裁決流.md` 以外的命名。這條路徑從補上的那天起就沒有被任何真實語料走過。
+#
+# **改成墓碑**（不是靜默移除）：檔在就報「舊名已不支援」並指出改名動作。依
+# `設計原則.md` A5，撤銷一支檔的身分要從機制看得出來——靜默不讀等於把「這本書
+# 沒有裁決流」與「這本書的裁決流叫舊名」變成同一句話。
+RETIRED_STREAM_NAMES = ("裁決流.co.md",)
 
 
 # ---------------------------------------------------------------- 輸出與 exit 契約
@@ -49,13 +62,25 @@ def _force_utf8() -> None:
             stream.reconfigure(encoding="utf-8")
 
 
+def retired_stream_files(book: Path) -> list[Path]:
+    """還留在已廢除命名的裁決流（`裁決流.co.md`）。**檔在就要說出來**（A5）。"""
+    ref = book / "story" / "參照"
+    return [p for n in RETIRED_STREAM_NAMES if (p := ref / n).is_file()]
+
+
 def resolve_stream(book: Path) -> Path:
     ref = book / "story" / "參照"
-    for name in STREAM_NAMES:
-        p = ref / name
-        if p.is_file():
-            return p
-    raise FileNotFoundError(f"找不到 {ref / STREAM_NAME}（舊名 {STREAM_NAMES[1]} 亦可）")
+    p = ref / STREAM_NAME
+    if p.is_file():
+        return p
+    retired = retired_stream_files(book)
+    if retired:
+        raise FileNotFoundError(
+            f"找不到 {p}，但 {retired[0].name} 在——**舊名 2026-07-30 起不再支援**"
+            f"（`.co.md` 這個檔類已於 2026-07-27 功能 04 廢除）。"
+            f"改名成 {STREAM_NAME} 即可，內容格式不變"
+        )
+    raise FileNotFoundError(f"找不到 {p}")
 
 
 def resolve_pending(book: Path) -> Path | None:

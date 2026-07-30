@@ -134,11 +134,17 @@ def test_summarize_preserves_group_order(tmp_path):
 
 _KNOWN_GOOD = REPO / "examples" / "一世之尊"
 _KNOWN_BAD = REPO / "一世之尊"
-_CONTROL = REPO / "芯片巫師"
 
+# 對照組 `芯片巫師` 的章節已被作者刪除（commit `a19bf0d`）——墓碑與理由在
+# `test_rhythm.py::test_the_second_generated_book_is_gone`（那裡有完整說明，
+# 這裡不複述；**一個論點一支墓碑，不是每個檔各抄一份**）。
+#
+# **`skipif` 從此守它真正需要的東西**（2026-07-30 驗證輪階段 1d）：舊版檢查
+# `芯片巫師/` **資料夾**在不在（在，只剩 `raw/`），而測試要的是它的 `chapters/`
+# ——於是它不是 skip，是一支長期紅測試。
 needs_corpora = pytest.mark.skipif(
-    not (_KNOWN_GOOD.is_dir() and _KNOWN_BAD.is_dir() and _CONTROL.is_dir()),
-    reason="回歸語料不在（本測試需要 repo 內的凍結 fixture）",
+    not (_KNOWN_GOOD.is_dir() and (_KNOWN_BAD / "chapters").is_dir()),
+    reason="回歸語料不在（本測試需要 examples/一世之尊 ＋ 一世之尊的 chapters/）",
 )
 
 
@@ -166,13 +172,15 @@ def test_known_bad_is_reported():
     assert any(l == "ch0080" and "擺清楚" in t for l, t in hits)
 
 
-@needs_corpora
-def test_control_group_not_falsely_reported():
-    _, stats, findings = _scan(load_book_chapters(_CONTROL))
-    assert findings == []
-    assert [round(s.density, 2) for s in stats] == sorted(
-        (round(s.density, 2) for s in stats), reverse=True
-    )  # 遞減，不是漂移
+def test_the_control_group_scope_is_not_silently_empty():
+    """**射程非空**：這一組回歸真的有東西可跑，不是全部 skip。
+
+    對照組（`芯片巫師`）那一支 2026-07-30 移除——它的語料已被作者刪除，
+    墓碑在 `test_rhythm.py::test_the_second_generated_book_is_gone`。
+    剩下的兩支靠 `_KNOWN_GOOD`／`_KNOWN_BAD`，這裡釘住它們兩個都在。
+    """
+    assert _KNOWN_GOOD.is_dir(), "examples/一世之尊 不在——known-good 那一半是空的"
+    assert (_KNOWN_BAD / "chapters").is_dir(), "一世之尊/chapters/ 不在——known-bad 那一半是空的"
 
 
 @needs_corpora

@@ -103,18 +103,31 @@ def load_vocab(book: Path) -> list[str]:
 
 
 _ARC_FM_RE = re.compile(r"^所屬arc:\s*(\S+)", re.MULTILINE)
-_ARC_OLD_RE = re.compile(r"^-\s*所屬\s*arc[：:]\s*(\S+)", re.MULTILINE)
+
+# 章的 arc 歸屬**只有一個落點**：`chNNNN.ai.md` 的 front-matter `所屬arc:`
+# （`章節.schema.md`，`ch-lint` 第 2 項守）。
+#
+# **舊格式的第二條路（正文源 `.md` 內嵌 `- 所屬 arc：`）2026-07-30（驗證輪階段 1c）
+# 移除。** 實測活用戶 **0**：5 本書的正文源沒有一支用那個寫法，唯一命中的檔是
+# `site/test-fixtures/oldbook/chapters/ch01.md`——那是**另一個產品**（閱讀網站建置器）
+# 的 fixture，由 `site/build.test.js` 使用，本工具從來讀不到它。
+# 這條分支唯一的用戶是它自己的兩支測試（`設計原則.md` E2 第七形態的鏡像：
+# **測試是綠的，射程是空的**）。
+UNTAGGED = "（未標 arc）"
 
 
 def _arc_of(md: Path) -> str:
-    """章→arc。新版讀 chNNNN.ai.md front-matter，舊版讀 .md 內嵌 bullet。"""
+    """章→arc。**唯一落點**＝`chNNNN.ai.md` front-matter 的 `所屬arc:`。
+
+    讀不到就回 `（未標 arc）`——它是一個**會出現在輸出裡的分組名**，不是靜默預設值。
+    整本書都落進這一組時，`load_book_chapters` 另外印一行說出原因（E2）。
+    """
     ai = md.parent / f"{md.stem}.ai.md"
     if ai.exists():
         m = _ARC_FM_RE.search(ai.read_text(encoding="utf-8"))
         if m:
             return m.group(1).strip()
-    m = _ARC_OLD_RE.search(md.read_text(encoding="utf-8", errors="replace"))
-    return m.group(1).strip() if m else "（未標 arc）"
+    return UNTAGGED
 
 
 def load_book_chapters(book: Path) -> list[Chapter]:

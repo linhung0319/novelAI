@@ -68,9 +68,13 @@ jobs:
           uv run --project tools/meta_lint python - <<'PY'
           import glob, sys, tomllib, xml.etree.ElementTree as ET
 
+          # `.get` 而非 `[...]`：**清單清空是正常狀態**（2026-07-30 起就是 0 筆），
+          # 而 `KeyError` 會讓「沒有已知紅」變成一次 CI 崩潰。
           expected = {
-              t["test"] for t in tomllib.load(open("tools/meta_lint/known-red.toml", "rb"))["known_red"]
+              t["test"]
+              for t in tomllib.load(open("tools/meta_lint/known-red.toml", "rb")).get("known_red", [])
           }
+          print(f"已知紅清單：{len(expected)} 支（0 也印）")
           red = set()
           for f in glob.glob("junit-*.xml"):
               for case in ET.parse(f).getroot().iter("testcase"):

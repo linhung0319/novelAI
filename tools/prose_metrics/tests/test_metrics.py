@@ -3,6 +3,7 @@ from prose_metrics.drift import Finding, detect, summarize
 from prose_metrics.metrics import (
     Chapter,
     MetricsError,
+    UNTAGGED,
     chapter_metrics,
     group_sort_key,
     load_book_chapters,
@@ -132,11 +133,48 @@ def test_load_book_chapters_maps_arc_from_ai_md(tmp_path):
     assert load_book_chapters(book)[0].group == "arc07"
 
 
-def test_load_book_chapters_falls_back_to_inline_arc(tmp_path):
+def test_the_inline_arc_fallback_is_gone(tmp_path):
+    """**舊格式的第二條路 2026-07-30 移除**（驗證輪階段 1c）。
+
+    正文源內嵌 `- 所屬 arc：` 曾是 `chNNNN.ai.md` front-matter 之外的第二個落點。
+    實測活用戶 **0**——5 本書的正文源沒有一支用它；全 repo 唯一命中的檔在
+    `site/test-fixtures/`（**另一個產品**的 fixture，本工具讀不到）。
+    這條分支唯一的用戶是這支測試自己：**測試是綠的，射程是空的**（E2 第七形態的鏡像）。
+    """
     book = tmp_path / "book"
     (book / "chapters").mkdir(parents=True)
     (book / "chapters" / "ch01.md").write_text("- 所屬 arc：arc03\n\n正文", encoding="utf-8")
-    assert load_book_chapters(book)[0].group == "arc03"
+    assert load_book_chapters(book)[0].group == UNTAGGED
+
+
+def test_untagged_chapters_are_reported_not_silent(tmp_path, capsys):
+    """降級成「被回報的」，不是靜默預設值（階段 1c 硬驗收條件 1）。
+
+    一本書全落進 `（未標 arc）` 與「這本書只有一個 arc」在分組欄上長得一樣，
+    所以覆蓋率行要說出「幾章讀不到」。
+    """
+    from prose_metrics.cli import main
+
+    book = tmp_path / "book"
+    (book / "chapters").mkdir(parents=True)
+    (book / "chapters" / "ch01.md").write_text("- 所屬 arc：arc03\n\n少年走了。\n", encoding="utf-8")
+    main(["--book", str(book)])
+    out = capsys.readouterr().out
+    assert "1 章讀不到" in out and "不再讀" in out
+
+
+def test_the_arc_coverage_line_prints_zero_too(tmp_path, capsys):
+    """射程非空的鏡像：全部讀得到時也印那一行（E2，**0 也印**）。"""
+    from prose_metrics.cli import main
+
+    book = tmp_path / "book"
+    (book / "chapters").mkdir(parents=True)
+    (book / "chapters" / "ch0001.md").write_text("少年走了。\n", encoding="utf-8")
+    (book / "chapters" / "ch0001.ai.md").write_text(
+        "---\ngenerated-from: x\n所屬arc: arc07\n---\n", encoding="utf-8"
+    )
+    main(["--book", str(book)])
+    assert "（0 章讀不到）" in capsys.readouterr().out
 
 
 def test_missing_chapters_dir_raises(tmp_path):

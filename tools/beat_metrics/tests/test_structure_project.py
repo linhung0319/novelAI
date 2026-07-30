@@ -83,7 +83,7 @@ def _book(tmp_path: Path, arc: str = ARC_OK, full: str = FULL, root: bool = True
         plant_package_root(tmp_path)
     book = tmp_path / "書"
     (book / "story" / "幕綱").mkdir(parents=True)
-    (book / "story" / "幕綱" / "_index.md").write_text(
+    (book / "story" / "幕綱" / "_順序.md").write_text(
         "# 幕綱索引\n全書順序：arc01\n", encoding="utf-8"
     )
     (book / "story" / "幕綱" / "arc01.md").write_text(arc, encoding="utf-8")
@@ -230,7 +230,7 @@ def test_a_new_cycle_in_the_next_arc_is_not_out_of_order(tmp_path: Path):
     (book / "story" / "幕綱" / "arc02.md").write_text(
         ARC_OK.replace("# arc01", "# arc02").replace("幕00", "幕10"), encoding="utf-8"
     )
-    (book / "story" / "幕綱" / "_index.md").write_text(
+    (book / "story" / "幕綱" / "_順序.md").write_text(
         "# 幕綱索引\n全書順序：arc01 → arc02\n", encoding="utf-8"
     )
     report, stats = project(book)

@@ -53,8 +53,13 @@ def test_object_lint_output_matches_golden(request):
 
 
 def test_the_convergence_still_holds():
-    """**收斂是會壞的東西。** `fact-lint` 在這本書上報 206 筆，而 `object-lint`
-    該印 0 筆——用 `in` 比對會讓那 206 筆的修法提示把它們全撈回來。"""
+    """**收斂是會壞的東西。** `object-lint` 該印 0 筆物件類問題，而 `fact-lint`
+    在同一本書上不是 0——用 `in` 比對會讓 `fact-lint` 那些修法提示全撈回來。
+
+    **2026-07-30：`fact-lint` 那一側從 206 筆變成 1 筆**（舊單檔事實流的讀取路徑
+    移除，見 `test_golden_一世之尊.py` 檔頭）。這一支要驗的是**收斂**，不是那個
+    數字——所以改成「非 0，且其中沒有一筆是物件類」。
+    """
     problems, _ = lint_report(BOOK)
-    assert len(problems) == 206
+    assert problems, "fact-lint 對病例書一筆都不報＝收斂測試失去對照組"
     assert [p for p in problems if _is_object_problem(p)] == []

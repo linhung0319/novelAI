@@ -18,6 +18,7 @@ from .metrics import (
     Chapter,
     LayerMissing,
     MetricsError,
+    UNTAGGED,
     chapter_metrics,
     load_book_chapters,
     load_plain_chapters,
@@ -313,6 +314,26 @@ def main(argv: list[str] | None = None) -> int:
     except OSError as e:
         print(f"讀取失敗：{e}", file=sys.stderr)
         return EXIT_PROBLEMS
+
+    # **arc 歸屬讀不到時要說出來**（2026-07-30 驗證輪階段 1c）。
+    #
+    # 移除舊格式的第二條路（正文源內嵌 `- 所屬 arc：`）之後，讀不到就整章落進
+    # `（未標 arc）`。那是一個會出現在分組欄的標籤，但**分組欄長什麼樣沒有人會
+    # 起疑**——一本書全落同一組，看起來就像「這本書只有一個 arc」。
+    # 這一行讓「沒標」與「只有一個 arc」分得開（`設計原則.md` E2）。**0 也印**。
+    if args.book:
+        untagged = sum(1 for c in chapters if c.group == UNTAGGED)
+        print(
+            f"（資訊）arc 歸屬：{len(chapters) - untagged}/{len(chapters)} 章讀自 "
+            f"`chNNNN.ai.md` 的 `所屬arc:`"
+            + (
+                f"；**{untagged} 章讀不到**（落進 `{UNTAGGED}`）——"
+                "舊格式的正文源內嵌 `- 所屬 arc：` 2026-07-30 起不再讀，"
+                "跑 `ch-lint` 看那幾章缺什麼"
+                if untagged
+                else "（0 章讀不到）"
+            )
+        )
 
     # 借來的詞彙表屬於**另一套語料**：拿 A 書的角色名去量 B 書，覆蓋率天生不足，
     # 「在場角色／獨白章」會系統性偏低。那是誤用，不是漂移，故整組停用。

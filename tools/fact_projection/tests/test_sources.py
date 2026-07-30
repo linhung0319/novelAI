@@ -51,7 +51,7 @@ def _book(
     (book / "chapters").mkdir(parents=True)
     (book / "story" / "參照").mkdir(parents=True)
     (book / "story" / "幕綱").mkdir(parents=True)
-    (book / "story" / "幕綱" / "_index.md").write_text(SPINE, encoding="utf-8")
+    (book / "story" / "幕綱" / "_順序.md").write_text(SPINE, encoding="utf-8")
     for name, body in (chapters or {}).items():
         (book / "chapters" / name).write_text(body, encoding="utf-8")
         # 每支衍生檔都要有正文源，否則會被（正確地）報成孤兒
@@ -249,18 +249,25 @@ def test_lint_always_reports_what_it_checked_even_when_clean(tmp_path, capsys):
     assert lint_main(["--book", str(book)]) == 0
     out = capsys.readouterr().out
     assert "1 支章 delta" in out
-    assert "1 筆事實行（新格式 1·舊格式 0）" in out
+    assert "1 筆事實行" in out
     assert "1 支物件檔" in out and "1 條約束" in out
 
 
-def test_stats_count_both_generations_separately(tmp_path):
+def test_stats_count_only_what_was_actually_read(tmp_path):
+    """**2026-07-30：`新格式 N·舊格式 M` 併成一個數。**
+
+    舊單檔的讀取路徑移除之後「舊格式 M」恆為 0，而一個恆為 0 的計數欄看起來像
+    一個還在量的指標。舊檔還在的書由墓碑那一行說，不由一個假的計數欄說。
+    """
     book = _book(
         tmp_path,
         chapters={"ch0001.ai.md": _ch("- 幕002（arc01）· 少年 · 持有：＋〔舊劍〕")},
         legacy_stream="- 幕003（arc01）· 少年 · 位置：舊格式那筆\n",
     )
-    _, stats = lint_report(book)
-    assert (stats.fact_lines_new, stats.fact_lines_legacy) == (1, 1)
+    problems, stats = lint_report(book)
+    assert stats.fact_lines == 1  # 只有章 delta 那一筆
+    assert "舊格式" not in stats.render()
+    assert [p for p in problems if "狀態事件流.md" in p and "2026-07-30 起不再讀" in p]
 
 
 # ------------------------------------------------------------ delta 純化
@@ -357,22 +364,33 @@ def test_plain_set_dimension_names_are_not_cross_checked(tmp_path):
     assert lint(book) == []
 
 
-def test_legacy_book_prose_is_not_linted_for_ops(tmp_path):
-    """一世之尊刻意不遷移——舊格式的自由 prose 不該被新語法報一整本。"""
+def test_a_retired_stream_is_reported_once_not_linted_line_by_line(tmp_path):
+    """**舊檔只換來一筆墓碑，不再逐行套新語法**（2026-07-30 驗證輪階段 1c）。
+
+    在此之前這裡驗的是「舊格式的自由 prose 不該被新語法報一整本」——那個豁免
+    現在由「根本不讀它」承擔，比一條 `if e.legacy: continue` 誠實：
+    工具說的是「我沒有讀這支檔」，不是「我讀了但放它過」。
+    """
     book = _book(
         tmp_path,
         legacy_stream="- 幕002（arc01）· 少年 · 知識前沿：得知信物存在，尚不知其真正用途\n",
     )
-    assert lint(book) == []
+    (problem,) = lint(book)
+    assert "狀態事件流.md" in problem and "2026-07-30 起不再讀" in problem
+    assert "知識前沿" not in problem  # 沒有逐行套新語法
 
 
 # --------------------------------------- 世代是逐行的，不是整本書一個開關（V6）
 
-def test_generation_is_per_line_not_per_book(tmp_path):
-    """混格式的書：舊那行的集合維度豁免，**同一本書裡新章那行照檢**。
+def test_a_retired_stream_does_not_mute_the_chapters(tmp_path):
+    """**舊檔的存在不影響章 delta 照檢**——這條紀律撐過了兩次收窄。
 
-    2026-07-27 前 `collect_events` 遇到舊單檔就 early-return，於是新章的 delta
-    連讀都沒讀到——一支檔的存在與否決定整本書要不要跑檢查（實測 206 → 0）。
+    - 2026-07-27 前：`collect_events` 遇到舊單檔就 early-return，於是新章的 delta
+      連讀都沒讀到——一支檔的存在與否決定整本書要不要跑檢查（實測 206 → 0）。
+    - 2026-07-27～30：兩個來源合流，世代逐行判。
+    - 2026-07-30 起：舊檔不讀了，**而它仍然不能讓章 delta 靜音**。
+
+    三個版本的實作完全不同，這一條不變量沒變過：**一支舊檔不該關掉別人的檢查。**
     """
     book = _book(
         tmp_path,
@@ -382,24 +400,39 @@ def test_generation_is_per_line_not_per_book(tmp_path):
         legacy_stream="- 幕003（arc01）· 少年 · 知識前沿：舊格式的自由 prose\n",
     )
     events, mode = collect_events(book)
-    assert mode == "legacy"
-    assert len(events) == 2  # 兩個來源合流，不是二選一
+    assert mode == "retired"
+    assert [e.origin for e in events] == ["ch0001"]  # 舊那行不進，章 delta 照進
     problems = lint(book)
-    assert len(problems) == 1
-    assert "ch0001 第" in problems[0] and "集合運算" in problems[0]
+    assert [p for p in problems if "ch0001 第" in p and "集合運算" in p]
 
 
-def test_purity_applies_to_legacy_lines_too(tmp_path):
-    """純化三條是**行本身**的紀律，跟它出生在哪一代無關。
+def test_purity_no_longer_has_a_real_corpus_case(tmp_path):
+    """**純化三條的唯一真實語料病例隨讀取路徑一起離場了——這一支釘住那個代價。**
 
-    那 206 筆全部出自舊格式那支檔——豁免它就等於豁免掉唯一的實測病例。
+    那 206 筆（行長 52 ＋ 括號 110 ＋ 夾帶 44）全部出自 `一世之尊` 的舊單檔。
+    不讀那支檔，`fact-lint` 就量不到它們。
+
+    **它們沒有變成靜默**：`derived-sync check` 的成長哨兵仍量那支檔的行
+    （`sentinel.APPEND_LOG_STEMS` 仍含 `狀態事件流`）。所以純化三條在 `fact-lint`
+    這一側**射程變成只有章 delta**，而章 delta 目前全 repo 0 支有內容
+    （`harry_potter` 會是第一本，階段 2）。
+
+    這支測試在射程回來的那天要改：有真實語料之後，改成釘那份語料。
     """
     book = _book(
         tmp_path,
         legacy_stream="- 幕002（arc01）· 少年 · 位置：" + "字" * 250 + "\n",
     )
     (problem,) = lint(book)
-    assert "250 字" in problem and "狀態事件流.md" in problem
+    assert "250 字" not in problem  # 舊檔的行長不再由 fact-lint 量
+    assert "2026-07-30 起不再讀" in problem
+
+    # 而**同一條規則對章 delta 照常生效**——規則沒被刪，只是射程換了。
+    book2 = _book(
+        tmp_path / "b2",
+        chapters={"ch0001.ai.md": _ch("- 幕002（arc01）· 少年 · 位置：" + "字" * 250)},
+    )
+    assert [p for p in lint(book2) if "250 字" in p]
 
 
 # ------------------------------------------------------------ 孤兒衍生檔（洞 b）
@@ -490,17 +523,19 @@ def test_bom_prefixed_files_still_parse(tmp_path):
 
 
 @pytest.mark.parametrize("mode_file", ["事實流.md", "狀態事件流.md"])
-def test_both_legacy_stream_names_are_read(tmp_path, mode_file):
-    """舊單檔的兩種命名都吃，而且**不再蓋掉章 delta**——兩邊合流。"""
+def test_neither_retired_stream_name_is_read(tmp_path, mode_file):
+    """**兩種舊命名的讀取路徑 2026-07-30 都移除**（驗證輪階段 1c）。
+
+    章 delta 照讀，舊檔那一行不進投影——而舊檔的存在會換來一筆墓碑。
+    """
     book = _book(
         tmp_path, chapters={"ch0001.ai.md": _ch("- 幕002（arc01）· 少年 · 持有：＋〔舊劍〕")}
     )
     (book / "story" / "參照" / mode_file).write_text(
         "- 幕003（arc01）· 少年 · 位置：舊格式那筆\n", encoding="utf-8"
     )
-    events, mode = collect_events(book)
-    assert mode == "legacy"
-    assert [(e.origin, e.generation) for e in events] == [
-        (mode_file, "legacy"),
-        ("ch0001", "new"),
-    ]
+    notes: list[str] = []
+    events, mode = collect_events(book, orphans=notes)
+    assert mode == "retired"
+    assert [e.origin for e in events] == ["ch0001"]
+    assert [n for n in notes if mode_file in n and "2026-07-30 起不再讀" in n]

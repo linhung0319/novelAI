@@ -200,9 +200,14 @@ def select_pending(rows: list[Pending], target: str | None = None) -> list[Pendi
 
 
 def _segments(path: str) -> list[str]:
-    """正規化成路徑分段：去掉 `.md`／`.ai.md`／`.co.md` 與頭尾斜線。"""
+    """正規化成路徑分段：去掉 `.md`／`.ai.md` 與頭尾斜線。
+
+    **`.co.md` 2026-07-30（驗證輪階段 1c）從這裡移除。** 它是 `共同約定.md:42`
+    那條半真承諾的另一半：標的比對剝得掉舊後綴，而掃描起點認不得——同一份資料，
+    查詢說「找到了」、閘門說「沒有這一層」。實測 0 本書用過 `.co.md` 任何檔。
+    """
     p = path.strip().strip("/")
-    for suffix in (".ai.md", ".co.md", ".md"):
+    for suffix in (".ai.md", ".md"):
         if p.endswith(suffix):
             p = p[: -len(suffix)]
             break
@@ -261,32 +266,52 @@ def select(
     return out
 
 
-# spine 的落點（2026-07-28 功能 12 抉擇 2 A）：**新落點優先、舊落點回退**。
-# `全書順序：` 是 A1 源（作者的創作決定），2026-07-28 從索引檔搬進同層的 `_順序.md`
-# ——它原本與一支「視圖 ≡ 資料夾」的索引同居一檔（六問 Q0 的違反）。
-# 舊書照抉擇 8 A 不遷移，所以回退保留。
+# spine 的落點（2026-07-28 功能 12 抉擇 2 A；**回退 2026-07-30 移除**）。
 #
-# **「回退在覆蓋率行上是看得見的狀態」曾是 1/4 成立**（2026-07-28 功能 14 的 V9）：
-# 12 那一輪的承諾是四支工具都要讓回退可見，而只有 `beat-lint` 有 `spine_legacy` 欄
-# ——本支與 `fact-project`／`foreshadow-project` **實作了回退但不印讀自哪裡**。
-# 一個看不見的回退與「這本書已經遷移完了」在輸出上完全相同。
-SPINE_FILES = ("_順序.md", "_index.md")
+# `全書順序：` 是作者的創作決定（哪一段先發生），沒有任何檔算得出來——它是 A1 源，
+# 而它原本住在一支被 `beat-lint` 當「視圖 ≡ 資料夾」驗的索引檔裡。一支檔同時裝
+# 「權威在自己身上的源」與「權威在別處的視圖」＝六問 Q0 的違反，所以 12 把它搬進
+# 同層的 `_順序.md`。
+#
+# **舊落點 `_index.md` 的回退（驗證輪階段 1c）移除。** 實測活用戶**只有 `一世之尊`**
+# ——`書本模板`／`驗證範例` 早就是 `_順序.md`，`harry_potter`／`gothic_witch`／
+# `芯片巫師` 沒有幕綱層。四份回退實作服務一本刻意不遷移的病例書。
+#
+# **它換成墓碑，不是換成靜默**：檔在就報「舊落點還在、2026-07-30 起不再讀」，
+# 並指出 `git mv` 那一行過去即可。依 `設計原則.md` A5，撤銷一個落點的身分要從
+# 機制看得出來——不讀又不報，會讓「這本書沒有 spine」與「這本書的 spine 住舊落點」
+# 變成同一句話。
+#
+# **回退活著的時候，這件事只有 1/4 成立**（功能 14 的 V9）：12 承諾四支工具都要讓
+# 回退可見，而只有 `beat-lint` 有 `spine_legacy` 欄。現在四支都印，因為墓碑就是輸出。
+SPINE_FILES = ("_順序.md",)
+RETIRED_SPINE_FILES = ("_index.md",)
 
 
 def spine_path(book: Path) -> Path:
+    """回 spine 檔的落點。**唯一落點**——不在時照樣回它，讓錯誤訊息指向該建的那支。"""
+    return book / "story" / "幕綱" / SPINE_FILES[0]
+
+
+def retired_spine_files(book: Path) -> list[Path]:
+    """還留在已廢除落點的 spine（`_index.md`）。**檔在就要說出來**（A5）。"""
     d = book / "story" / "幕綱"
-    for name in SPINE_FILES:
-        p = d / name
-        if p.is_file():
-            return p
-    return d / SPINE_FILES[0]
+    return [p for n in RETIRED_SPINE_FILES if (p := d / n).is_file()]
 
 
 def spine_note(book: Path) -> str:
-    """`spine 讀自 \\`X\\`` ——**走舊落點時要說出來**（功能 14，V9）。"""
+    """`spine 讀自 X` ——**舊落點還在時要說出來**（功能 14 V9；階段 1c 改墓碑）。"""
     p = spine_path(book)
-    legacy = "（**舊落點·回退**）" if p.name != SPINE_FILES[0] else ""
-    return f"spine 讀自 `{p.name}`{legacy}" if p.is_file() else "spine **找不到**"
+    if p.is_file():
+        return f"spine 讀自 `{p.name}`"
+    retired = retired_spine_files(book)
+    if retired:
+        return (
+            f"spine **找不到**（新落點 `{SPINE_FILES[0]}` 不在）；"
+            f"偵測到舊落點 `{retired[0].name}`——**2026-07-30 起不再讀它**，"
+            f"`git mv` 那一行過去即可"
+        )
+    return "spine **找不到**"
 
 
 def parse_spine(text: str) -> dict[str, int]:

@@ -54,8 +54,9 @@ READINESS_FILE = "就緒.md"
 # 廢除的舊檔（兩種命名都認）。留著它＝`設計原則.md` A5 的「撤銷要從檔案系統看得
 # 出來」沒有兌現：內容還在、身分卻已經被一句話撤銷了。
 LEGACY_FILES = ("就緒儀表.md", "就緒儀表.ai.md")
-# 日誌的家（04 蓋好的）。舊名一併吃，同 `sentinel.DESTINATIONS`。
-DECISION_LOG = ("裁決流.md", "裁決流.co.md")
+# 日誌的家（04 蓋好的）。**舊名 `裁決流.co.md` 2026-07-30（驗證輪階段 1c）移除**
+# ——同 `sentinel.DESTINATIONS`／`beat_metrics.lint.DECISION_LOG`（三處一起收）。
+DECISION_LOG = ("裁決流.md",)
 
 SECTIONS = ("產物軸 × 深度成熟度", "就緒清單")
 DEPTHS = ("粗", "大綱", "幕綱", "正文")

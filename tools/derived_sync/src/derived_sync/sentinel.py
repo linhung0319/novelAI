@@ -112,7 +112,9 @@ _PAREN_RE = re.compile(r"（[^（）]*）")
 # `story/參照/` 底下那些「檔可以很大、但一行不可再切」的檔（有投影工具切它們）。
 # 2026-07-27 移除 `約束`／`約束.co`：那個落點已廢除（約束搬進 story/物件/<名>.md 的
 # 「## 不得寫成什麼」）。還留著那支檔的書由 `fact-lint` 報成落點錯，不是在這裡量行長。
-APPEND_LOG_STEMS = frozenset({"事實流", "狀態事件流", "裁決流", "裁決流.co"})
+# 2026-07-30（驗證輪階段 1c）移除 `裁決流.co`：**同一個形狀，只是晚了三天**——
+# `.co.md` 這個檔類 2026-07-27 就廢了，而它的豁免活到今天。實測 0 本書有它。
+APPEND_LOG_STEMS = frozenset({"事實流", "狀態事件流", "裁決流"})
 
 
 @dataclass(frozen=True)
@@ -299,8 +301,10 @@ def oversized_sources(
     # 五類都不同**：這支檔一開始就只該裝「每支 arc 一列」，而實測 18 行裡 11 行是 arc
     # 概覽散文（平均 969 字元、最長 1,949），另有一行 652 字元的檔頭沿革與一行 310
     # 字元的選用結構公式複本——**三種東西，三個不同的家，一支檔**。
-    bi = beat_index(book)
-    if bi is not None:
+    # **2026-07-30：`beat_index` 從單支改成清單**——`_順序.md`（活的）＋`_index.md`
+    # （已廢除）。在此之前只量後者，於是 2026-07-28 搬家之後**活的那一支沒有體積
+    # 哨兵**：同一個「手寫路徑清單漏檔」在同一個資料夾裡復發，只是換了檔名。
+    for bi in beat_index(book):
         st.count("幕綱索引")
         size = _size(bi)
         if size > limit:
@@ -488,8 +492,7 @@ def long_lines(
     # **hint 要另立一個 set，不能靠 limit 判**——400 已經同時給設定層 rollup、
     # `chapters/_index.ai.md` 與 `大綱/_index.md` 用，limit 分不出病徵。
     beat_index_targets: set[Path] = set()
-    bi = beat_index(book)
-    if bi is not None:
+    for bi in beat_index(book):
         targets.append((bi, rollup_limit))
         beat_index_targets.add(bi)
 
@@ -646,9 +649,12 @@ def bloated_fact_lines(
     return out
 
 
-# 各 hint 指定的搬移目的地。舊名一併吃（既有書不必為改名動書內檔）。
+# 各 hint 指定的搬移目的地。
+# **舊名 `裁決流.co.md` 2026-07-30（驗證輪階段 1c）移除**：實測 0 本書有它，而讓
+# 一支拿不到 `decision-lint` 的檔冒充目的地，正是 E1 要擋的「箭頭指向空氣」的變形
+# ——只是這次箭頭指向的是一支存在但沒有守衛的檔。
 DESTINATIONS: dict[str, tuple[str, ...]] = {
-    "story/參照/裁決流.md": ("story/參照/裁決流.md", "story/參照/裁決流.co.md"),
+    "story/參照/裁決流.md": ("story/參照/裁決流.md",),
     "story/參照/待裁決.md": ("story/參照/待裁決.md",),
     "story/物件/": ("story/物件",),
 }

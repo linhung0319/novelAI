@@ -19,6 +19,7 @@ from .fold import (
     Slot,
     parse_spine,
     project,
+    retired_spine_files,
     spine_note,
     spine_path as _spine_path,
 )
@@ -59,8 +60,34 @@ def _force_utf8() -> None:
 
 _SOURCE_DESC = {
     "chapters": "衍生自章 delta＋物件檔的約束",
-    "legacy": "含舊格式單檔事實流的行（逐行判世代）",
+    # `retired` ＝這本書還留著一支 2026-07-26 前的單檔事實流。**它的內容不在這份
+    # 投影裡**（讀取路徑 2026-07-30 移除），標頭要說出來，否則讀者會以為它被算進去了。
+    "retired": "衍生自章 delta＋物件檔的約束（**本書另有一支已廢除的單檔事實流·未納入**）",
 }
+
+
+def _spine_or_report(book: Path) -> dict[str, int]:
+    """讀 spine，讀不到就換成一句**人看得懂**的話。
+
+    2026-07-30（驗證輪階段 1c）補：移除舊落點回退之後，`一世之尊` 這條路吐的是
+    一個 raw errno（`[Errno 2] No such file or directory`），而 raw errno 說不出
+    「舊落點還在、而且工具已經不讀它了」。
+    **降級成「被回報的問題」的意思是回報得出問題是什麼**，不只是不 crash。
+    """
+    p = _spine_path(book)
+    if p.is_file():
+        return parse_spine(p.read_text(encoding="utf-8"))
+    retired = retired_spine_files(book)
+    extra = (
+        f"。舊落點 `{retired[0].name}` 還在，但**2026-07-30 起不再讀它**"
+        f"——`git mv` 那一行過去即可"
+        if retired
+        else ""
+    )
+    raise FileNotFoundError(
+        f"找不到幕綱順序檔 story/幕綱/{p.name}"
+        f"（「全書順序：」是四支工具共用的定序來源）{extra}"
+    )
 
 
 def format_projection(
@@ -256,19 +283,14 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"  [x] {p}")
             return EXIT_PROBLEMS
 
-    spine_file = _spine_path(args.book)
-    # **回退要看得見**（功能 14，V9）：12 承諾四支工具都印，實測只有 `beat-lint` 做到。
+    # **spine 讀自哪裡要看得見**（功能 14，V9）：12 承諾四支工具都印，實測只有
+    # `beat-lint` 做到；2026-07-30 起四支都印，因為墓碑就是輸出（見 `fold.spine_note`）。
     notes: list[str] = [spine_note(args.book)]
     try:
+        # `mode == "retired"` 的那一行墓碑由 `collect_events` 直接寫進 `orphans`
+        # ——它不是「這本書有兩代混寫」的資訊，是「這本書的事實沒有人在讀」的警告。
         events, mode = collect_events(args.book, orphans=notes)
-        if mode == "legacy":
-            legacy_lines = sum(1 for e in events if e.legacy)
-            notes.append(
-                f"本書仍有 2026-07-26 前的單檔事實流（{legacy_lines} 行走舊格式、"
-                f"{len(events) - legacy_lines} 行走章 delta）。"
-                "**世代是逐行判的**：舊格式那些行的集合維度不套操作串，其餘檢查照跑"
-            )
-        spine = parse_spine(spine_file.read_text(encoding="utf-8"))
+        spine = _spine_or_report(args.book)
         slots = project(
             events,
             spine,
@@ -276,7 +298,6 @@ def main(argv: list[str] | None = None) -> int:
             target_arc,
             kinds=kinds,
             active_only=args.active_only,
-            # 集合維度只套在新格式的行上，那個判斷在 fold 裡逐行做（見 GEN_LEGACY）。
             set_dims=SET_DIMENSIONS,
         )
         # 約束走規則表、不走 fold——它是一條一列的登記表，不是事件流
@@ -293,7 +314,7 @@ def main(argv: list[str] | None = None) -> int:
             )
             notes += _release_due(args.book, constraints, spine)
     except FileNotFoundError as e:
-        print(f"找不到檔案：{e}", file=sys.stderr)
+        print(f"{e}", file=sys.stderr)
         return 1
     except FoldError as e:
         print(f"投影錯誤：{e}", file=sys.stderr)
@@ -387,9 +408,9 @@ def _history_main(args: argparse.Namespace) -> int:
     entity, token = entity.strip(), token.strip()
     try:
         events, _mode = collect_events(args.book)
-        spine = parse_spine(_spine_path(args.book).read_text(encoding="utf-8"))
+        spine = _spine_or_report(args.book)
     except FileNotFoundError as e:
-        print(f"找不到檔案：{e}", file=sys.stderr)
+        print(f"{e}", file=sys.stderr)
         return 1
     except FoldError as e:
         print(f"投影錯誤：{e}", file=sys.stderr)
@@ -441,9 +462,9 @@ def refs_main(argv: list[str] | None = None) -> int:
 
     try:
         events, _mode = collect_events(args.book)
-        spine = parse_spine(_spine_path(args.book).read_text(encoding="utf-8"))
+        spine = _spine_or_report(args.book)
     except FileNotFoundError as e:
-        print(f"找不到檔案：{e}", file=sys.stderr)
+        print(f"{e}", file=sys.stderr)
         return 1
     except FoldError as e:
         print(f"解析錯誤：{e}", file=sys.stderr)
