@@ -26,6 +26,7 @@ from .checks import (
     check_output_contract,
     check_parallel_lists,
     check_schema_guards,
+    check_ship_closure,
     check_skill_paths,
     check_triggers,
     emit_guards,
@@ -41,7 +42,7 @@ EXIT_PROBLEMS = 1
 
 CLEAN = (
     "工具鏈格式乾淨（指令觸發者／指名的指令存在／schema 守衛／平行清單／覆蓋率行／"
-    "輸出契約／SKILL.md 的取用宣告／查詢入口表雙向／技法檔的三份清單）"
+    "輸出契約／SKILL.md 的取用宣告／查詢入口表雙向／技法檔的三份清單／生產包封閉性）"
 )
 
 EMITS = {"guards": emit_guards, "kb": emit_kb}
@@ -57,7 +58,7 @@ def _force_utf8() -> None:
 
 
 def lint_repo(repo: Path, live: bool = True) -> tuple[list, MetaStats]:
-    """十二項。第 1–6 與 10–12 項進問題數，第 7–9 項只印。"""
+    """十三項。第 1–6、10–12 與 13 項進問題數，第 7–9 項只印。"""
     stats = MetaStats()
     stats.packages = len(packages(repo))
     stats.skills = len(skill_files(repo))
@@ -76,6 +77,8 @@ def lint_repo(repo: Path, live: bool = True) -> tuple[list, MetaStats]:
         + check_skill_paths(repo, stats)
         + check_entry_table(repo, stats)
         + check_kb_lists(repo, stats)
+        # 第 13 項（2026-07-30 驗證輪階段 1.5）：生產包封閉性
+        + check_ship_closure(repo, stats)
     )
     return problems, stats
 
@@ -88,7 +91,8 @@ def main(argv: list[str] | None = None) -> int:
         "④ 三份平行清單的產物集合一致；⑤ 每個 CLI 入口的路徑上都印得出覆蓋率行；"
         "⑥ 輸出去向與 exit 語意（對 fixture 書實跑）；"
         "⑦ SKILL.md 的書內路徑有落點、且不指向已廢除的檔；"
-        "⑧ 查詢入口表 ↔ SKILL.md 雙向；⑨ 技法檔的三份平行清單（含檔頭目錄）。"
+        "⑧ 查詢入口表 ↔ SKILL.md 雙向；⑨ 技法檔的三份平行清單（含檔頭目錄）；"
+        "⑩ 生產包封閉性（每支套件宣告射程·宣告 ↔ 位置一致·生產側 src/ 不提開發期落點）。"
         "另投影三項（只印）：門檻常數與樣本數宣告／同形實作份數／測試狀態。"
         "**它不吃 `--book`**——它守的是 repo 自己。",
     )

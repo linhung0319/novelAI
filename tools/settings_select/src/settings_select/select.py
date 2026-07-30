@@ -9,6 +9,22 @@ class SelectError(Exception):
     """幕綱／設定層解析或定位失敗（找不到 arc、幕號範圍不合法、設定層缺目錄）。"""
 
 
+class LayerMissing(SelectError):
+    """**這本書還沒有這一層**——與「這本書的格式壞了」是兩件事。
+
+    契約：**exit 2，而且照樣印覆蓋率行**（`共同約定.md`「輸出與 exit 契約」）。
+    形狀照抄 `fact_projection/fold.py` 的同名類別（唯一真相在那份 docstring）：
+    **它是 `SelectError` 的子類**，所以既有的 `except SelectError` 照舊接得住，
+    只有想分辨的地方才多接一層。
+
+    **為什麼 2026-07-30（階段 1.5）才補。** `cli.py` 從第一天就定了
+    `EXIT_LAYER_MISSING = 2`，而**沒有任何一條路徑回傳過它**——一支空宣告的常數。
+    沒被發現是因為 `settings-select` **同時不在** `tools.yml` 步驟 ② 的 19 支清單
+    **與** `meta-lint` 第 6 項的 `LIVE_COMMANDS` 裡：兩份清單都漏了它，於是「乾淨的
+    書上它回幾」從來沒有被問過一次。本階段的導出冒煙第一次跑到它，當場回 exit 1。
+    """
+
+
 # ---------------------------------------------------------------- 已知實體詞彙表
 
 # 角色源檔目錄形態的切面枚舉（見 結構定義/角色.schema.md）。檔名即選擇器。
@@ -110,7 +126,9 @@ def load_entities(book: Path) -> list[Entity]:
                 )
             )
     if not entities:
-        raise SelectError(f"找不到任何設定層實體：{book / 'story' / '設定'}")
+        # **一本剛從 `書本模板/` 開的書就長這樣**（設定層是空骨架）——那是「還沒有
+        # 這一層」，不是「格式壞了」。
+        raise LayerMissing(f"找不到任何設定層實體：{book / 'story' / '設定'}")
     return entities
 
 
@@ -341,7 +359,9 @@ def select(
 ) -> Selection:
     arc_path = book / "story" / "幕綱" / f"{arc}.md"
     if not arc_path.is_file():
-        raise SelectError(f"找不到幕綱：{arc_path}")
+        # 同上：還沒拆幕的書沒有這一支檔。**「拆過幕但這個 arc 打錯字」也落在這裡**
+        # ——兩者都指得出「幕綱在哪」，交呼叫端看訊息判，不值得再分一級。
+        raise LayerMissing(f"找不到幕綱：{arc_path}")
     entities = load_entities(book)
     by_name = {e.name: e for e in entities}
 

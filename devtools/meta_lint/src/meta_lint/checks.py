@@ -64,6 +64,14 @@ class MetaStats:
     kb_unreferenced: int = 0
     kb_without_toc: int = 0
     claude_kb_named: int = 0
+    # 第 13 項（2026-07-30 驗證輪階段 1.5）：生產包封閉性
+    ship_packages: int = 0  # `scope = "book"` 的套件數（進生產包）
+    ship_commands: int = 0  # 它們的指令數
+    dev_packages: int = 0  # `scope = "repo-dev"` 的套件數（不進生產包）
+    dev_commands: int = 0
+    scope_undeclared: int = 0  # 沒宣告或值不認得
+    ship_src_files: int = 0  # 掃了幾支生產側 `.py`
+    ship_src_leaks: int = 0  # 其中幾處出現開發期落點
     notes: list[str] = field(default_factory=list)
     hints: list[str] = field(default_factory=list)
     _bad_entries: list[str] = field(default_factory=list)
@@ -94,7 +102,13 @@ class MetaStats:
             f"·**{self.skill_axes_unlisted} 個 skill 讀的路徑兩份清單都沒有**）；"
             f"技法檔 {self.kb_referenced} 支被引用"
             f"（**{self.kb_without_toc} 支無檔頭目錄**"
-            f"·另 {self.kb_unreferenced} 支零引用·`CLAUDE.md` 列舉 {self.claude_kb_named} 支）"
+            f"·另 {self.kb_unreferenced} 支零引用·`CLAUDE.md` 列舉 {self.claude_kb_named} 支）；"
+            # ---- 第 13 項：生產包封閉性（0 也印）
+            f"生產包 {self.ship_packages} 個套件／{self.ship_commands} 個指令"
+            f"·開發包 {self.dev_packages} 個套件／{self.dev_commands} 個指令"
+            f"（**{self.scope_undeclared} 個套件沒宣告射程**）；"
+            f"生產側 src/ 掃了 {self.ship_src_files} 支 `.py`"
+            f"（**{self.ship_src_leaks} 處出現開發期落點**）"
         )
 
 
@@ -468,6 +482,12 @@ LIVE_COMMANDS: tuple[tuple[str, str, tuple[str, ...]], ...] = (
     ("decision-project", "decision_projection", ()),
     ("foreshadow-project", "foreshadow_project", ()),
     ("prose-metrics", "prose_metrics", ()),
+    # **2026-07-30（階段 1.5）補進來的第 20 支。** 它吃 `--book` 以外的必填參數，
+    # 所以原本兩份清單（本表與 `tools.yml` 步驟 ②）**都把它漏在外面**——於是
+    # 「乾淨的書上 `settings-select` 回幾」從來沒有被問過一次，而答案是 **exit 1**，
+    # 違反第 2 條契約。它自己定了 `EXIT_LAYER_MISSING = 2` 卻沒有任何路徑回傳過。
+    # **漏一支指令的代價不是少驗一支，是那一支從此可以違反任何契約。**
+    ("settings-select", "settings_select", ("--arc", "arc01")),
 )
 
 # 「我檢查了幾筆」的實際寫法（各軸的量詞不同，這是**它們現有的**寫法，不是新規矩）：
@@ -541,7 +561,7 @@ _UV = ("uv", "run", "-q", "--project")
 
 def _run(repo: Path, pkg: str, cmd: str, extra: tuple[str, ...], book: str):
     return subprocess.run(  # noqa: S603
-        [*_UV, f"{R.TOOLS_DIR}/{pkg}", cmd, *extra, "--book", book],
+        [*_UV, R.package_rel(repo, pkg), cmd, *extra, "--book", book],
         cwd=repo,
         capture_output=True,
         text=True,
@@ -815,15 +835,25 @@ class KnownRed:
     reason: str
 
 
+def known_red_path(repo: Path) -> Path:
+    """`devtools/meta_lint/known-red.toml`（2026-07-30 階段 1.5 起在 `devtools/`）。"""
+    return repo / R.DEVTOOLS_DIR / "meta_lint" / "known-red.toml"
+
+
 def load_known_red(repo: Path) -> list[KnownRed]:
-    """`tools/meta_lint/known-red.toml`——**紅的幾支 ＋ 登記在案的理由**。
+    """**紅的幾支 ＋ 登記在案的理由**。
 
     **雙向擋**（在 CI 那一側）：紅而不在清單裡 → fail；**在清單裡卻變綠了也 fail**
     ——一份過期的已知紅清單就是下一個「守衛壞了而沒有人知道」。
+
+    **「清單空的」與「清單檔不在」是兩件事**（2026-07-30 階段 1.5）：前者是正常狀態
+    （階段 1d 之後就是 0 筆），後者是路徑壞了。這支函式對兩者都回 `[]`，所以
+    **區分它們的責任在呼叫端**——`project_tests` 印「清單檔不在」，見那裡。
+    本階段搬 `meta_lint` 時這條路徑就差點靜靜地壞掉：讀不到會印「已知紅 0 支」。
     """
     import tomllib
 
-    p = repo / R.TOOLS_DIR / "meta_lint" / "known-red.toml"
+    p = known_red_path(repo)
     if not p.is_file():
         return []
     data = tomllib.loads(p.read_text(encoding="utf-8"))
@@ -1222,6 +1252,128 @@ def check_kb_lists(repo: Path, stats: MetaStats) -> list[Problem]:
     return out
 
 
+# ============================================================ 第 13 項：生產包封閉性
+#
+# **新增於 2026-07-30（驗證輪階段 1.5）。為什麼需要它。**
+# 生產形態是「系統層 ＋ 一本書」，而在此之前系統層白名單把 `tools/` **整支**列進去，
+# 於是生產包裡會有 `meta_lint`——一支消費者是 `.github/workflows/tools.yml` 的指令，
+# 而 `.github/` 不在白名單上。**指令進了生產包，它的觸發者沒有**，那是 E1 的反面；
+# 更糟的是它在生產側的第 6 項（要病例書 `一世之尊/`）與第 10 項（要 `情境測試/`）
+# 都會印「未接」而 exit 0 —— **守衛在、射程空、輸出綠**，E2 最糟那一格。
+#
+# **這一項守的是「拆完之後不會慢慢黏回去」。** 拆分本身是一次性的動作，而讓它保持
+# 拆開的是：① 每支套件都要宣告自己屬哪一邊；② 宣告要與它住的資料夾一致；
+# ③ 生產側的 `src/` 不准提到開發期的落點。
+#
+# **第 ③ 條抓的是「路徑字面」，不是「提到那個名字」。** 這一格第一版寫錯過，值得記：
+# 原本只要字串常數裡出現 `docs/` 就報，實測**7 處全是誤報**——`lint.py:492` 的
+# `「（見 docs/重構/功能報告/02-幕綱.md §八）」` 與 `style_lint.py:1` 的模組 docstring
+# 都是**出處引用**（這條門檻的實測依據在哪份報告），與註解完全同一個性質，只是剛好
+# 存成字串。刪掉它們會讓常數變成天上掉下來的數字。
+#
+# **判準因此是形狀**：字串要**長得像一條路徑**（無空白、無全形標點）且**第一段**是
+# 開發期資料夾。散文句子有全形括號與空白，一律不match；`Path("examples/一世之尊")`
+# 這種真的會去讀檔的寫法一定match。
+# **代價要認**：藏在 f-string 散文裡的真實讀取抓不到——但那種寫法也組不出路徑。
+# 今天這一條是 **0 命中，擋的是未來**，與 `tools.yml` 步驟 ① 的「有 pyproject 而沒有
+# tests/」同形。
+
+# 開發期資料夾（`00-系統層邊界與儀器.md` §一 開發期表 ＋ `設計原則.md` 射程表第五格）。
+# **`書本模板/` 不在裡面**：它是系統層（開新書的骨架），生產包要帶著它。
+_DEV_ONLY_DIRS = ("examples", "情境測試", "docs", "Data", "site", "devtools")
+# 路徑字面的形狀：不含空白，也不含中文散文的全形標點。
+_PROSE_CHARS = frozenset(" \t\n（）「」『』，。：；、？！—…`")
+
+
+def _path_like_constants(path: Path) -> list[tuple[int, str]]:
+    """一支 `.py` 裡**長得像路徑**的字串常數＋行號。
+
+    **註解不在射程內**（AST 不留註解），而那是對的：註解寫「門檻取自 `examples/` 六本」
+    是實測出處。散文型的字串常數也不在射程內——判準見上面那段。
+    語法錯誤時回空 list 並不報：這一項的對象是落點，不是語法（語法壞了 pytest 會先炸）。
+    """
+    try:
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+    except (SyntaxError, UnicodeDecodeError):
+        return []
+    out: list[tuple[int, str]] = []
+    for n in ast.walk(tree):
+        if not (isinstance(n, ast.Constant) and isinstance(n.value, str)):
+            continue
+        s = n.value
+        if not s or len(s) > 200 or set(s) & _PROSE_CHARS:
+            continue
+        if s.split("/", 1)[0] in _DEV_ONLY_DIRS:
+            out.append((n.lineno, s))
+    return out
+
+
+def check_ship_closure(repo: Path, stats: MetaStats) -> list[Problem]:
+    """第 13 項：射程宣告存在／宣告 ↔ 位置一致／生產側 src 不提開發期落點。"""
+    out: list[Problem] = []
+    pkgs = R.packages(repo)
+
+    misplaced: list[str] = []
+    for pkg in pkgs:
+        cmds = len(pkg.scripts)
+        if pkg.scope == R.SCOPE_BOOK:
+            stats.ship_packages += 1
+            stats.ship_commands += cmds
+        elif pkg.scope == R.SCOPE_REPO_DEV:
+            stats.dev_packages += 1
+            stats.dev_commands += cmds
+        else:
+            stats.scope_undeclared += 1
+            out.append(
+                Problem(
+                    f"{pkg.rel}/pyproject.toml",
+                    f"沒有可辨識的射程宣告（`[tool.novelai] scope`，讀到 {pkg.scope!r}）",
+                    "**沒宣告的套件不知道自己該不該進生產包**，而複製系統層的人也不會知道。"
+                    f"加一行 `scope = \"{R.SCOPE_BOOK}\"`（吃 `--book`、消費者是 SKILL.md）"
+                    f"或 `scope = \"{R.SCOPE_REPO_DEV}\"`（守 repo、觸發者是 workflow）",
+                )
+            )
+            continue
+        expected = R.SCOPES[pkg.scope]
+        if pkg.root != expected:
+            misplaced.append(f"`{pkg.rel}` 宣告 `{pkg.scope}` 卻住在 `{pkg.root}/`")
+
+    if misplaced:
+        out.append(
+            Problem(
+                "tools/ 與 devtools/",
+                f"{len(misplaced)} 個套件的宣告與位置不一致：{'；'.join(misplaced)}",
+                "**宣告與位置必須是同一件事的兩種說法**，否則「複製 `tools/`」這個"
+                f"資料夾粒度的規則就失效了。`{R.SCOPE_BOOK}` 住 `{R.TOOLS_DIR}/`、"
+                f"`{R.SCOPE_REPO_DEV}` 住 `{R.DEVTOOLS_DIR}/`",
+            )
+        )
+
+    leaks: list[str] = []
+    for pkg in pkgs:
+        if not pkg.ships or not pkg.src.is_dir():
+            continue
+        for py in sorted(pkg.src.rglob("*.py")):
+            stats.ship_src_files += 1
+            for lineno, text in _path_like_constants(py):
+                stats.ship_src_leaks += 1
+                leaks.append(f"`{py.relative_to(repo).as_posix()}:{lineno}` → `{text}`")
+    if leaks:
+        out.append(
+            Problem(
+                "生產側 src/",
+                f"{len(leaks)} 處生產側程式碼帶開發期路徑字面：{'；'.join(leaks[:5])}"
+                + ("…" if len(leaks) > 5 else ""),
+                "生產 project 裡那些資料夾**不存在**，所以讀它們要嘛 raise、要嘛靜靜地"
+                "當成「沒有資料」——後者更糟。**註解與出處引用不算**（那是門檻的實測"
+                "依據），這一項只抓路徑形狀的字面。要吃開發期語料的程式碼住 "
+                f"`{R.DEVTOOLS_DIR}/`，或改成由呼叫端傳路徑進來"
+                "（先例：`prose-metrics --corpus <作者給的路徑>`）",
+            )
+        )
+    return out
+
+
 # ============================================================ --emit：兩個投影
 #
 # **投影不是閘門、一律 exit 0**（形狀照抄功能 12 的五個 `--emit`）。
@@ -1395,34 +1547,47 @@ def _entries_without_coverage(repo: Path, stats: MetaStats) -> list[str]:
 
 
 def project_tests(repo: Path, stats: MetaStats, live: bool) -> list[str]:
-    """第 9 項：8 個套件、N 支測試、**紅的幾支 ＋ 登記在案的理由**。"""
+    """第 9 項：8 個套件、N 支測試、**紅的幾支 ＋ 登記在案的理由**。
+
+    **套件數含兩個根**（`tools/` 生產 ＋ `devtools/` 開發期，階段 1.5 起）。
+    """
     reds = load_known_red(repo)
+    pkgs = R.packages(repo)
+    ships = sum(1 for p in pkgs if p.ships)
     out = [
         "",
-        f"### 測試（{len(R.packages(repo))} 個套件；已知紅 {len(reds)} 支）",
+        f"### 測試（{len(pkgs)} 個套件＝生產 {ships} ＋ 開發期 {len(pkgs) - ships}；"
+        f"已知紅 {len(reds)} 支）",
         "",
     ]
+    # **「清單空的」與「清單檔不在」不可以長得一樣**（見 `load_known_red`）。
+    if not known_red_path(repo).is_file():
+        out += [
+            f"> ⚠️ **已知紅清單檔不在**（`{known_red_path(repo).relative_to(repo).as_posix()}`）"
+            "——下面那個「0 支」是**讀不到**，不是**沒有**。",
+            "",
+        ]
     if not live:
         out += [
             "> **未接**（`--no-live`）——沒跑 pytest。CI 一律跑（`tools.yml`）。",
             "",
         ]
     else:
-        for pkg in R.packages(repo):
+        for pkg in pkgs:
             if not pkg.tests.is_dir():
-                out.append(f"- `{pkg.name}`：**沒有 tests/**")
+                out.append(f"- `{pkg.rel}`：**沒有 tests/**")
                 continue
             r = subprocess.run(  # noqa: S603
                 [
                     sys.executable if False else "uv",
                     "run",
                     "--project",
-                    f"{R.TOOLS_DIR}/{pkg.name}",
+                    pkg.rel,
                     "pytest",
                     "-q",
                     "-p",
                     "no:cacheprovider",
-                    f"{R.TOOLS_DIR}/{pkg.name}/tests",
+                    f"{pkg.rel}/tests",
                 ],
                 cwd=repo,
                 capture_output=True,
@@ -1431,7 +1596,7 @@ def project_tests(repo: Path, stats: MetaStats, live: bool) -> list[str]:
                 errors="replace",
             )
             tail = [ln for ln in r.stdout.splitlines() if "passed" in ln or "failed" in ln]
-            out.append(f"- `{pkg.name}`：{tail[-1] if tail else '（讀不到結果）'}")
+            out.append(f"- `{pkg.rel}`：{tail[-1] if tail else '（讀不到結果）'}")
     out += ["", "**已知紅清單**（不在清單裡的紅字要 fail；在清單裡卻變綠了也要 fail）：", ""]
     if not reds:
         out.append("- （無）")

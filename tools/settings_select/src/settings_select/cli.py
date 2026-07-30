@@ -4,7 +4,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from .select import FACETS, Selection, SelectError, parse_facets, select
+from .select import FACETS, LayerMissing, Selection, SelectError, parse_facets, select
 
 
 def _beats_label(beats: tuple[int, ...], limit: int = 4) -> str:
@@ -163,12 +163,23 @@ def main(argv: list[str] | None = None) -> int:
     try:
         facets = parse_facets(args.facets)
         sel = select(args.book, args.arc, args.beats)
+    except LayerMissing as e:
+        # **exit 2 ＝這本書還沒有這一層，而且照樣印覆蓋率行**（`共同約定.md`）。
+        # 覆蓋率行進 **stdout**：exit 2 不是錯誤，是一個關於這本書的事實。
+        #
+        # **刻意沿用成功路徑的抬頭形狀**（`（掃 N 幕；…）`），只是 N ＝ 0。
+        # 第一版寫成 `選取範圍：…`，而 `meta-lint` 第 6 項的覆蓋率行 marker 認不得它
+        # ——**正解不是去那份 marker 清單加一個字**（那是替一支工具放寬一個共用定義），
+        # 是讓這條路印得跟自己的成功路徑一樣。exit 2 與 exit 0 的差別該在數字，不在句型。
+        print(f"## {args.arc} 設定選取（掃 0 幕；這本書還沒有這一層）")
+        print(f"（資訊）{e}")
+        return EXIT_LAYER_MISSING
     except SelectError as e:
         print(f"選取錯誤：{e}", file=sys.stderr)
-        return 1
+        return EXIT_PROBLEMS
     except OSError as e:
         print(f"讀取失敗：{e}", file=sys.stderr)
-        return 1
+        return EXIT_PROBLEMS
 
     if args.paths_only:
         for hit in sel.selected:

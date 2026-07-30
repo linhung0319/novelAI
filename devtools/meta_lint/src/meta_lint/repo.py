@@ -15,6 +15,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 TOOLS_DIR = "tools"
+# **開發期的套件根**（2026-07-30 驗證輪階段 1.5）。`tools/` 從此只住「生產包」
+# ——21 支吃 `--book` 的指令，消費者是 12 支 SKILL.md；`meta_lint` 住這裡，
+# 因為它的消費者是 `.github/workflows/tools.yml`，而 `.github/` 本來就不在
+# 系統層白名單上。**一支指令在生產包裡而它的觸發者不在，是 E1 的反面。**
+DEVTOOLS_DIR = "devtools"
+PACKAGE_ROOTS = (TOOLS_DIR, DEVTOOLS_DIR)
 SKILLS_DIR = ".claude/skills"
 SCHEMA_DIR = "結構定義"
 WORKFLOW_DIR = ".github/workflows"
@@ -38,11 +44,30 @@ def find_repo(start: Path | None = None) -> Path:
     raise FileNotFoundError(f"找不到 repo 根（要有 {TOOLS_DIR}/ 與 {SCHEMA_DIR}/）：{here}")
 
 
+# 射程宣告的兩個合法值（`[tool.novelai] scope`）。**封閉枚舉**——第三個值要先改
+# 這裡，而第 13 項會把不認得的值報出來。ASCII 鍵是刻意的：TOML 裸鍵不收非 ASCII。
+SCOPE_BOOK = "book"  # 吃 `--book`，消費者是 SKILL.md，進生產包
+SCOPE_REPO_DEV = "repo-dev"  # 守 repo 自己，觸發者是 workflow，不進生產包
+SCOPES = {SCOPE_BOOK: TOOLS_DIR, SCOPE_REPO_DEV: DEVTOOLS_DIR}
+
+
 @dataclass(frozen=True)
 class Package:
     name: str  # 資料夾名（`derived_sync`）
     path: Path
+    root: str  # 套件根（`tools` / `devtools`）
     scripts: dict[str, str] = field(default_factory=dict)  # 指令名 → entry point
+    scope: str | None = None  # `[tool.novelai] scope`；None ＝沒宣告（第 13 項會報）
+
+    @property
+    def rel(self) -> str:
+        """`uv run --project` 吃的相對路徑（`tools/derived_sync`）。
+
+        **不要再用 `f"{TOOLS_DIR}/{pkg.name}"` 拼**——階段 1.5 之前有四處那樣拼，
+        而套件一搬家，那四處會安靜地指到不存在的路徑（其中 `load_known_red` 讀不到
+        清單時回 `[]`，於是「已知紅 0 支」照印，而那是假的）。
+        """
+        return f"{self.root}/{self.name}"
 
     @property
     def src(self) -> Path:
@@ -52,23 +77,50 @@ class Package:
     def tests(self) -> Path:
         return self.path / "tests"
 
+    @property
+    def ships(self) -> bool:
+        """進不進生產包（系統層 ＋ 一本書）。`tests/` 一律不進，見第 13 項。"""
+        return self.root == TOOLS_DIR
+
 
 def packages(repo: Path) -> list[Package]:
-    """所有 uv 套件（有 `pyproject.toml` 的 `tools/*`）。"""
+    """所有 uv 套件（有 `pyproject.toml` 的 `tools/*` 與 `devtools/*`）。
+
+    **兩個根都要掃。** 階段 1.5 把 `meta_lint` 搬進 `devtools/`，而這支函式是
+    第 1／5／6／9／13 項共用的枚舉器——只掃 `tools/` 的話 `meta-lint` 從此**看不見
+    自己**，那五項各少驗一支而輸出完全正常（`設計原則.md` E2 最糟那一格）。
+    """
     out: list[Package] = []
-    for d in sorted((repo / TOOLS_DIR).iterdir()):
-        pj = d / "pyproject.toml"
-        if not pj.is_file():
+    for root in PACKAGE_ROOTS:
+        base = repo / root
+        if not base.is_dir():
             continue
-        data = tomllib.loads(pj.read_text(encoding="utf-8"))
-        out.append(
-            Package(
-                name=d.name,
-                path=d,
-                scripts=dict(data.get("project", {}).get("scripts", {})),
+        for d in sorted(base.iterdir()):
+            pj = d / "pyproject.toml"
+            if not pj.is_file():
+                continue
+            data = tomllib.loads(pj.read_text(encoding="utf-8"))
+            out.append(
+                Package(
+                    name=d.name,
+                    path=d,
+                    root=root,
+                    scripts=dict(data.get("project", {}).get("scripts", {})),
+                    scope=data.get("tool", {}).get("novelai", {}).get("scope"),
+                )
             )
-        )
     return out
+
+
+def package_rel(repo: Path, name: str) -> str:
+    """套件名 → `uv run --project` 吃的相對路徑。**根由枚舉決定，不由字面拼接。**
+
+    找不到就回 `tools/<name>`——讓後續的 `uv run` 大聲失敗，而不是在這裡吞掉。
+    """
+    for pkg in packages(repo):
+        if pkg.name == name:
+            return pkg.rel
+    return f"{TOOLS_DIR}/{name}"
 
 
 def commands(repo: Path) -> dict[str, str]:

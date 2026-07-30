@@ -19,6 +19,14 @@ dependencies = []
 # 而沒有東西保證它明天還是好的。
 meta-lint = "meta_lint.cli:main"
 
+[tool.novelai]
+# **射程宣告**（2026-07-30 驗證輪階段 1.5）。本套件是**唯一一支 `repo-dev`**：
+# 它不吃 `--book`，觸發者是 `.github/workflows/tools.yml`，而 `.github/` 不在
+# 系統層白名單上（`docs/驗證/00-系統層邊界與儀器.md` §一）。**一支指令住在生產包裡
+# 而它的觸發者不在，是 E1 的反面**；而且它的第 6 項（要病例書 `一世之尊/`）與第 10 項
+# （要 `情境測試/`）在生產側都會印「未接」而 exit 0——`設計原則.md` E2 最糟那一格。
+scope = "repo-dev"
+
 [dependency-groups]
 dev = ["pytest>=8"]
 

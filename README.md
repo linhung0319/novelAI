@@ -19,15 +19,16 @@
 
 分工：**技巧知識庫承載「方法」，skill 承載「操作」**——skill 執行時載入知識庫與結構定義來工作。
 
-### 第四個部分：守衛（`tools/`）
+### 第四個部分：守衛（`tools/` 生產、`devtools/` 開發期）
 
 「沒有檢查器的保證只是口頭承諾」是這套系統用痛學過很多次的一件事，所以**每一條 schema 宣稱的格式都要指名一個檢查器與一個觸發時機**（`設計原則.md` E1）。
 
-- **8 個 Python 套件／22 個指令**，一律唯讀、零 LLM、可覆算：**12 支格式閘門**（`beat-lint`／`ch-lint`／`outline-lint`／`char-lint`／`world-lint`／`style-lint`／`summary-lint`／`readiness-lint`／`fact-lint`／`object-lint`／`decision-lint`＋`derived-sync validate`）＋投影查詢（`fact-project`／`decision-project`／`foreshadow-project`／`structure-project`／`readiness`／`settings-select`…）。
+- **`tools/` 7 個 Python 套件／21 個指令 ＝ 生產包**（全部吃 `--book`），另 `devtools/` 1 個套件／1 個指令是開發期的（`meta-lint`，見 `devtools/README.md`）。一律唯讀、零 LLM、可覆算：**12 支格式閘門**（`beat-lint`／`ch-lint`／`outline-lint`／`char-lint`／`world-lint`／`style-lint`／`summary-lint`／`readiness-lint`／`fact-lint`／`object-lint`／`decision-lint`＋`derived-sync validate`）＋投影查詢（`fact-project`／`decision-project`／`foreshadow-project`／`structure-project`／`readiness`／`settings-select`…）。
 - **每一支都先印「我在這本書上檢查了幾筆」，0 也印**——只回答「發現幾個問題」的檢查器，在它自己被關掉時會印「乾淨」。
-- **守衛自己由 `meta-lint` 與 `.github/workflows/tools.yml` 守**：`meta-lint` 是唯一一支不吃 `--book` 的指令（它的「書」是 repo），驗指令 ↔ 觸發者雙向、schema 指名的守衛存在、平行清單一致、輸出與 exit 契約等 12 項。
+- **守衛自己由 `meta-lint` 與 `.github/workflows/tools.yml` 守**：`meta-lint` 是唯一一支不吃 `--book` 的指令（它的「書」是 repo），驗指令 ↔ 觸發者雙向、schema 指名的守衛存在、平行清單一致、輸出與 exit 契約、**生產包封閉性**等 13 項。
+- **生產包 ＝ 系統層 7 項，唯一的排除是 `tools/*/tests/`**（黃金檔釘病例書、語料回歸釘 `examples/`，都是開發期資產）。`tools.yml` 步驟 ⑤ 把生產包導出到一棵**沒有任何開發期檔案**的樹並跑 21/21——**那是「系統層真的與開發期分開」的機械證明，不是宣稱**。
 
-> 清單不落檔（那會是第 N 份會漂移的複本）——跑 `uv run --project tools/meta_lint meta-lint --emit guards`。
+> 清單不落檔（那會是第 N 份會漂移的複本）——跑 `uv run --project devtools/meta_lint meta-lint --emit guards`。
 
 ### 為什麼 skill 放在「專案層」`.claude/skills/`
 

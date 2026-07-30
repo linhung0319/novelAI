@@ -86,6 +86,24 @@ def retired_stream_files(book: Path) -> list[Path]:
     return [p for n in RETIRED_STREAM_NAMES if (p := ref / n).is_file()]
 
 
+def _normalized_bytes(p: Path) -> int:
+    """把行尾歸一成 LF 之後的位元組數。**不用 `stat().st_size`。**
+
+    2026-07-30（驗證輪階段 1.5）實測：`st_size` 讓這一行的數字**跨平台不一致**，
+    而它被釘在黃金檔裡。作者的 checkout 是 `core.autocrlf=true`，`狀態事件流.md`
+    有 232 行 CRLF → 磁碟上 111,178 B；CI（ubuntu，LF）是 110,946 B，而黃金檔
+    釘的是後者。**於是那支測試在 CI 綠、在作者機器上紅**，工作樹卻是乾淨的。
+
+    這比「數字錯了」更糟：**同一支守衛在兩台機器上給相反的裁決**，而兩邊都看不出
+    對方的結果。`read_text` 的 universal newlines 把 CRLF 讀成 LF，所以重新編碼
+    出來的長度就是版控裡的長度——**與 checkout 設定無關**。
+
+    另兩處 `st_size`（`settings_select/cli.py`、`beat_metrics/structure_project.py`）
+    刻意不動：它們印的是給人看的參考大小，沒有被任何黃金檔釘住。
+    """
+    return len(p.read_text(encoding=_ENCODING).encode("utf-8"))
+
+
 def section_lines(text: str, title: str) -> str:
     """抽出 `## <title>` 區塊，**保留原行號**（區塊外的行換成空行）。
 
@@ -138,7 +156,7 @@ def collect_events(
     for p in retired:
         msg = (
             f"story/參照/{p.name}：**2026-07-26 前的單檔事實流，2026-07-30 起不再讀**"
-            f"（{p.stat().st_size:,} B）。事實的落點是 `chapters/chNNNN.ai.md` 的 "
+            f"（{_normalized_bytes(p):,} B）。事實的落點是 `chapters/chNNNN.ai.md` 的 "
             f"「## 本章事實」——這支檔裡的事實**目前沒有任何工具在讀**，"
             f"`fact-project`／`fact-refs` 看不到它們，而 `write` 會理直氣壯地違反。"
             f"逐章重生 `chNNNN.ai.md` 的 `## 本章事實` 之後刪掉它"

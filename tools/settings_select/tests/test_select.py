@@ -1,4 +1,5 @@
 import pytest
+from settings_select.cli import main as cli_main
 from settings_select.select import (
     SelectError,
     load_entities,
@@ -296,3 +297,49 @@ def test_no_hollow_when_all_filled(tmp_path):
     sel = select(book, "arc09")
     assert sel.char_count == 3
     assert sel.char_hollow == []
+
+
+# ---------------------------------------------------------------- exit 契約三條
+#
+# **`EXIT_LAYER_MISSING = 2` 從第一天定著、從來沒有任何路徑回傳過**（2026-07-30
+# 階段 1.5 的導出冒煙抓到）。沒被發現是因為 `settings-select` 同時不在
+# `tools.yml` 步驟 ② 與 `meta-lint` 第 6 項的 `LIVE_COMMANDS` 裡——兩份清單都漏了它。
+
+
+def _bare_book(tmp_path):
+    book = tmp_path / "新書"
+    (book / "story" / "設定").mkdir(parents=True)
+    (book / "story" / "幕綱").mkdir(parents=True)
+    return book
+
+
+def test_a_book_without_a_settings_layer_exits_two_with_a_scope_line(tmp_path, capsys):
+    """**還沒有這一層 ＝ exit 2，而且照樣印覆蓋率行**（`共同約定.md` 輸出與 exit 契約）。
+
+    一本剛從 `書本模板/` 開的書就長這樣。回 exit 1 會讓它與「格式壞了」不可分辨。
+    """
+    rc = cli_main(["--book", str(_bare_book(tmp_path)), "--arc", "arc01"])
+    out = capsys.readouterr()
+    assert rc == 2
+    assert "（掃 0 幕；" in out.out, "覆蓋率行要在 stdout，0 也印"
+    assert "設定選取" in out.out, "抬頭形狀要與成功路徑一致（差別在數字，不在句型）"
+    assert out.err == "", "exit 2 不是錯誤，不該進 stderr"
+
+
+def test_a_missing_arc_is_also_layer_missing(tmp_path, capsys):
+    """沒拆幕的書要不到 `幕綱/arcNN.md`——同樣是「還沒有這一層」。"""
+    book = _bare_book(tmp_path)
+    (book / "story" / "設定" / "角色").mkdir(parents=True)
+    (book / "story" / "設定" / "角色" / "少年.md").write_text("# 少年\n本文\n", encoding="utf-8")
+    rc = cli_main(["--book", str(book), "--arc", "arc01"])
+    assert rc == 2
+    assert "（掃 0 幕；" in capsys.readouterr().out
+
+
+def test_a_format_error_still_exits_one(tmp_path, capsys):
+    """**exit 2 不是萬用的降級。** 參數本身寫錯仍是 exit 1，訊息進 stderr。"""
+    book = _bare_book(tmp_path)
+    rc = cli_main(["--book", str(book), "--arc", "arc01", "--facets", "不存在的切面"])
+    out = capsys.readouterr()
+    assert rc == 1
+    assert "選取錯誤" in out.err

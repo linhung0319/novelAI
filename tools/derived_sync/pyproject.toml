@@ -33,6 +33,13 @@ readiness-lint = "derived_sync.cli:readiness_lint_main"
 # 而它們住的檔是 128,371 字元（419×）。跨套件的機械來源印「未接」＋該跑的指令。
 readiness = "derived_sync.cli:readiness_main"
 
+[tool.novelai]
+# **射程宣告**（2026-07-30 驗證輪階段 1.5）。`meta-lint` 第 13 項驗宣告 ↔ 位置：
+#   `book`     ＝吃 `--book`，消費者是 SKILL.md，住 `tools/`，**進生產包**
+#   `repo-dev` ＝守 repo 自己，觸發者是 workflow，住 `devtools/`，不進生產包
+# 生產包一律**不含 `tests/`**——黃金檔釘病例書、語料回歸釘 `examples/`，兩者都是開發期資產。
+scope = "book"
+
 [dependency-groups]
 dev = ["pytest>=8"]
 

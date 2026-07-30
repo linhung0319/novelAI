@@ -29,6 +29,13 @@ outline-lint = "beat_metrics.cli:outline_lint_main"
 # 「無單一源檔可 hash」，而實測對應表 108/108 幕可從幕綱重算（設計原則.md A6 的空訊號）。
 structure-project = "beat_metrics.cli:structure_project_main"
 
+[tool.novelai]
+# **射程宣告**（2026-07-30 驗證輪階段 1.5）。`meta-lint` 第 13 項驗宣告 ↔ 位置：
+#   `book`     ＝吃 `--book`，消費者是 SKILL.md，住 `tools/`，**進生產包**
+#   `repo-dev` ＝守 repo 自己，觸發者是 workflow，住 `devtools/`，不進生產包
+# 生產包一律**不含 `tests/`**——黃金檔釘病例書、語料回歸釘 `examples/`，兩者都是開發期資產。
+scope = "book"
+
 [dependency-groups]
 dev = ["pytest>=8"]
 

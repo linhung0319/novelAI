@@ -39,15 +39,18 @@ jobs:
 
       # ---------------------------------------------------------------- ① 測試
       #
-      # **雙向擋**（見 `tools/meta_lint/known-red.toml`）：
+      # **雙向擋**（見 `devtools/meta_lint/known-red.toml`）：
       #   紅而不在清單裡 → fail（新的回歸）；
       #   在清單裡卻變綠了 → 也 fail（一份過期的已知紅清單就是下一個
       #   「守衛壞了而沒有人知道」——`設計原則.md` E2 第八種形態）。
-      - name: pytest（8 個套件；紅的必須登記在案）
+      - name: pytest（8 個套件＝tools/ 7 ＋ devtools/ 1；紅的必須登記在案）
         run: |
           set -uo pipefail
           status=0
-          for pkg in tools/*/; do
+          # **兩個套件根**（2026-07-30 驗證輪階段 1.5）：`tools/` ＝生產包（21 支吃
+          # `--book` 的指令），`devtools/` ＝開發期（`meta_lint`，觸發者就是本檔）。
+          # 只掃 `tools/*/` 的話 `meta_lint` 的 70 支測試從此靜靜地不跑。
+          for pkg in tools/*/ devtools/*/; do
             name=$(basename "$pkg")
             # **註冊了卻沒有 tests/ ＝ 靜默跳過**（2026-07-30 補）。原本這裡只寫
             # `[ -d "$pkg/tests" ] || continue`，於是一個有 pyproject.toml 而還沒有
@@ -65,14 +68,14 @@ jobs:
             echo "::endgroup::"
           done
           # 逐支比對「紅的是不是登記在案的那幾支」
-          uv run --project tools/meta_lint python - <<'PY'
+          uv run --project devtools/meta_lint python - <<'PY'
           import glob, sys, tomllib, xml.etree.ElementTree as ET
 
           # `.get` 而非 `[...]`：**清單清空是正常狀態**（2026-07-30 起就是 0 筆），
           # 而 `KeyError` 會讓「沒有已知紅」變成一次 CI 崩潰。
           expected = {
               t["test"]
-              for t in tomllib.load(open("tools/meta_lint/known-red.toml", "rb")).get("known_red", [])
+              for t in tomllib.load(open("devtools/meta_lint/known-red.toml", "rb")).get("known_red", [])
           }
           print(f"已知紅清單：{len(expected)} 支（0 也印）")
           red = set()
@@ -100,7 +103,7 @@ jobs:
       # 19 支裡 17 支 exit 0，另兩支是 `derived-sync check`（模板的兩支骨架被報成
       # `unstamped`）與 `prose-metrics`（沒有 chNNNN.md）。本輪讓那個前提成真——
       # 前者拆出 `skeleton` 狀態、後者走 exit 2。
-      - name: 書本模板 19 指令（exit ∈ {0,2} 且問題數 0）
+      - name: 書本模板 20 指令（exit ∈ {0,2} 且問題數 0）
         run: |
           set -uo pipefail
           status=0
@@ -135,6 +138,10 @@ jobs:
           run decision_projection decision-project
           run foreshadow_project foreshadow-project
           run prose_metrics prose-metrics
+          # 第 20 支（2026-07-30 階段 1.5）：它吃 `--arc`，本表原本因此漏了它，
+          # 而漏掉的那一支在乾淨書上一直回 exit 1（違約）。理由見 `checks.py` 的
+          # `LIVE_COMMANDS`。**兩份清單要一起長**，否則下一支照樣會被漏在同一個縫。
+          run settings_select settings-select --arc arc01
           exit $status
 
       # ---------------------------------------------------------------- ③ 黃金檔
@@ -151,4 +158,84 @@ jobs:
       # **這一步就是 `meta-lint` 的觸發者**（第 1 項認 SKILL.md **或 workflow**）：
       # 它不吃 `--book`，沒有任何一支 skill 該跑它。
       - name: meta-lint（工具鏈自己的閘門）
-        run: uv run --project tools/meta_lint meta-lint
+        run: uv run --project devtools/meta_lint meta-lint
+
+      # ---------------------------------------------------------------- ⑤ 生產包
+      #
+      # **「系統層真的與開發期分開了」的唯一機械證明**（2026-07-30 階段 1.5）。
+      #
+      # `meta-lint` 第 13 項是**靜態**的（宣告 ↔ 位置、`src/` 不帶開發期路徑字面）；
+      # 這一步是**活的**：把生產包導出到一棵**沒有 `examples/`／`情境測試/`／`docs/`／
+      # `Data/`／`site/`／任何一本書**的樹，在那裡開一本新書，跑全部 21 支指令。
+      #
+      # **為什麼不能只靠上面步驟 ②。** 那一步跑在完整的 repo 上，所以任何「其實偷偷
+      # 依賴了開發期檔案」的相依都被滿足著——它驗得了「工具對乾淨的書不誤報」，
+      # 驗不了「工具在乾淨的**樹**上跑得動」。兩者差的正是本階段要拆的那條邊。
+      #
+      # **`tests/` 刻意不導出**（作者拍板）：黃金檔釘病例書、語料回歸釘 `examples/`，
+      # 兩者都是開發期資產。所以這一步不跑 pytest，它跑的是 21 支指令本身。
+      #
+      # **這一步刻意不驗「有沒有印覆蓋率行」。** 那一格的擁有者是 `meta-lint` 第 5 項
+      # （靜態：每個 CLI 入口的路徑上都印得出來）與第 6 項（實跑比對）。在這裡再 grep
+      # 一次，就是替「覆蓋率行長什麼樣」開第二份會漂移的定義——本 repo 已駁回過同形的
+      # 東西七次。這一步只驗**它自己能驗的那三件**：exit 在契約內、不吐 traceback、
+      # 問題數 0。
+      - name: 生產包導出冒煙（一棵沒有開發期檔案的樹）
+        run: |
+          set -uo pipefail
+          ship=$(mktemp -d)
+          # 系統層白名單 7 項（`docs/驗證/00-系統層邊界與儀器.md` §一），
+          # 唯一的排除是每支套件的 `tests/`——一個 uniform pattern，不是逐套件清單。
+          cp -r 結構定義 技巧知識庫 書本模板 CLAUDE.md README.md "$ship"/
+          mkdir -p "$ship/.claude" && cp -r .claude/skills "$ship/.claude"/
+          cp -r tools "$ship"/ && rm -rf "$ship"/tools/*/tests
+          # `.venv`／`__pycache__` 在 CI 上不存在（fresh checkout ＋ gitignored），
+          # 但在作者機器上會被 `cp -r` 帶過去，而它們的 trampoline 指回原 repo
+          # ——那會讓這一步「借到」原樹的東西，量到的封閉性是假的。
+          find "$ship" -name .venv -o -name __pycache__ | xargs -r rm -rf
+          cp -r "$ship/書本模板" "$ship/新書"
+          echo "導出樹："; ls "$ship"
+          for leak in examples 情境測試 docs Data site devtools 一世之尊; do
+            if [ -e "$ship/$leak" ]; then
+              echo "::error::導出樹裡有開發期落點 $leak——生產包不封閉"; exit 1
+            fi
+          done
+          status=0
+          run() {  # run <套件> <指令> [子指令...]
+            pkg=$1; shift
+            out=$(cd "$ship" && uv run --project "tools/$pkg" "$@" --book 新書 2>&1); rc=$?
+            label="$*"
+            case "$rc" in
+              0|2) ;;
+              *) echo "::error::$label 在導出樹上 exit $rc（只准 0 或 2）"; echo "$out"; status=1 ;;
+            esac
+            if echo "$out" | grep -qiE "Traceback|發現 [1-9][0-9]* 個問題|合計 [1-9][0-9]* 個格式問題"; then
+              echo "::error::$label 在導出樹上吐 traceback 或報了格式問題"; echo "$out"; status=1
+            fi
+          }
+          run beat_metrics beat-lint
+          run beat_metrics ch-lint
+          run beat_metrics outline-lint
+          run beat_metrics structure-project
+          run beat_metrics beat-metrics
+          run derived_sync derived-sync check
+          run derived_sync derived-sync validate
+          run derived_sync world-lint
+          run derived_sync char-lint
+          run derived_sync style-lint
+          run derived_sync summary-lint
+          run derived_sync readiness-lint
+          run derived_sync readiness
+          run fact_projection fact-lint
+          run fact_projection object-lint
+          run decision_projection decision-lint
+          run decision_projection decision-project
+          run foreshadow_project foreshadow-project
+          run prose_metrics prose-metrics
+          # **這三支吃 `--book` 以外的必填參數**，所以裸呼叫測到的是 argparse 不是工具
+          # （這也是步驟 ② 那份 19 支清單當初把它們留在外面的原因）。這一步補上參數把
+          # 它們收進來——導出樹的封閉性要驗的是**全部 21 支**，不是 19 支。
+          run fact_projection fact-project --for-beat 幕001
+          run fact_projection fact-refs --entity 示範
+          run settings_select settings-select --arc arc01
+          exit $status

@@ -14,6 +14,13 @@ object-lint = "fact_projection.cli:object_lint_main"
 # 反向索引：誰依賴了這條事實（`derived-sync check` 管正向的新鮮度，兩者互補）
 fact-refs = "fact_projection.cli:refs_main"
 
+[tool.novelai]
+# **射程宣告**（2026-07-30 驗證輪階段 1.5）。`meta-lint` 第 13 項驗宣告 ↔ 位置：
+#   `book`     ＝吃 `--book`，消費者是 SKILL.md，住 `tools/`，**進生產包**
+#   `repo-dev` ＝守 repo 自己，觸發者是 workflow，住 `devtools/`，不進生產包
+# 生產包一律**不含 `tests/`**——黃金檔釘病例書、語料回歸釘 `examples/`，兩者都是開發期資產。
+scope = "book"
+
 [dependency-groups]
 dev = ["pytest>=8"]
 

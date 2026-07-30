@@ -539,3 +539,23 @@ def test_neither_retired_stream_name_is_read(tmp_path, mode_file):
     assert mode == "retired"
     assert [e.origin for e in events] == ["ch0001"]
     assert [n for n in notes if mode_file in n and "2026-07-30 起不再讀" in n]
+
+
+def test_the_retired_stream_size_is_the_same_on_crlf_and_lf(tmp_path):
+    """墓碑那一行的 B 數**不得隨 checkout 的行尾設定改變**（階段 1.5）。
+
+    這一格是回歸：`sources.py` 原本印 `stat().st_size`，於是同一支檔在
+    `core.autocrlf=true` 的 Windows checkout 上比 CI（LF）多 232 B——而那個數字
+    被釘在 `一世之尊-fact-lint` 黃金檔裡，**測試因此在 CI 綠、在作者機器上紅**。
+    守衛在兩台機器上給相反的裁決，比數字錯了更糟。
+    """
+    body = "- 幕003（arc01）· 少年 · 位置：舊格式那筆\n" * 5
+    sizes = set()
+    for i, newline in enumerate(("\n", "\r\n")):
+        book = _book(tmp_path / f"b{i}", chapters={"ch0001.ai.md": _ch("- 幕002（arc01）· 少年 · 持有：＋〔舊劍〕")})
+        p = book / "story" / "參照" / "狀態事件流.md"
+        p.write_bytes(body.replace("\n", newline).encode("utf-8"))
+        notes: list[str] = []
+        collect_events(book, orphans=notes)
+        sizes.add(next(n.split("（")[1].split(" B）")[0] for n in notes if "不再讀" in n))
+    assert len(sizes) == 1, f"CRLF 與 LF 報出不同的 B 數：{sizes}"

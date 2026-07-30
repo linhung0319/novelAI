@@ -20,6 +20,7 @@ from meta_lint.checks import (
     check_named_commands,
     check_parallel_lists,
     check_schema_guards,
+    check_ship_closure,
     check_skill_paths,
     check_triggers,
     emit_guards,
@@ -27,6 +28,7 @@ from meta_lint.checks import (
     empty_book,
     entry_table,
     kb_referrers,
+    known_red_path,
     load_known_red,
     project_duplicates,
     project_thresholds,
@@ -116,7 +118,7 @@ def test_the_known_red_file_is_still_readable():
     `load_known_red` 回 `[]`，與「清單清空了」完全同形——那正是這一整輪在追的
     「已遷移」與「守衛被關掉」共用一個綠燈。所以檔的存在性單獨釘一支。
     """
-    p = REPO / "tools" / "meta_lint" / "known-red.toml"
+    p = known_red_path(REPO)
     assert p.is_file(), "known-red.toml 不見了——雙向擋的第一個方向從此不存在"
     assert "known_red" in p.read_text(encoding="utf-8"), "清單的鍵不在，`.get` 會靜默回 []"
 
@@ -272,10 +274,14 @@ def test_lint_repo_runs_without_live(tmp_path):
     assert isinstance(problems, list)
 
 
-@pytest.mark.parametrize("pkg", [p.name for p in packages(REPO)])
+@pytest.mark.parametrize("pkg", [p.rel for p in packages(REPO)], ids=lambda r: r)
 def test_every_package_has_tests(pkg):
-    """一個沒有 tests/ 的套件 ＝ CI 對它一句話都不會說。"""
-    assert (REPO / "tools" / pkg / "tests").is_dir(), f"{pkg} 沒有 tests/"
+    """一個沒有 tests/ 的套件 ＝ CI 對它一句話都不會說。
+
+    **走 `pkg.rel` 而不是 `"tools" / name`**（2026-07-30 階段 1.5）：套件根現在有兩個，
+    照舊拼 `tools/` 會讓 `devtools/` 底下的套件恆定失敗。
+    """
+    assert (REPO / pkg / "tests").is_dir(), f"{pkg} 沒有 tests/"
 
 
 def test_command_count_matches_the_registry():
@@ -668,3 +674,110 @@ def test_the_case_book_is_the_only_one_with_prose():
     assert with_prose == [CASE_BOOK], (
         f"有正文的書變成 {with_prose}——第 4 條契約的樣本可以（也應該）改成自動挑選"
     )
+
+
+# ================================================ 第 13 項（2026-07-30 階段 1.5）
+#
+# **生產包封閉性。** 拆分是一次性動作，讓它保持拆開的是這三條：宣告存在／宣告 ↔ 位置
+# 一致／生產側 `src/` 不帶開發期路徑字面。
+
+
+def _scoped_repo(tmp_path: Path, *, layout: dict[str, str], src: str = "") -> Path:
+    """`layout`：`"tools/demo"` → `scope` 的值（`""` ＝不宣告）。"""
+    root = tmp_path / "repo"
+    (root / "結構定義").mkdir(parents=True)
+    for rel, scope in layout.items():
+        pkg = root / rel
+        (pkg / "src" / "demo").mkdir(parents=True)
+        (pkg / "src" / "demo" / "mod.py").write_text(src, encoding="utf-8")
+        body = '[project]\nname = "demo"\nversion = "0.1.0"\n[project.scripts]\ndemo = "demo.cli:main"\n'
+        if scope:
+            body += f'\n[tool.novelai]\nscope = "{scope}"\n'
+        (pkg / "pyproject.toml").write_text(body, encoding="utf-8")
+    return root
+
+
+def test_a_package_without_a_scope_declaration_is_reported(tmp_path):
+    """沒宣告 ＝複製系統層的人不知道該不該帶它走。"""
+    repo = _scoped_repo(tmp_path, layout={"tools/demo": ""})
+    stats = MetaStats()
+    problems = check_ship_closure(repo, stats)
+    assert stats.scope_undeclared == 1
+    assert any("射程宣告" in str(p) for p in problems)
+
+
+def test_scope_declaration_must_match_the_folder(tmp_path):
+    """宣告 `repo-dev` 卻住 `tools/` ＝「複製 `tools/`」這個資料夾粒度的規則失效。"""
+    repo = _scoped_repo(tmp_path, layout={"tools/demo": "repo-dev"})
+    problems = check_ship_closure(repo, MetaStats())
+    assert any("宣告與位置不一致" in str(p) for p in problems)
+
+
+def test_a_ship_package_may_not_carry_a_dev_path_literal(tmp_path):
+    """生產側 `src/` 帶 `examples/…` 的路徑字面要報——那個資料夾在生產 project 不存在。"""
+    repo = _scoped_repo(
+        tmp_path,
+        layout={"tools/demo": "book"},
+        src='from pathlib import Path\nP = Path("examples/一世之尊")\n',
+    )
+    stats = MetaStats()
+    problems = check_ship_closure(repo, stats)
+    assert stats.ship_src_leaks == 1
+    assert any("開發期路徑字面" in str(p) for p in problems)
+
+
+def test_a_dev_path_in_a_comment_or_a_citation_is_not_a_problem(tmp_path):
+    """**註解與出處引用不算。**
+
+    這一格是回歸：第一版只要字串常數含 `docs/` 就報，實測**7 處全是誤報**——
+    `（見 docs/重構/功能報告/02-幕綱.md §八）` 這種是門檻的實測依據，與註解同性質。
+    刪掉它們會讓常數變成天上掉下來的數字。判準因此是**路徑形狀**，不是「提到名字」。
+    """
+    repo = _scoped_repo(
+        tmp_path,
+        layout={"tools/demo": "book"},
+        src=(
+            '"""門檻取自 examples/ 六本語料（見 docs/重構/功能報告/02-幕綱.md §八）。"""\n'
+            "# 實測 examples/一世之尊 的分佈\n"
+            'HINT = "本輪刻意不裁（見 docs/重構/02-待用構想.md）"\n'
+        ),
+    )
+    stats = MetaStats()
+    assert check_ship_closure(repo, stats) == []
+    assert stats.ship_src_leaks == 0
+
+
+def test_a_dev_package_may_carry_dev_path_literals(tmp_path):
+    """`devtools/` 底下不受第 ③ 條約束——它本來就是吃開發期語料的那一半。"""
+    repo = _scoped_repo(
+        tmp_path,
+        layout={"devtools/demo": "repo-dev"},
+        src='from pathlib import Path\nP = Path("情境測試")\n',
+    )
+    stats = MetaStats()
+    assert check_ship_closure(repo, stats) == []
+    assert stats.ship_src_files == 0, "生產側掃描不該把 devtools/ 算進去"
+
+
+# ---------------------------------------------------------------- 真 repo：射程非空
+#
+# **測試是綠的、射程是空的** 是新守衛最容易的死法（`設計原則.md` E2 第七形態的鏡像）。
+
+
+def test_every_real_package_declares_a_scope():
+    assert [p.rel for p in packages(REPO) if p.scope is None] == []
+
+
+def test_meta_lint_sees_itself_after_the_move():
+    """`packages()` 少掃一個根 ＝第 1／5／6／9／13 項各少驗一支，而輸出完全正常。"""
+    rels = [p.rel for p in packages(REPO)]
+    assert "devtools/meta_lint" in rels
+    assert sum(1 for p in packages(REPO) if not p.ships) == 1
+
+
+def test_the_ship_scan_is_not_silently_empty():
+    """真 repo 上生產側掃得到 `.py`——掃到 0 支就是這一格空了，而不是「都合格」。"""
+    stats = MetaStats()
+    check_ship_closure(REPO, stats)
+    assert stats.ship_src_files > 0
+    assert stats.ship_packages > 0 and stats.dev_packages > 0

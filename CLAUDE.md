@@ -22,7 +22,7 @@
 > **自由源被逐欄取值時走第三條路**：權威移到衍生層並在那裡補 lint，源檔維持自由散文（實例：`00-摘要.ai.md` 六欄＋`summary-lint`、`風格.ai.md` 五欄＋`style-lint`）。**別給自由源補 lint**，也別假裝「改成整檔讀」解決了問題。
 
 > **格式保證由 12 支閘門在守**：`derived-sync validate`／`fact-lint`／`object-lint`／`beat-lint`／`ch-lint`／`decision-lint`／`world-lint`／`char-lint`／`style-lint`／`summary-lint`／`outline-lint`／`readiness-lint`。**沒有檢查器的保證只是口頭承諾**（E1）。
-> **而守衛自己由 `meta-lint` 與 `.github/workflows/tools.yml` 守**——`meta-lint` 是 22 個指令裡**唯一一支不吃 `--book` 的**（它的「書」是 repo），12 項：指令 ↔ 觸發者雙向／schema 指名的守衛存在／平行清單一致／每個閘門都印覆蓋率行／輸出與 exit 契約（對 fixture 書實跑）／SKILL.md 的取用宣告有落點且不指向已廢除的檔／查詢入口表 ↔ SKILL.md 雙向／技法檔的三份平行清單。
+> **而守衛自己由 `meta-lint` 與 `.github/workflows/tools.yml` 守**——`meta-lint` 是 22 個指令裡**唯一一支不吃 `--book` 的**（它的「書」是 repo，所以 2026-07-30 起它住 `devtools/`、不進生產包），13 項：指令 ↔ 觸發者雙向／schema 指名的守衛存在／平行清單一致／每個閘門都印覆蓋率行／輸出與 exit 契約（對 fixture 書實跑）／SKILL.md 的取用宣告有落點且不指向已廢除的檔／查詢入口表 ↔ SKILL.md 雙向／技法檔的三份平行清單／**生產包封閉性**（每支套件宣告射程·宣告 ↔ 位置一致·生產側 `src/` 不帶開發期路徑字面）。
 > **一律先印「我在這本書上檢查了幾筆」，0 也印**（E2）——只回答「發現幾個問題」的檢查器，在它自己被關掉時會印「乾淨」。
 
 > **沒有索引檔，是刻意的。** 章序／角色清單／arc 清單／世界觀主題清單／階段↔幕對應／就緒現況全部是**投影**（`ch-lint --emit`／`char-lint --emit`／`outline-lint --emit`／`world-lint --emit`／`beat-lint --emit`／`structure-project`／`readiness`），**不落檔**。
@@ -91,8 +91,10 @@
 - `技巧知識庫/` — 整合後的寫作方法，扁平並列（技法與 skill 是多對多，資料夾會強迫單一歸屬）。**唯一入口是 `技巧知識庫/_index.md`**：查哪一支用它的「何時查它」欄；三種效力（**地板** always-on／**天花板** 依取向定位 opt-in／**配額** 好東西但密度上限就是本體）、網文↔文學的技巧取捨、「看情況二選一」的 OR 抉擇對照表，全部在那一支裡。哪一支被哪幾支 skill 引用跑 `meta-lint --emit kb`。
   > **這裡刻意不列檔名**（2026-07-29 功能 15 抉擇 4 A）：舊版在這一行列了 19 支，而資料夾裡有 27 支——**漏列 8 支／76,990 B ＝ 25.2%**，而答問檔位照本檔定位，所以那 8 支永遠不會被想到。列舉一份會隨技法輪次成長的清單在一支**每一回合無條件載入**的檔裡，形狀與功能 12 廢除的五支 rollup 相同。**`meta-lint` 第 12 項② 在守這一格**：本檔指名的技法檔集合必須是**空的、或等於資料夾**（「列舉了就要齊」）。
 - `.claude/skills/` — **12 支 skill**：skill 承載「操作」、知識庫承載「方法」。
-- `tools/` — **8 個套件／22 個指令**，唯讀、零 LLM、可覆算：**12 支格式閘門**＋投影查詢。**確定性的工作一律進程式，LLM 只做判斷**——加投影，**不要在 SKILL.md 裡寫「請只讀相關部分」這種規勸**（規勸不會被執行，工具會）。閘門清單不落檔，跑 `meta-lint --emit guards`。
-  > **`tools/` 不套 `設計原則.md` 的 A–G**（那套原則的射程是書內檔）；守它的是 `meta-lint` ＋ 903 支 pytest ＋ `.github/workflows/tools.yml`。**`.claude/skills/`、`技巧知識庫/`、`結構定義/` 的非 schema 檔套 A1／A4／E1／E2**，守它的是 `meta-lint` 第 10–12 項。
+- `tools/` — **7 個套件／21 個指令 ＝ 生產包**，全部吃 `--book`、唯讀、零 LLM、可覆算：**12 支格式閘門**＋投影查詢。**確定性的工作一律進程式，LLM 只做判斷**——加投影，**不要在 SKILL.md 裡寫「請只讀相關部分」這種規勸**（規勸不會被執行，工具會）。閘門清單不落檔，跑 `meta-lint --emit guards`。
+  > **`devtools/` 是開發期的那一半**（2026-07-30 驗證輪階段 1.5 拆出）：目前只有 `meta_lint`／`meta-lint`，**不進生產包**。判準是**消費者**——`tools/` 的 21 支由 12 支 SKILL.md 呼叫，`meta-lint` 由 `.github/workflows/tools.yml` 呼叫，而 `.github/` 不在系統層白名單上。**一支指令進生產包而它的觸發者沒有，是 E1 的反面**；更糟的是它在生產側第 6／10 項都會印「未接」而 exit 0（E2 最糟那一格）。理由與守衛見 `devtools/README.md`。
+  > **`tools/` 與 `devtools/` 都不套 `設計原則.md` 的 A–G**（那套原則的射程是書內檔）；守它們的是 `meta-lint` ＋ 953 支 pytest ＋ `.github/workflows/tools.yml`。**`.claude/skills/`、`技巧知識庫/`、`結構定義/` 的非 schema 檔套 A1／A4／E1／E2**，守它的是 `meta-lint` 第 10–12 項。
+  > **生產包 ＝ 系統層 7 項，唯一的排除是 `tools/*/tests/`**（一個 uniform pattern，不是逐套件清單）。守它的是 `meta-lint` 第 13 項（宣告 ↔ 位置·生產側 `src/` 不帶開發期路徑字面）＋ `tools.yml` 步驟 ⑤ 的**導出冒煙**（在一棵沒有開發期檔案的樹上跑 21/21）。
 
 ## Skill 地圖（作者在哪個階段，用哪個）
 
