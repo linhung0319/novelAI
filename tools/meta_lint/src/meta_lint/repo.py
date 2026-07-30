@@ -23,6 +23,7 @@ KB_INDEX = "_index.md"
 TEMPLATE_BOOK = "書本模板"
 CONVENTIONS = "共同約定.md"
 PROJECT_DOC = "CLAUDE.md"
+DEVDOC_DIR = "情境測試"
 
 
 def find_repo(start: Path | None = None) -> Path:
@@ -106,6 +107,25 @@ def kb_files(repo: Path) -> list[Path]:
 def workflow_files(repo: Path) -> list[Path]:
     d = repo / WORKFLOW_DIR
     return sorted(d.glob("*.yml")) + sorted(d.glob("*.yaml")) if d.is_dir() else []
+
+
+def devdoc_files(repo: Path) -> list[Path]:
+    """開發期的**活指示檔**（`情境測試/*.md`）。第 10 項的墓碑那一格掃它。
+
+    **為什麼要掃它**：`設計原則.md` 末節的射程表原本只有三格（書內檔／`tools/*.py`／
+    `.claude/skills/`＋`技巧知識庫/`＋`結構定義/` 非 schema 檔），`情境測試/` 一格都不在。
+    於是 `端到端貫穿測試流程.md` 能在功能 10 廢除 `就緒儀表.md` 兩天後照樣叫人去讀它，
+    **而 `meta-lint` 的覆蓋率行印「0 條指向已廢除的檔」**——這正是第 10 項自己寫的那句
+    「掃描對象是對的，掃描的欄位只有一格」的下一個實例：欄位對了，**射程少一個資料夾**。
+
+    **只掃頂層、不遞迴**（`情境測試/<書>/` 不掃）。那底下住的是 S1–S51 的逐 session
+    紀錄——**歷史紀錄提到一支當時還活著的檔是正確的**，那是它當時的事實，不是今天的
+    指示。把 append-only 的歷史納入墓碑檢查，等於要求歷史隨著今天的廢除而改寫，而
+    「判例要能回查」是 `CLAUDE.md` 第三問立事件流的理由本身。
+    代價是「有人把活指示放進 `情境測試/<書>/`」抓不到；依 E1，**驗不到的就不宣稱**。
+    """
+    d = repo / DEVDOC_DIR
+    return sorted(d.glob("*.md")) if d.is_dir() else []
 
 
 def cli_modules(repo: Path) -> list[tuple[str, Path]]:

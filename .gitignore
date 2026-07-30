@@ -19,7 +19,10 @@
 /.claude/*
 !/.claude/skills/
 
-# Python（子專案 C：tools/state_projection）——不版控環境與快取產物
+# Python（`tools/` 底下的 8 個 uv 套件）——不版控環境與快取產物。
+# 2026-07-30 校：原本這一行寫「子專案 C：tools/state_projection」，而那個套件
+# 2026-07-27（功能 01）就被 `fact_projection` 取代並刪除了（commit 57352b9）。
+# 規則本身對每個套件都適用，所以改成不指名任一套件。
 .venv/
 __pycache__/
 *.pyc

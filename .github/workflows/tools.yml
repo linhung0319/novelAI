@@ -49,6 +49,15 @@ jobs:
           status=0
           for pkg in tools/*/; do
             name=$(basename "$pkg")
+            # **註冊了卻沒有 tests/ ＝ 靜默跳過**（2026-07-30 補）。原本這裡只寫
+            # `[ -d "$pkg/tests" ] || continue`，於是一個有 pyproject.toml 而還沒有
+            # 測試的套件會被無聲略過，而這一步的 log 看起來完全正常——`設計原則.md`
+            # E2 最糟那一格。目前 8 個套件都有 tests/，所以這是**擋未來**，不是修現況。
+            if [ -f "$pkg/pyproject.toml" ] && [ ! -d "$pkg/tests" ]; then
+              echo "::error::$name 有 pyproject.toml 但沒有 tests/——CI 會靜默跳過它"
+              status=1
+              continue
+            fi
             [ -d "$pkg/tests" ] || continue
             echo "::group::$name"
             uv run --project "$pkg" pytest -q -p no:cacheprovider "$pkg/tests" \

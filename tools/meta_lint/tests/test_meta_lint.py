@@ -23,6 +23,7 @@ from meta_lint.checks import (
     check_triggers,
     emit_guards,
     emit_kb,
+    empty_book,
     entry_table,
     kb_referrers,
     load_known_red,
@@ -120,7 +121,15 @@ def test_no_in_package_duplicate_survives():
 # 只在乾淨輸入上綠的檢查器測不出任何東西。
 
 
-def _fake_repo(tmp_path: Path, *, scripts: str = "", skill: str = "", schema: str = "") -> Path:
+def _fake_repo(
+    tmp_path: Path,
+    *,
+    scripts: str = "",
+    skill: str = "",
+    schema: str = "",
+    devdoc: str = "",
+    session_log: str = "",
+) -> Path:
     root = tmp_path / "repo"
     pkg = root / "tools" / "demo"
     (pkg / "src" / "demo").mkdir(parents=True)
@@ -134,6 +143,14 @@ def _fake_repo(tmp_path: Path, *, scripts: str = "", skill: str = "", schema: st
     d = root / ".claude" / "skills" / "demo"
     d.mkdir(parents=True)
     (d / "SKILL.md").write_text(skill or "# demo\n", encoding="utf-8")
+    if devdoc:
+        dev = root / "情境測試"
+        dev.mkdir(parents=True, exist_ok=True)
+        (dev / "端到端貫穿測試流程.md").write_text(devdoc, encoding="utf-8")
+    if session_log:
+        logs = root / "情境測試" / "示範書"
+        logs.mkdir(parents=True, exist_ok=True)
+        (logs / "S12-write.md").write_text(session_log, encoding="utf-8")
     return root
 
 
@@ -353,6 +370,94 @@ def test_a_path_with_no_landing_place_is_reported(tmp_path):
     problems = check_skill_paths(repo, stats)
     assert stats.skill_paths_unlanded == 1
     assert any("沒有落點" in p.detail for p in problems)
+
+
+# ------------------------------------------------ 第 6 項的 exit 2 樣本不再硬編書名
+
+
+def test_the_exit_two_sample_is_discovered_not_hardcoded(tmp_path):
+    """`raw/` 在、`story/` 不在 → 就是它。**書名不進程式碼。**"""
+    repo = _fake_repo(tmp_path)
+    (repo / "某本新書" / "raw").mkdir(parents=True)
+    assert empty_book(repo) == "某本新書"
+
+
+def test_a_book_that_started_writing_stops_being_the_sample(tmp_path):
+    """**這一支釘的是那顆定時炸彈本身。**
+
+    原本 `EMPTY_BOOK` 寫死 `gothic_witch`，而那是作者的實驗素材。它一旦長出 `story/`，
+    舊寫法會**靜默**跳過整個 exit 2 分支——迴圈照跑、覆蓋率行照印、`live_checked`
+    照加，而第 2 條契約再也沒有被驗過一次（`設計原則.md` E2 最糟那一格，觸發條件是
+    「有人正常地開始寫一本書」）。現在它會改挑別本，挑不到則印「未接」。
+    """
+    repo = _fake_repo(tmp_path)
+    (repo / "已開工的書" / "raw").mkdir(parents=True)
+    (repo / "已開工的書" / "story").mkdir(parents=True)
+    assert empty_book(repo) is None  # 不是「還是它」，也不是拋錯
+
+    (repo / "還沒開工的書" / "raw").mkdir(parents=True)
+    assert empty_book(repo) == "還沒開工的書"
+
+
+def test_the_real_repo_still_has_an_exit_two_sample():
+    """**射程非空的守衛**（同 devdoc 那一條的理由）。挑不到就是這一格空了。"""
+    assert empty_book(REPO) is not None
+
+
+# ------------------------------------------------ 墓碑那一格的第三個射程：`情境測試/`
+#
+# 2026-07-30 擴。**擴的理由是一個實測**：`端到端貫穿測試流程.md` 寫於 2026-07-20，
+# 早於 07-26～29 的重構，於是它的「開場三讀」第 3 條在功能 10 廢除 `就緒儀表.md` 之後
+# 還叫人去讀那支檔，**而覆蓋率行印「0 條指向已廢除的檔」**——射程少一個資料夾。
+
+
+def test_a_stale_instruction_in_a_devdoc_is_reported(tmp_path):
+    """開發期活指示檔指向已廢除的檔，要報，而且要指得出行號。"""
+    repo = _fake_repo(tmp_path, devdoc="開場三讀：\n3. `story/參照/就緒儀表.md`（若已存在）\n")
+    stats = MetaStats()
+    problems = check_skill_paths(repo, stats)
+    assert stats.devdocs == 1
+    assert stats.skill_paths_abolished == 1
+    assert any("端到端貫穿測試流程.md:2" in p.detail for p in problems)
+
+
+def test_the_tombstone_rule_applies_to_devdocs_too(tmp_path):
+    """同一行寫出「廢除」就放行——與 SKILL.md 那一側同一條規矩，不另立標準。"""
+    repo = _fake_repo(
+        tmp_path,
+        devdoc="`就緒儀表.md` 功能 10 已廢除，改跑 `readiness` ＋源 `story/參照/就緒.md`\n",
+    )
+    stats = MetaStats()
+    assert check_skill_paths(repo, stats) == []
+    assert stats.devdocs == 1
+    assert stats.skill_paths_abolished == 0
+
+
+def test_historical_session_logs_are_deliberately_out_of_scope(tmp_path):
+    """**`情境測試/<書>/` 底下的逐 session 紀錄不掃**——只掃頂層。
+
+    那底下住的是 S1–S51 的歷史紀錄，而**歷史紀錄提到一支當時還活著的檔是正確的**：
+    那是它當時的事實，不是今天的指示。把 append-only 的歷史納入墓碑檢查，等於要求
+    歷史隨著今天的廢除而改寫，而「判例要能回查」正是 `CLAUDE.md` 第三問立事件流的
+    理由本身。這一支釘的是**射程的邊界**，不是一個洞。
+    """
+    repo = _fake_repo(tmp_path, session_log="S12 當時讀了 `story/參照/就緒儀表.md`\n")
+    stats = MetaStats()
+    assert check_skill_paths(repo, stats) == []
+    assert stats.devdocs == 0  # 頂層沒有 .md，所以掃了 0 支——**而 0 也印**
+    assert stats.skill_paths_abolished == 0
+
+
+def test_the_devdoc_scope_is_not_silently_empty():
+    """**射程非空的守衛**：真 repo 上這一格必須掃到 > 0 支。
+
+    這一條是針對 `設計原則.md` E2 第七形態的鏡像——**測試是綠的，射程是空的**
+    （功能 11 實測過一次：五支測試全用 `tmp_path` 造 `結構.ai.md`，而唯一的活書叫
+    `結構.md`）。`devdocs == 0` 而其他 assert 全綠，就是那個形態又發生一次。
+    """
+    stats = MetaStats()
+    check_skill_paths(REPO, stats)
+    assert stats.devdocs > 0, "情境測試/ 掃到 0 支＝射程空了，不是「都合格」"
 
 
 def test_the_kb_index_column_is_detected_as_a_leftover(tmp_path):

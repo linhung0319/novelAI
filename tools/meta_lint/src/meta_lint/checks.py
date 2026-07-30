@@ -55,6 +55,7 @@ class MetaStats:
     skill_paths: int = 0
     skill_paths_unlanded: int = 0
     skill_paths_abolished: int = 0
+    devdocs: int = 0  # 掃了幾支開發期活指示檔（`情境測試/*.md`）——0 也印
     entry_rows: int = 0
     entry_rows_unread: int = 0
     skill_axes_unlisted: int = 0
@@ -86,7 +87,8 @@ class MetaStats:
             # ---- 第 10–12 項：取用宣告那一半（0 也印）
             f"取用宣告 {self.skill_paths} 條書內路徑"
             f"（**{self.skill_paths_unlanded} 個沒有落點**"
-            f"·**{self.skill_paths_abolished} 條指向已廢除的檔**）；"
+            f"·**{self.skill_paths_abolished} 條指向已廢除的檔**"
+            f"·墓碑那一格另掃 {self.devdocs} 支開發期活指示檔）；"
             f"查詢入口表 {self.entry_rows} 列"
             f"（**{self.entry_rows_unread} 列無讀者**"
             f"·**{self.skill_axes_unlisted} 個 skill 讀的路徑兩份清單都沒有**）；"
@@ -481,7 +483,27 @@ def _has_scope_line(out: str) -> bool:
 
 
 CLEAN_BOOK = "書本模板"
-EMPTY_BOOK = "gothic_witch"
+
+
+def empty_book(repo: Path) -> str | None:
+    """挑一本「有 `raw/`、還沒有 `story/`」的書，當第 2 條契約（exit 2）的樣本。
+
+    **2026-07-30 起不硬編書名。** 原本這裡寫死 `gothic_witch`，而那本書是作者的實驗
+    素材——**任何人開始寫它、`story/` 一出現，這一格就會靜默失去射程**：迴圈照跑、
+    覆蓋率行照印、`live_checked` 照加，而「還沒到那一層要 exit 2 且照樣印覆蓋率行」
+    這條契約再也沒有被驗過一次。那是 `設計原則.md` E2 最糟的一格——**壞了永遠不會
+    發現，而且守衛回報正常**。而它的觸發條件不是誰改壞了什麼，是**有人正常地開始
+    寫一本書**。
+
+    判準是機械的：`raw/` 在、`story/` 不在。`書本模板`／`驗證範例`／`一世之尊` 都有
+    `story/`，自動排除；`examples/` 沒有 `raw/`，也不會被誤認成書。
+    `sorted` 是為了可覆算——同一個 repo 每次挑到同一本。
+    找不到就回 `None`，由呼叫端印「未接」（同 `CLEAN_BOOK` 找不到時的降級）。
+    """
+    for d in sorted(repo.iterdir()):
+        if d.is_dir() and (d / "raw").is_dir() and not (d / "story").is_dir():
+            return d.name
+    return None
 
 
 # **`-q` 不是裝飾**：`uv run` 自己會把「Building…／Installed N packages」寫進
@@ -521,6 +543,16 @@ def check_output_contract(repo: Path, stats: MetaStats, live: bool) -> list[Prob
         stats.hints.append(f"第 6 項未接——找不到 fixture 書 `{CLEAN_BOOK}`")
         return []
 
+    empty = empty_book(repo)
+    if empty is None:
+        stats.hints.append(
+            "第 6 項的**第 2 條契約未接**——找不到一本「有 `raw/`、還沒有 `story/`」的書，"
+            "於是「還沒到那一層要 exit 2 且照樣印覆蓋率行」這一格本次沒有被驗到。"
+            "第 1／3 條（乾淨的書、stderr 只裝執行錯誤）照驗"
+        )
+    else:
+        stats.notes.append(f"第 6 項的 exit 2 樣本：`{empty}`（有 `raw/`、無 `story/`，自動挑選）")
+
     out: list[Problem] = []
     dirty: list[str] = []
     bad_exit: list[str] = []
@@ -536,15 +568,13 @@ def check_output_contract(repo: Path, stats: MetaStats, live: bool) -> list[Prob
         if not _has_scope_line(r.stdout):
             no_coverage.append(f"{label}（{CLEAN_BOOK}）")
 
-        if (repo / EMPTY_BOOK).is_dir():
-            r2 = _run(repo, pkg, cmd, extra, EMPTY_BOOK)
+        if empty is not None:
+            r2 = _run(repo, pkg, cmd, extra, empty)
             stats.live_checked += 1
             if r2.returncode == 1:
-                bad_exit.append(
-                    f"{label}（{EMPTY_BOOK} → exit 1，而那本書只有 raw/）"
-                )
+                bad_exit.append(f"{label}（{empty} → exit 1，而那本書只有 raw/）")
             if r2.returncode == 2 and not _has_scope_line(r2.stdout):
-                no_coverage.append(f"{label}（{EMPTY_BOOK}·exit 2 卻沒印覆蓋率行）")
+                no_coverage.append(f"{label}（{empty}·exit 2 卻沒印覆蓋率行）")
 
     if bad_exit:
         out.append(
@@ -779,13 +809,16 @@ def _covers(pattern: str, path: str) -> bool:
 def check_skill_paths(repo: Path, stats: MetaStats) -> list[Problem]:
     """第 10 項：SKILL.md 指名的書內路徑有落點，且**不得指向已廢除的檔**。
 
-    **兩個閘門，強度刻意不同**：
+    **兩個閘門，強度刻意不同——而射程也不同**：
     1. **落點**（目錄級）：正規化後的目錄要在受管集合裡。**它刻意只驗到目錄**——
        SKILL.md 裡有大量示例路徑（`story/幕綱/arc02.md`），驗檔名存在會把示例
        全部報成問題，而那是警報疲勞。這一格抓的是「整個一層不存在」。
+       射程：**只有 `.claude/skills/`**。
     2. **已廢除**（檔名級）：`repo.ABOLISHED` 是封閉清單，提到就報——除非**同一行**
        寫出它已廢除（`repo.TOMBSTONE`）。**這一格才是本項的利刃**：實測 2026-07-29
        它在 12 支 SKILL.md 上抓到 24 條，其中一半是「重生它／封章它」的寫入命令。
+       射程：`.claude/skills/` ＋ argparse `description` ＋ **`情境測試/*.md`**
+       （2026-07-30 擴，見 `repo.devdoc_files`）。
     """
     places, notes = R.landing_places(repo)
     out: list[Problem] = []
@@ -805,6 +838,20 @@ def check_skill_paths(repo: Path, stats: MetaStats) -> list[Problem]:
         for lineno, name in R.abolished_mentions(text):
             when, instead = R.ABOLISHED[name]
             zombies.append(f"`{where}/SKILL.md:{lineno}` → `{name}`（{when} 廢除，改跑 {instead}）")
+
+    # **開發期的活指示檔也是取用宣告**（`情境測試/*.md`）。射程刻意只到墓碑那一格、
+    # **不驗落點**：那幾支檔講的是「怎麼測這個系統」，裡面的書內路徑多半是佈局示意與
+    # `<書>/` 佔位，驗落點會把示意圖報成問題，而那是警報疲勞（同本項落點閘門刻意只驗
+    # 到目錄的理由）。而墓碑那一格對它們**完全適用**——實測 2026-07-30：
+    # `端到端貫穿測試流程.md:63` 的「開場三讀」第 3 條仍叫人去讀 `就緒儀表.md`，
+    # 那支檔功能 10（2026-07-28）已廢除，而在此之前沒有任何東西看得到這一行。
+    devdocs = R.devdoc_files(repo)
+    stats.devdocs = len(devdocs)
+    for p in devdocs:
+        rel = p.relative_to(repo).as_posix()
+        for lineno, name in R.abolished_mentions(p.read_text(encoding="utf-8")):
+            when, instead = R.ABOLISHED[name]
+            zombies.append(f"`{rel}:{lineno}` → `{name}`（{when} 廢除，改跑 {instead}）")
 
     # **argparse `description` 也是一條取用宣告**，而它 2026-07-29 起是
     # `--emit guards` 的機械來源——**投影的輸入自己在描述已廢除的檔，投影就會把那句話
@@ -835,7 +882,7 @@ def check_skill_paths(repo: Path, stats: MetaStats) -> list[Problem]:
     if zombies:
         out.append(
             Problem(
-                ".claude/skills/",
+                f".claude/skills/ ＋ {R.DEVDOC_DIR}/",
                 f"{len(zombies)} 條取用宣告指向已廢除的檔：" + "；".join(zombies),
                 "**這一格「壞了永遠不會發現，而且守衛回報正常」**：照著跑會把一支已"
                 "廢除的檔造回來，而 `world-lint` 會印「格式合規」、`derived-sync check` "
