@@ -13,7 +13,7 @@
 | S1 | develop | 全書 | ✅ | `b59aa91`（書側）＋`23ce0a4`（測試側） |
 | S2 | organize → outline-test | 局部 arc01–arc08（`01-大綱.md` 未動） | ✅ | `3435b69`（書側）＋`30b6f03`（測試側） |
 | S3 | worldbuild ＋ character ＋ expand **各至少一次** | 橫向 | ✅ | `07a1f9a`（書側）＋`85ecee3`（測試側） |
-| S4 | **拆幕前置清帳（輕量三件）＋ character（金妮）** | 設定層／角色層 | ✅ | `<書側>`＋`<測試側>` |
+| S4 | **拆幕前置清帳（輕量三件）＋ character（金妮）** | 設定層／角色層 | ✅ | `b399999`（書側）＋`018a359`（測試側） |
 | S5 | beat-sheet → beat-test | arc01 | ⬜ | — |
 | S6 | write → write-test → revise | ch0001– | ⬜ | — |
 | S7 | sync（反向萃取已承諾事實）＋收尾盤點 | 全書 | ⬜ | — |
