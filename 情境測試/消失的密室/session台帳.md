@@ -11,7 +11,7 @@
 | S0 | 基座檔四項增修＋定義觀測者與需求機制帳格式 | 只動測試方法論 | ✅ | `f545f4e` |
 | P  | 刪 `harry_potter/`；`書本模板/`→`消失的密室/`；產 raw＋作者腦內 | — | ✅ | `3d6ce4a`（書側）＋`5ebc45e`（測試側） |
 | S1 | develop | 全書 | ✅ | `b59aa91`（書側）＋`23ce0a4`（測試側） |
-| S2 | organize → outline-test | 局部 arc01–arc08（`01-大綱.md` 未動） | ✅ | 見下 |
+| S2 | organize → outline-test | 局部 arc01–arc08（`01-大綱.md` 未動） | ✅ | `3435b69`（書側）＋`30b6f03`（測試側） |
 | S3 | worldbuild ＋ character ＋ expand **各至少一次** | 橫向 | ⬜ | — |
 | S4 | beat-sheet → beat-test | arc01 | ⬜ | — |
 | S5 | write → write-test → revise | ch0001– | ⬜ | — |
