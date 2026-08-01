@@ -15,7 +15,7 @@
 | S3 | worldbuild ＋ character ＋ expand **各至少一次** | 橫向 | ✅ | `07a1f9a`（書側）＋`85ecee3`（測試側） |
 | S4 | **拆幕前置清帳（輕量三件）＋ character（金妮）** | 設定層／角色層 | ✅ | `b399999`（書側）＋`018a359`（測試側） |
 | S5 | **開場清帳 ＋ beat-sheet → beat-test** | arc01 | ✅ | `bfabe2a`（書側）＋`019cf62`（測試側） |
-| S6 | **write → write-test → revise** | arc01 ch0001–ch0003 | ✅ | `<書側>`＋`<測試側>` |
+| S6 | **write → write-test → revise** | arc01 ch0001–ch0003 | ✅ | `416ab05`（書側）＋`46128f3`（測試側） |
 | S7 | sync（反向萃取已承諾事實）＋收尾盤點 | 全書 | ⬜ | — |
 
 ## 下一步（新 session 讀這段）
