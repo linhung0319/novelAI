@@ -17,7 +17,7 @@
 | S5 | **開場清帳 ＋ beat-sheet → beat-test** | arc01 | ✅ | `bfabe2a`（書側）＋`019cf62`（測試側） |
 | S6 | **write → write-test → revise** | arc01 ch0001–ch0003 | ✅ | `416ab05`（書側）＋`46128f3`（測試側） |
 | S7 | **character（榮恩）＋ worldbuild（監管與曝光）** — 拆幕前置清帳第二輪 | 角色層／設定層 | ✅ | `6d9664d`（書側）＋`2cdc429`（測試側） |
-| S8 | **beat-sheet（定點補幕）＋誤導線落地·character（派西）＋ write ch0004** | arc01 幕005–006 | ✅ | `<書側>`＋`<測試側>` |
+| S8 | **beat-sheet（定點補幕）＋誤導線落地·character（派西）＋ write ch0004** | arc01 幕005–006 | ✅ | `bf4f848`（書側）＋`5da2cb3`（測試側） |
 | S9 | **write-test（ch0001–ch0004 一次審完）→ revise** — 作者綁死的閘門 | arc01 前四章 | ⬜ | — |
 
 ## 下一步（新 session 讀這段）
