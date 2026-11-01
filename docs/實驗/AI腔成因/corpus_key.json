@@ -1,0 +1,445 @@
+{
+ "T5140": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "A",
+  "rep": 1,
+  "src": "S1_A_1.md"
+ },
+ "T6339": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "A",
+  "rep": 2,
+  "src": "S1_A_2.md"
+ },
+ "T4232": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "A",
+  "rep": 3,
+  "src": "S1_A_3.md"
+ },
+ "T4940": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "B",
+  "rep": 1,
+  "src": "S1_B_1.md"
+ },
+ "T4164": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "B",
+  "rep": 2,
+  "src": "S1_B_2.md"
+ },
+ "T2885": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "B",
+  "rep": 3,
+  "src": "S1_B_3.md"
+ },
+ "T5789": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "C",
+  "rep": 1,
+  "src": "S1_C_1.md"
+ },
+ "T8802": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "C",
+  "rep": 2,
+  "src": "S1_C_2.md"
+ },
+ "T4896": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "C",
+  "rep": 3,
+  "src": "S1_C_3.md"
+ },
+ "T3383": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "D",
+  "rep": 1,
+  "src": "S1_D_1.md"
+ },
+ "T9202": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "D",
+  "rep": 2,
+  "src": "S1_D_2.md"
+ },
+ "T1039": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "D",
+  "rep": 3,
+  "src": "S1_D_3.md"
+ },
+ "T5586": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "H",
+  "rep": 1,
+  "src": "S1_H_1.md"
+ },
+ "T1464": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "H",
+  "rep": 2,
+  "src": "S1_H_2.md"
+ },
+ "T9145": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "H",
+  "rep": 3,
+  "src": "S1_H_3.md"
+ },
+ "T3829": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "A",
+  "rep": 1,
+  "src": "S2_A_1.md"
+ },
+ "T4133": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "A",
+  "rep": 2,
+  "src": "S2_A_2.md"
+ },
+ "T9311": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "A",
+  "rep": 3,
+  "src": "S2_A_3.md"
+ },
+ "T7366": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "B",
+  "rep": 1,
+  "src": "S2_B_1.md"
+ },
+ "T3996": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "B",
+  "rep": 2,
+  "src": "S2_B_2.md"
+ },
+ "T6431": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "B",
+  "rep": 3,
+  "src": "S2_B_3.md"
+ },
+ "T6267": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "C",
+  "rep": 1,
+  "src": "S2_C_1.md"
+ },
+ "T2921": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "C",
+  "rep": 2,
+  "src": "S2_C_2.md"
+ },
+ "T2428": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "C",
+  "rep": 3,
+  "src": "S2_C_3.md"
+ },
+ "T5265": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "D",
+  "rep": 1,
+  "src": "S2_D_1.md"
+ },
+ "T9748": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "D",
+  "rep": 2,
+  "src": "S2_D_2.md"
+ },
+ "T8694": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "D",
+  "rep": 3,
+  "src": "S2_D_3.md"
+ },
+ "T4358": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "H",
+  "rep": 1,
+  "src": "S2_H_1.md"
+ },
+ "T4696": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "H",
+  "rep": 2,
+  "src": "S2_H_2.md"
+ },
+ "T4140": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "H",
+  "rep": 3,
+  "src": "S2_H_3.md"
+ },
+ "T2177": {
+  "group": "human_scene",
+  "scene": "S2",
+  "arm": "HUMAN",
+  "rep": 1,
+  "src": "第002章_空門.txt"
+ },
+ "T2326": {
+  "group": "human_base",
+  "book": "一世之尊",
+  "src": "第047章_圍觀群眾路人孟.txt"
+ },
+ "T4278": {
+  "group": "human_base",
+  "book": "一世之尊",
+  "src": "第060章_破浪一斬.txt"
+ },
+ "T8170": {
+  "group": "human_base",
+  "book": "詭秘之主",
+  "src": "第023章_副手武器.txt"
+ },
+ "T9826": {
+  "group": "human_base",
+  "book": "詭秘之主",
+  "src": "第012章_再次上門.txt"
+ },
+ "T2250": {
+  "group": "human_base",
+  "book": "極道天魔",
+  "src": "第033章_不同_一.txt"
+ },
+ "T2635": {
+  "group": "human_base",
+  "book": "極道天魔",
+  "src": "第012章_蟄伏_二.txt"
+ },
+ "T4474": {
+  "group": "human_base",
+  "book": "從紅月開始",
+  "src": "第013章_工作積極性.txt"
+ },
+ "T6388": {
+  "group": "human_base",
+  "book": "從紅月開始",
+  "src": "第051章_精神損傷.txt"
+ },
+ "T2437": {
+  "group": "human_base",
+  "book": "神秀之主",
+  "src": "第402章_飛劍.txt"
+ },
+ "T2555": {
+  "group": "human_base",
+  "book": "神秀之主",
+  "src": "第409章_桃花運.txt"
+ },
+ "T8556": {
+  "group": "human_base",
+  "book": "我有一個修仙世界",
+  "src": "第799章_翻手為云.txt"
+ },
+ "T2299": {
+  "group": "human_base",
+  "book": "我有一個修仙世界",
+  "src": "第796章_真寒.txt"
+ },
+ "T9814": {
+  "group": "old_ai",
+  "book": "repo_一世之尊",
+  "src": "ch0002.md"
+ },
+ "T2744": {
+  "group": "old_ai",
+  "book": "repo_一世之尊",
+  "src": "ch0040.md"
+ },
+ "T5455": {
+  "group": "old_ai",
+  "book": "repo_一世之尊",
+  "src": "ch0070.md"
+ },
+ "T8286": {
+  "group": "old_ai",
+  "book": "repo_消失的密室",
+  "src": "ch0001.md"
+ },
+ "T2990": {
+  "group": "old_ai",
+  "book": "repo_消失的密室",
+  "src": "ch0004.md"
+ },
+ "T6757": {
+  "group": "old_ai",
+  "book": "oh_典籍有誤",
+  "src": "第001章_父親抄錯了一個字.md"
+ },
+ "T9678": {
+  "group": "old_ai",
+  "book": "oh_典籍有誤",
+  "src": "第006章_十七次.md"
+ },
+ "T1923": {
+  "group": "old_ai",
+  "book": "oh_典籍有誤",
+  "src": "第012章_整頁都是黑的.md"
+ },
+ "T2089": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "QA",
+  "rep": 1,
+  "src": "S1_QA_1.md"
+ },
+ "T7217": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "QA",
+  "rep": 2,
+  "src": "S1_QA_2.md"
+ },
+ "T3627": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "QA",
+  "rep": 3,
+  "src": "S1_QA_3.md"
+ },
+ "T3007": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "QB",
+  "rep": 1,
+  "src": "S1_QB_1.md"
+ },
+ "T7832": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "QB",
+  "rep": 2,
+  "src": "S1_QB_2.md"
+ },
+ "T1734": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "QB",
+  "rep": 3,
+  "src": "S1_QB_3.md"
+ },
+ "T4348": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "QC",
+  "rep": 1,
+  "src": "S1_QC_1.md"
+ },
+ "T7678": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "QC",
+  "rep": 2,
+  "src": "S1_QC_2.md"
+ },
+ "T9499": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "QC",
+  "rep": 3,
+  "src": "S1_QC_3.md"
+ },
+ "T8691": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "QA",
+  "rep": 1,
+  "src": "S2_QA_1.md"
+ },
+ "T4179": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "QA",
+  "rep": 2,
+  "src": "S2_QA_2.md"
+ },
+ "T4068": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "QA",
+  "rep": 3,
+  "src": "S2_QA_3.md"
+ },
+ "T7714": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "QB",
+  "rep": 1,
+  "src": "S2_QB_1.md"
+ },
+ "T8290": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "QB",
+  "rep": 2,
+  "src": "S2_QB_2.md"
+ },
+ "T6342": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "QB",
+  "rep": 3,
+  "src": "S2_QB_3.md"
+ },
+ "T4287": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "QC",
+  "rep": 1,
+  "src": "S2_QC_1.md"
+ },
+ "T9255": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "QC",
+  "rep": 2,
+  "src": "S2_QC_2.md"
+ },
+ "T1906": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "QC",
+  "rep": 3,
+  "src": "S2_QC_3.md"
+ }
+}

@@ -1,0 +1,446 @@
+{
+"B000": {
+"group": "trial",
+"src": "q_S2_S_3"
+},
+"B001": {
+"group": "trial",
+"src": "q_S1_M_2"
+},
+"B002": {
+"group": "trial",
+"src": "q_S1_S_1"
+},
+"B003": {
+"group": "trial",
+"src": "q_S2_PA_3"
+},
+"B004": {
+"group": "trial",
+"src": "c_S1_V_2"
+},
+"B005": {
+"group": "trial",
+"src": "q_S2_M_1"
+},
+"B006": {
+"group": "human_base",
+"src": "第013章_工作積極性.txt"
+},
+"B007": {
+"group": "trial",
+"src": "c_S2_MP_2"
+},
+"B008": {
+"group": "trial",
+"src": "c_S2_MP_3"
+},
+"B009": {
+"group": "trial",
+"src": "c_S1_MP_2"
+},
+"B010": {
+"group": "trial",
+"src": "c_S1_S_1"
+},
+"B011": {
+"group": "trial",
+"src": "q_S2_MP_1"
+},
+"B012": {
+"group": "human_base",
+"src": "第060章_破浪一斬.txt"
+},
+"B013": {
+"group": "trial",
+"src": "c_S2_PH_1"
+},
+"B014": {
+"group": "old_ai",
+"src": "第001章_父親抄錯了一個字.md"
+},
+"B015": {
+"group": "trial",
+"src": "q_S2_V_1"
+},
+"B016": {
+"group": "trial",
+"src": "c_S1_N_3"
+},
+"B017": {
+"group": "trial",
+"src": "q_S1_MP_1"
+},
+"B018": {
+"group": "trial",
+"src": "q_S2_N_3"
+},
+"B019": {
+"group": "trial",
+"src": "c_S1_M_2"
+},
+"B020": {
+"group": "trial",
+"src": "q_S1_S_2"
+},
+"B021": {
+"group": "trial",
+"src": "c_S2_V_3"
+},
+"B022": {
+"group": "trial",
+"src": "q_S2_S_1"
+},
+"B023": {
+"group": "trial",
+"src": "c_S2_PA_3"
+},
+"B024": {
+"group": "trial",
+"src": "c_S2_M_2"
+},
+"B025": {
+"group": "human_base",
+"src": "第051章_精神損傷.txt"
+},
+"B026": {
+"group": "trial",
+"src": "c_S1_R_1"
+},
+"B027": {
+"group": "trial",
+"src": "q_S2_PA_2"
+},
+"B028": {
+"group": "trial",
+"src": "c_S2_N_1"
+},
+"B029": {
+"group": "trial",
+"src": "q_S2_N_2"
+},
+"B030": {
+"group": "old_ai",
+"src": "ch0040.md"
+},
+"B031": {
+"group": "trial",
+"src": "c_S1_M_3"
+},
+"B032": {
+"group": "trial",
+"src": "c_S2_R_1"
+},
+"B033": {
+"group": "trial",
+"src": "q_S1_PA_3"
+},
+"B034": {
+"group": "trial",
+"src": "q_S1_N_3"
+},
+"B035": {
+"group": "trial",
+"src": "q_S2_MP_2"
+},
+"B036": {
+"group": "trial",
+"src": "q_S2_R_1"
+},
+"B037": {
+"group": "trial",
+"src": "q_S2_N_1"
+},
+"B038": {
+"group": "trial",
+"src": "q_S1_PA_1"
+},
+"B039": {
+"group": "trial",
+"src": "q_S1_R_3"
+},
+"B040": {
+"group": "trial",
+"src": "c_S2_PH_2"
+},
+"B041": {
+"group": "old_ai",
+"src": "ch0004.md"
+},
+"B042": {
+"group": "trial",
+"src": "q_S1_V_2"
+},
+"B043": {
+"group": "human_base",
+"src": "第796章_真寒.txt"
+},
+"B044": {
+"group": "trial",
+"src": "c_S2_S_2"
+},
+"B045": {
+"group": "trial",
+"src": "c_S2_R_2"
+},
+"B046": {
+"group": "trial",
+"src": "q_S1_M_3"
+},
+"B047": {
+"group": "trial",
+"src": "q_S1_PA_2"
+},
+"B048": {
+"group": "human_base",
+"src": "第409章_桃花運.txt"
+},
+"B049": {
+"group": "human_base",
+"src": "第047章_圍觀群眾路人孟.txt"
+},
+"B050": {
+"group": "trial",
+"src": "c_S1_PA_1"
+},
+"B051": {
+"group": "trial",
+"src": "c_S2_MP_1"
+},
+"B052": {
+"group": "trial",
+"src": "q_S1_V_3"
+},
+"B053": {
+"group": "trial",
+"src": "c_S2_N_3"
+},
+"B054": {
+"group": "trial",
+"src": "q_S2_V_3"
+},
+"B055": {
+"group": "trial",
+"src": "q_S2_M_2"
+},
+"B056": {
+"group": "human_base",
+"src": "第023章_副手武器.txt"
+},
+"B057": {
+"group": "trial",
+"src": "q_S1_N_1"
+},
+"B058": {
+"group": "trial",
+"src": "q_S2_M_3"
+},
+"B059": {
+"group": "trial",
+"src": "q_S2_PA_1"
+},
+"B060": {
+"group": "trial",
+"src": "c_S2_M_1"
+},
+"B061": {
+"group": "trial",
+"src": "c_S1_PA_2"
+},
+"B062": {
+"group": "human_base",
+"src": "第799章_翻手為云.txt"
+},
+"B063": {
+"group": "human_base",
+"src": "第012章_蟄伏_二.txt"
+},
+"B064": {
+"group": "old_ai",
+"src": "ch0001.md"
+},
+"B065": {
+"group": "old_ai",
+"src": "ch0002.md"
+},
+"B066": {
+"group": "human_base",
+"src": "第033章_不同_一.txt"
+},
+"B067": {
+"group": "trial",
+"src": "q_S1_R_2"
+},
+"B068": {
+"group": "trial",
+"src": "q_S2_PH_1"
+},
+"B069": {
+"group": "trial",
+"src": "c_S2_V_2"
+},
+"B070": {
+"group": "trial",
+"src": "c_S2_R_3"
+},
+"B071": {
+"group": "trial",
+"src": "q_S1_N_2"
+},
+"B072": {
+"group": "trial",
+"src": "c_S2_PA_1"
+},
+"B073": {
+"group": "trial",
+"src": "c_S1_V_3"
+},
+"B074": {
+"group": "old_ai",
+"src": "ch0070.md"
+},
+"B075": {
+"group": "trial",
+"src": "c_S2_S_3"
+},
+"B076": {
+"group": "trial",
+"src": "c_S2_S_1"
+},
+"B077": {
+"group": "trial",
+"src": "q_S2_R_2"
+},
+"B078": {
+"group": "trial",
+"src": "c_S2_PA_2"
+},
+"B079": {
+"group": "human_base",
+"src": "第402章_飛劍.txt"
+},
+"B080": {
+"group": "trial",
+"src": "q_S2_PH_3"
+},
+"B081": {
+"group": "trial",
+"src": "q_S2_S_2"
+},
+"B082": {
+"group": "trial",
+"src": "c_S2_M_3"
+},
+"B083": {
+"group": "human_scene",
+"src": "第002章_空門.txt"
+},
+"B084": {
+"group": "trial",
+"src": "q_S1_V_1"
+},
+"B085": {
+"group": "trial",
+"src": "c_S1_R_2"
+},
+"B086": {
+"group": "trial",
+"src": "q_S1_MP_2"
+},
+"B087": {
+"group": "old_ai",
+"src": "第012章_整頁都是黑的.md"
+},
+"B088": {
+"group": "trial",
+"src": "c_S1_MP_1"
+},
+"B089": {
+"group": "trial",
+"src": "q_S1_M_1"
+},
+"B090": {
+"group": "trial",
+"src": "c_S1_M_1"
+},
+"B091": {
+"group": "trial",
+"src": "q_S2_PH_2"
+},
+"B092": {
+"group": "trial",
+"src": "c_S1_S_3"
+},
+"B093": {
+"group": "old_ai",
+"src": "第006章_十七次.md"
+},
+"B094": {
+"group": "trial",
+"src": "q_S1_S_3"
+},
+"B095": {
+"group": "trial",
+"src": "q_S2_MP_3"
+},
+"B096": {
+"group": "trial",
+"src": "q_S1_R_1"
+},
+"B097": {
+"group": "trial",
+"src": "c_S1_V_1"
+},
+"B098": {
+"group": "trial",
+"src": "c_S1_S_2"
+},
+"B099": {
+"group": "trial",
+"src": "c_S2_V_1"
+},
+"B100": {
+"group": "trial",
+"src": "c_S2_PH_3"
+},
+"B101": {
+"group": "trial",
+"src": "c_S2_N_2"
+},
+"B102": {
+"group": "trial",
+"src": "q_S2_R_3"
+},
+"B103": {
+"group": "trial",
+"src": "c_S1_N_1"
+},
+"B104": {
+"group": "trial",
+"src": "c_S1_MP_3"
+},
+"B105": {
+"group": "trial",
+"src": "q_S2_V_2"
+},
+"B106": {
+"group": "trial",
+"src": "c_S1_N_2"
+},
+"B107": {
+"group": "trial",
+"src": "q_S1_MP_3"
+},
+"B108": {
+"group": "trial",
+"src": "c_S1_R_3"
+},
+"B109": {
+"group": "trial",
+"src": "c_S1_PA_3"
+},
+"B110": {
+"group": "human_base",
+"src": "第012章_再次上門.txt"
+}
+}

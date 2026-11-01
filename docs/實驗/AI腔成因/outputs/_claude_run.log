@@ -1,0 +1,30 @@
+skip S1_A_1.md
+skip S2_A_1.md
+ok S1_B_1.md chars=2991 in=2690 cost=0.29980860000000004 456s
+ok S2_B_1.md chars=3663 in=1527 cost=0.183408 116s
+ok S1_C_1.md chars=3026 in=205852 cost=1.1972528 487s
+ok S2_C_1.md chars=3303 in=237421 cost=2.173812 441s
+ok S1_D_1.md chars=3175 in=206320 cost=1.2266515999999998 385s
+ok S2_D_1.md chars=3665 in=118935 cost=1.2909920000000001 202s
+ok S1_H_1.md chars=2738 in=34634 cost=0.4960958 199s
+ok S2_H_1.md chars=3496 in=34801 cost=0.44146620000000003 163s
+ok S1_A_2.md chars=2823 in=1111 cost=0.3074898 189s
+ok S2_A_2.md chars=3865 in=1278 cost=0.13504320000000003 92s
+ok S1_B_2.md chars=3325 in=1345 cost=0.34343660000000004 227s
+ok S2_B_2.md chars=3965 in=1527 cost=0.164573 113s
+ok S1_C_2.md chars=3170 in=102926 cost=0.5377128 305s
+ok S2_C_2.md chars=2946 in=118686 cost=0.3590448 194s
+ok S1_D_2.md chars=2819 in=103160 cost=0.49117959999999994 281s
+ok S2_D_2.md chars=3610 in=118935 cost=0.3814946 207s
+ok S1_H_2.md chars=2763 in=34634 cost=0.34499440000000003 203s
+ok S2_H_2.md chars=3741 in=34801 cost=0.2662278 167s
+ok S1_A_3.md chars=2964 in=1111 cost=0.21928979999999998 151s
+ok S2_A_3.md chars=3715 in=1278 cost=0.13264320000000002 91s
+ok S1_B_3.md chars=2913 in=1345 cost=0.3362766 218s
+ok S2_B_3.md chars=3655 in=1527 cost=0.195673 129s
+ok S1_C_3.md chars=2904 in=102926 cost=0.4551928 252s
+ok S2_C_3.md chars=3321 in=118686 cost=0.3081648 176s
+ok S1_D_3.md chars=3170 in=103160 cost=0.4937796 282s
+ok S2_D_3.md chars=3308 in=118935 cost=0.3081146 181s
+ok S1_H_3.md chars=2788 in=34634 cost=0.30219440000000003 192s
+ok S2_H_3.md chars=3748 in=34801 cost=0.2417678 154s

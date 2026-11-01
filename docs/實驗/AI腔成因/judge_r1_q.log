@@ -1,0 +1,69 @@
+skip T1039
+skip T1464
+ok T1734 J1=8/8 J2=8/8 J3=10 J4=5
+ok T1906 J1=5/5 J2=3/3 J3=5 J4=5
+skip T1923
+ok T2089 J1=5/5 J2=4/4 J3=8 J4=4
+skip T2177
+skip T2250
+skip T2299
+skip T2326
+skip T2428
+skip T2437
+skip T2555
+skip T2635
+skip T2744
+skip T2885
+skip T2921
+skip T2990
+ok T3007 J1=10/10 J2=7/7 J3=8 J4=2
+skip T3383
+ok T3627 J1=6/6 J2=4/4 J3=8 J4=5
+skip T3829
+skip T3996
+ok T4068 J1=4/4 J2=4/4 J3=9 J4=6
+skip T4133
+skip T4140
+skip T4164
+ok T4179 J1=6/6 J2=3/3 J3=10 J4=6
+skip T4232
+skip T4278
+ok T4287 J1=3/3 J2=3/3 J3=7 J4=8
+ok T4348 J1=4/4 J2=4/4 J3=10 J4=6
+skip T4358
+skip T4474
+skip T4696
+skip T4896
+skip T4940
+skip T5140
+skip T5265
+skip T5455
+skip T5586
+skip T5789
+skip T6267
+skip T6339
+ok T6342 J1=4/4 J2=4/4 J3=11 J4=8
+skip T6388
+skip T6431
+skip T6757
+ok T7217 J1=6/6 J2=6/6 J3=9 J4=4
+skip T7366
+ok T7678 J1=5/5 J2=5/5 J3=10 J4=5
+ok T7714 J1=5/5 J2=6/6 J3=7 J4=7
+ok T7832 J1=7/7 J2=8/8 J3=8 J4=6
+skip T8170
+skip T8286
+ok T8290 J1=6/6 J2=5/5 J3=8 J4=6
+skip T8556
+ok T8691 J1=4/4 J2=3/3 J3=8 J4=5
+skip T8694
+skip T8802
+skip T9145
+skip T9202
+ok T9255 J1=5/5 J2=3/3 J3=10 J4=6
+skip T9311
+ok T9499 J1=4/4 J2=4/4 J3=12 J4=6
+skip T9678
+skip T9748
+skip T9814
+skip T9826

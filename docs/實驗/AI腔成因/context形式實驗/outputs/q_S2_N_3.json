@@ -1,0 +1,1 @@
+{"model": "qwen3.5:9b", "seed": 21211, "options": {"temperature": 0.8, "top_p": 0.95, "top_k": 20, "repeat_penalty": 1.0, "presence_penalty": 0, "num_predict": 7000, "num_ctx": 32768}, "prompt_tokens": 853, "output_tokens": 1520, "done": "stop", "secs": 22}
