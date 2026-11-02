@@ -20,7 +20,7 @@
 | 動作與 skill | 討論已寫進 `novel-desk/CLAUDE.md`；其他動作討論中 |
 | 水下的做法 | 資料夾已放進骨架，讀取規則尚未確認 |
 | 新技巧知識庫 | 在本 repo 的 `docs/新技巧知識庫/` 製作，**先修再搬**（作者定案，2026-11-02）：要趁這次盤點砍掉太重、難用、複雜卻沒用的東西。修完的檢查由 Claude 做，方法也由 Claude 設計；作者之後在 `novel-desk` 實際使用，就等於再手動測一次，不另外逐張審。已修正並測試，現為 107 張、一份索引，已複製到 `novel-desk/knowledge/`，已併入 `main`，尚未 push。**之後改卡只改 `novel-desk` 那份**，`docs/新技巧知識庫/` 留作紀錄。修正過程見 `docs/新技巧知識庫-工作底稿.md`，測試見 `docs/實驗/招卡測試/01-結果.md` |
-| skill | `/change-angle` 已完成（作者確認，2026-11-02），已併入 `main`，尚未 push。`/draft`（落筆）已寫好，commit 在 `novel-desk` 分支 `add-draft`，尚未併入 `main`：組 prompt 由另一個 agent 照 `SKILL.md` 試過，生成、水下比對、並排都實跑過；第 5 步拼接和作者實際觸發還沒測。測試書是 `books/雁門鏢-測試/`。落筆模板對照實驗見 `docs/實驗/落筆模板對照/01-結果.md`。`/search`（問全書）已寫好並測過，在 `novel-desk` 分支 `add-search`，**尚未 commit**：20 題實跑通過，作者還沒實際用過，見 `docs/實驗/問全書測試/01-結果.md`。測試書是 `books/一世之尊-測試/` |
+| skill | `/change-angle` 已完成（作者確認，2026-11-02），已併入 `main`，尚未 push。`/draft`（落筆）已寫好，commit 在 `novel-desk` 分支 `add-draft`，尚未併入 `main`：組 prompt 由另一個 agent 照 `SKILL.md` 試過，生成、水下比對、並排都實跑過；第 5 步拼接和作者實際觸發還沒測。測試書是 `books/雁門鏢-測試/`。落筆模板對照實驗見 `docs/實驗/落筆模板對照/01-結果.md`。`/search`（問全書）已寫好並測過，commit 在 `novel-desk` 分支 `add-search`，尚未併入 `main`：20 題實跑通過，作者還沒實際用過，見 `docs/實驗/問全書測試/01-結果.md`。測試書是 `books/一世之尊-測試/` |
 
 ## 已定案
 
