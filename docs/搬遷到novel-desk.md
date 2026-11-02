@@ -17,10 +17,10 @@
 | `novel-desk` 資料夾與 git（`main`） | 已完成，骨架已 commit（`50f85f6`） |
 | 工具與書的 git 分離 | 已定案，`.gitignore` 已建立 |
 | 資料夾骨架 | 已建立 `README.md`、`CLAUDE.md`、`.gitignore` |
-| 動作與 skill | 討論的做法已定案，`novel-desk/CLAUDE.md` 還沒寫進去；其他動作討論中 |
+| 動作與 skill | 討論已寫進 `novel-desk/CLAUDE.md`；其他動作討論中 |
 | 水下的做法 | 資料夾已放進骨架，讀取規則尚未確認 |
-| 新技巧知識庫 | 在本 repo 的 `docs/新技巧知識庫/` 製作，**先修再搬**（作者定案，2026-11-02）：要趁這次盤點砍掉太重、難用、複雜卻沒用的東西。修完的檢查由 Claude 做，方法也由 Claude 設計；作者之後在 `novel-desk` 實際使用，就等於再手動測一次，不另外逐張審。已修正並測試，現為 107 張、一份索引，已複製到 `novel-desk/knowledge/`，尚未 commit。**之後改卡只改 `novel-desk` 那份**，`docs/新技巧知識庫/` 留作紀錄。修正過程見 `docs/新技巧知識庫-工作底稿.md`，測試見 `docs/實驗/招卡測試/01-結果.md` |
-| skill | `/change-angle` 已寫好，模擬試跑過，尚未 commit，也還沒在 `novel-desk` 實際觸發過。其他未開始 |
+| 新技巧知識庫 | 在本 repo 的 `docs/新技巧知識庫/` 製作，**先修再搬**（作者定案，2026-11-02）：要趁這次盤點砍掉太重、難用、複雜卻沒用的東西。修完的檢查由 Claude 做，方法也由 Claude 設計；作者之後在 `novel-desk` 實際使用，就等於再手動測一次，不另外逐張審。已修正並測試，現為 107 張、一份索引，已複製到 `novel-desk/knowledge/`，commit 在分支 `add-change-angle`。**之後改卡只改 `novel-desk` 那份**，`docs/新技巧知識庫/` 留作紀錄。修正過程見 `docs/新技巧知識庫-工作底稿.md`，測試見 `docs/實驗/招卡測試/01-結果.md` |
+| skill | `/change-angle` 已寫好，模擬試跑過，commit 在同一分支，還沒在 `novel-desk` 實際觸發過。其他未開始 |
 
 ## 已定案
 
