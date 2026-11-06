@@ -1,0 +1,11 @@
+{
+ "id": "C2410",
+ "cost": 0.00486,
+ "format_errors": 0,
+ "raw": [
+  "{\"label\": \"其他\", \"reason\": \"純動作描寫，咬線頭放下鞋\"}"
+ ],
+ "label": "其他",
+ "reason": "純動作描寫，咬線頭放下鞋",
+ "forced": false
+}

@@ -1,0 +1,11 @@
+{
+ "id": "C1179",
+ "cost": 0.005026,
+ "format_errors": 0,
+ "raw": [
+  "{\"label\": \"其他\", \"reason\": \"外貌與神情描寫，屬純描寫\"}"
+ ],
+ "label": "其他",
+ "reason": "外貌與神情描寫，屬純描寫",
+ "forced": false
+}

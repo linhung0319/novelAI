@@ -1,0 +1,12 @@
+{
+ "id": "C0169",
+ "cost": 0.006457900000000001,
+ "format_errors": 1,
+ "raw": [
+  "{\"label\": \"交代事實\", \"reason\": \"新資訊：七塊、舊布包、塞懷裡、冰得發疼，屬具體動作描寫\"}\n\nWait — I should correct that to match the definitions: this sentence is concrete action and sensation, not new background or a verdict.\n\n{\"label\": \"其他\", \"reason\": \"純動作與感官描寫，無新背景也無定論\"}",
+  "{\"label\": \"交代事實\", \"reason\": \"新資訊：七塊、舊布包、塞懷裡，屬具體動作細節\"}"
+ ],
+ "label": "交代事實",
+ "reason": "新資訊：七塊、舊布包、塞懷裡，屬具體動作細節",
+ "forced": false
+}

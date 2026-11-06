@@ -1,0 +1,1135 @@
+{
+ "T1039": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "D",
+  "rep": 3,
+  "src": "S1_D_3.md",
+  "narr_chars": 2665,
+  "chars": 2705,
+  "n_sents": 142,
+  "n_cand": 55,
+  "n_sample": 55,
+  "kinds": {
+   "段尾": 55,
+   "單句成段": 23,
+   "標記": 0
+  }
+ },
+ "T1464": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "H",
+  "rep": 2,
+  "src": "S1_H_2.md",
+  "narr_chars": 2317,
+  "chars": 2334,
+  "n_sents": 130,
+  "n_cand": 45,
+  "n_sample": 45,
+  "kinds": {
+   "段尾": 45,
+   "單句成段": 14,
+   "標記": 0
+  }
+ },
+ "T1734": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "QB",
+  "rep": 3,
+  "src": "S1_QB_3.md",
+  "narr_chars": 2571,
+  "chars": 2773,
+  "n_sents": 104,
+  "n_cand": 37,
+  "n_sample": 37,
+  "kinds": {
+   "段尾": 34,
+   "單句成段": 7,
+   "標記": 4
+  }
+ },
+ "T1906": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "QC",
+  "rep": 3,
+  "src": "S2_QC_3.md",
+  "narr_chars": 1784,
+  "chars": 2150,
+  "n_sents": 72,
+  "n_cand": 18,
+  "n_sample": 18,
+  "kinds": {
+   "段尾": 16,
+   "單句成段": 3,
+   "標記": 2
+  }
+ },
+ "T1923": {
+  "group": "old_ai",
+  "book": "oh_典籍有誤",
+  "src": "第012章_整頁都是黑的.md",
+  "narr_chars": 1937,
+  "chars": 2154,
+  "n_sents": 121,
+  "n_cand": 58,
+  "n_sample": 58,
+  "kinds": {
+   "段尾": 58,
+   "單句成段": 32,
+   "標記": 2
+  }
+ },
+ "T2089": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "QA",
+  "rep": 1,
+  "src": "S1_QA_1.md",
+  "narr_chars": 2022,
+  "chars": 2153,
+  "n_sents": 86,
+  "n_cand": 18,
+  "n_sample": 18,
+  "kinds": {
+   "段尾": 16,
+   "單句成段": 0,
+   "標記": 5
+  }
+ },
+ "T2177": {
+  "group": "human_scene",
+  "scene": "S2",
+  "arm": "HUMAN",
+  "rep": 1,
+  "src": "第002章_空門.txt",
+  "narr_chars": 2169,
+  "chars": 2902,
+  "n_sents": 83,
+  "n_cand": 32,
+  "n_sample": 32,
+  "kinds": {
+   "段尾": 32,
+   "單句成段": 29,
+   "標記": 1
+  }
+ },
+ "T2250": {
+  "group": "human_base",
+  "book": "極道天魔",
+  "src": "第033章_不同_一.txt",
+  "narr_chars": 1142,
+  "chars": 2488,
+  "n_sents": 90,
+  "n_cand": 22,
+  "n_sample": 22,
+  "kinds": {
+   "段尾": 22,
+   "單句成段": 14,
+   "標記": 0
+  }
+ },
+ "T2299": {
+  "group": "human_base",
+  "book": "我有一個修仙世界",
+  "src": "第796章_真寒.txt",
+  "narr_chars": 3168,
+  "chars": 3517,
+  "n_sents": 119,
+  "n_cand": 97,
+  "n_sample": 80,
+  "kinds": {
+   "段尾": 97,
+   "單句成段": 96,
+   "標記": 0
+  }
+ },
+ "T2326": {
+  "group": "human_base",
+  "book": "一世之尊",
+  "src": "第047章_圍觀群眾路人孟.txt",
+  "narr_chars": 2385,
+  "chars": 3245,
+  "n_sents": 90,
+  "n_cand": 44,
+  "n_sample": 44,
+  "kinds": {
+   "段尾": 44,
+   "單句成段": 34,
+   "標記": 2
+  }
+ },
+ "T2428": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "C",
+  "rep": 3,
+  "src": "S2_C_3.md",
+  "narr_chars": 2340,
+  "chars": 2709,
+  "n_sents": 83,
+  "n_cand": 48,
+  "n_sample": 48,
+  "kinds": {
+   "段尾": 48,
+   "單句成段": 48,
+   "標記": 1
+  }
+ },
+ "T2437": {
+  "group": "human_base",
+  "book": "神秀之主",
+  "src": "第402章_飛劍.txt",
+  "narr_chars": 1450,
+  "chars": 1823,
+  "n_sents": 76,
+  "n_cand": 50,
+  "n_sample": 50,
+  "kinds": {
+   "段尾": 50,
+   "單句成段": 48,
+   "標記": 1
+  }
+ },
+ "T2555": {
+  "group": "human_base",
+  "book": "神秀之主",
+  "src": "第409章_桃花運.txt",
+  "narr_chars": 1378,
+  "chars": 1954,
+  "n_sents": 60,
+  "n_cand": 35,
+  "n_sample": 35,
+  "kinds": {
+   "段尾": 35,
+   "單句成段": 34,
+   "標記": 0
+  }
+ },
+ "T2635": {
+  "group": "human_base",
+  "book": "極道天魔",
+  "src": "第012章_蟄伏_二.txt",
+  "narr_chars": 1915,
+  "chars": 2668,
+  "n_sents": 122,
+  "n_cand": 79,
+  "n_sample": 79,
+  "kinds": {
+   "段尾": 79,
+   "單句成段": 73,
+   "標記": 2
+  }
+ },
+ "T2744": {
+  "group": "old_ai",
+  "book": "repo_一世之尊",
+  "src": "ch0040.md",
+  "narr_chars": 3179,
+  "chars": 3390,
+  "n_sents": 166,
+  "n_cand": 90,
+  "n_sample": 80,
+  "kinds": {
+   "段尾": 88,
+   "單句成段": 50,
+   "標記": 3
+  }
+ },
+ "T2885": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "B",
+  "rep": 3,
+  "src": "S1_B_3.md",
+  "narr_chars": 2417,
+  "chars": 2433,
+  "n_sents": 145,
+  "n_cand": 52,
+  "n_sample": 52,
+  "kinds": {
+   "段尾": 50,
+   "單句成段": 11,
+   "標記": 2
+  }
+ },
+ "T2921": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "C",
+  "rep": 2,
+  "src": "S2_C_2.md",
+  "narr_chars": 2149,
+  "chars": 2425,
+  "n_sents": 61,
+  "n_cand": 32,
+  "n_sample": 32,
+  "kinds": {
+   "段尾": 32,
+   "單句成段": 32,
+   "標記": 0
+  }
+ },
+ "T2990": {
+  "group": "old_ai",
+  "book": "repo_消失的密室",
+  "src": "ch0004.md",
+  "narr_chars": 1621,
+  "chars": 2131,
+  "n_sents": 95,
+  "n_cand": 66,
+  "n_sample": 66,
+  "kinds": {
+   "段尾": 66,
+   "單句成段": 57,
+   "標記": 0
+  }
+ },
+ "T3007": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "QB",
+  "rep": 1,
+  "src": "S1_QB_1.md",
+  "narr_chars": 1841,
+  "chars": 1946,
+  "n_sents": 63,
+  "n_cand": 19,
+  "n_sample": 19,
+  "kinds": {
+   "段尾": 18,
+   "單句成段": 0,
+   "標記": 3
+  }
+ },
+ "T3383": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "D",
+  "rep": 1,
+  "src": "S1_D_1.md",
+  "narr_chars": 2699,
+  "chars": 2717,
+  "n_sents": 134,
+  "n_cand": 58,
+  "n_sample": 58,
+  "kinds": {
+   "段尾": 57,
+   "單句成段": 20,
+   "標記": 1
+  }
+ },
+ "T3627": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "QA",
+  "rep": 3,
+  "src": "S1_QA_3.md",
+  "narr_chars": 2125,
+  "chars": 2215,
+  "n_sents": 81,
+  "n_cand": 17,
+  "n_sample": 17,
+  "kinds": {
+   "段尾": 14,
+   "單句成段": 0,
+   "標記": 4
+  }
+ },
+ "T3829": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "A",
+  "rep": 1,
+  "src": "S2_A_1.md",
+  "narr_chars": 2690,
+  "chars": 3183,
+  "n_sents": 137,
+  "n_cand": 69,
+  "n_sample": 69,
+  "kinds": {
+   "段尾": 69,
+   "單句成段": 41,
+   "標記": 1
+  }
+ },
+ "T3996": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "B",
+  "rep": 2,
+  "src": "S2_B_2.md",
+  "narr_chars": 2809,
+  "chars": 3244,
+  "n_sents": 151,
+  "n_cand": 62,
+  "n_sample": 62,
+  "kinds": {
+   "段尾": 61,
+   "單句成段": 29,
+   "標記": 2
+  }
+ },
+ "T4068": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "QA",
+  "rep": 3,
+  "src": "S2_QA_3.md",
+  "narr_chars": 1949,
+  "chars": 2510,
+  "n_sents": 72,
+  "n_cand": 12,
+  "n_sample": 12,
+  "kinds": {
+   "段尾": 12,
+   "單句成段": 1,
+   "標記": 1
+  }
+ },
+ "T4133": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "A",
+  "rep": 2,
+  "src": "S2_A_2.md",
+  "narr_chars": 2619,
+  "chars": 3201,
+  "n_sents": 126,
+  "n_cand": 54,
+  "n_sample": 54,
+  "kinds": {
+   "段尾": 53,
+   "單句成段": 24,
+   "標記": 2
+  }
+ },
+ "T4140": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "H",
+  "rep": 3,
+  "src": "S2_H_3.md",
+  "narr_chars": 2545,
+  "chars": 3040,
+  "n_sents": 148,
+  "n_cand": 57,
+  "n_sample": 57,
+  "kinds": {
+   "段尾": 55,
+   "單句成段": 27,
+   "標記": 2
+  }
+ },
+ "T4164": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "B",
+  "rep": 2,
+  "src": "S1_B_2.md",
+  "narr_chars": 2743,
+  "chars": 2752,
+  "n_sents": 176,
+  "n_cand": 65,
+  "n_sample": 65,
+  "kinds": {
+   "段尾": 63,
+   "單句成段": 18,
+   "標記": 2
+  }
+ },
+ "T4179": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "QA",
+  "rep": 2,
+  "src": "S2_QA_2.md",
+  "narr_chars": 1645,
+  "chars": 1960,
+  "n_sents": 59,
+  "n_cand": 8,
+  "n_sample": 8,
+  "kinds": {
+   "段尾": 8,
+   "單句成段": 0,
+   "標記": 1
+  }
+ },
+ "T4232": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "A",
+  "rep": 3,
+  "src": "S1_A_3.md",
+  "narr_chars": 2502,
+  "chars": 2513,
+  "n_sents": 140,
+  "n_cand": 44,
+  "n_sample": 44,
+  "kinds": {
+   "段尾": 44,
+   "單句成段": 15,
+   "標記": 0
+  }
+ },
+ "T4278": {
+  "group": "human_base",
+  "book": "一世之尊",
+  "src": "第060章_破浪一斬.txt",
+  "narr_chars": 2904,
+  "chars": 3518,
+  "n_sents": 111,
+  "n_cand": 45,
+  "n_sample": 45,
+  "kinds": {
+   "段尾": 45,
+   "單句成段": 36,
+   "標記": 2
+  }
+ },
+ "T4287": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "QC",
+  "rep": 1,
+  "src": "S2_QC_1.md",
+  "narr_chars": 1459,
+  "chars": 1643,
+  "n_sents": 60,
+  "n_cand": 13,
+  "n_sample": 13,
+  "kinds": {
+   "段尾": 13,
+   "單句成段": 0,
+   "標記": 0
+  }
+ },
+ "T4348": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "QC",
+  "rep": 1,
+  "src": "S1_QC_1.md",
+  "narr_chars": 2195,
+  "chars": 2240,
+  "n_sents": 134,
+  "n_cand": 56,
+  "n_sample": 56,
+  "kinds": {
+   "段尾": 56,
+   "單句成段": 16,
+   "標記": 1
+  }
+ },
+ "T4358": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "H",
+  "rep": 1,
+  "src": "S2_H_1.md",
+  "narr_chars": 2466,
+  "chars": 2844,
+  "n_sents": 151,
+  "n_cand": 48,
+  "n_sample": 48,
+  "kinds": {
+   "段尾": 46,
+   "單句成段": 18,
+   "標記": 2
+  }
+ },
+ "T4474": {
+  "group": "human_base",
+  "book": "從紅月開始",
+  "src": "第013章_工作積極性.txt",
+  "narr_chars": 1357,
+  "chars": 2126,
+  "n_sents": 75,
+  "n_cand": 29,
+  "n_sample": 29,
+  "kinds": {
+   "段尾": 29,
+   "單句成段": 29,
+   "標記": 2
+  }
+ },
+ "T4696": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "H",
+  "rep": 2,
+  "src": "S2_H_2.md",
+  "narr_chars": 2615,
+  "chars": 3066,
+  "n_sents": 156,
+  "n_cand": 55,
+  "n_sample": 55,
+  "kinds": {
+   "段尾": 54,
+   "單句成段": 17,
+   "標記": 1
+  }
+ },
+ "T4896": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "C",
+  "rep": 3,
+  "src": "S1_C_3.md",
+  "narr_chars": 2419,
+  "chars": 2470,
+  "n_sents": 145,
+  "n_cand": 56,
+  "n_sample": 56,
+  "kinds": {
+   "段尾": 55,
+   "單句成段": 20,
+   "標記": 1
+  }
+ },
+ "T4940": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "B",
+  "rep": 1,
+  "src": "S1_B_1.md",
+  "narr_chars": 2484,
+  "chars": 2484,
+  "n_sents": 148,
+  "n_cand": 55,
+  "n_sample": 55,
+  "kinds": {
+   "段尾": 54,
+   "單句成段": 20,
+   "標記": 2
+  }
+ },
+ "T5140": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "A",
+  "rep": 1,
+  "src": "S1_A_1.md",
+  "narr_chars": 2243,
+  "chars": 2261,
+  "n_sents": 131,
+  "n_cand": 43,
+  "n_sample": 43,
+  "kinds": {
+   "段尾": 43,
+   "單句成段": 15,
+   "標記": 0
+  }
+ },
+ "T5265": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "D",
+  "rep": 1,
+  "src": "S2_D_1.md",
+  "narr_chars": 2719,
+  "chars": 3062,
+  "n_sents": 68,
+  "n_cand": 38,
+  "n_sample": 38,
+  "kinds": {
+   "段尾": 38,
+   "單句成段": 38,
+   "標記": 1
+  }
+ },
+ "T5455": {
+  "group": "old_ai",
+  "book": "repo_一世之尊",
+  "src": "ch0070.md",
+  "narr_chars": 1449,
+  "chars": 1473,
+  "n_sents": 68,
+  "n_cand": 25,
+  "n_sample": 25,
+  "kinds": {
+   "段尾": 25,
+   "單句成段": 10,
+   "標記": 0
+  }
+ },
+ "T5586": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "H",
+  "rep": 1,
+  "src": "S1_H_1.md",
+  "narr_chars": 2358,
+  "chars": 2358,
+  "n_sents": 115,
+  "n_cand": 32,
+  "n_sample": 32,
+  "kinds": {
+   "段尾": 32,
+   "單句成段": 9,
+   "標記": 0
+  }
+ },
+ "T5789": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "C",
+  "rep": 1,
+  "src": "S1_C_1.md",
+  "narr_chars": 2580,
+  "chars": 2605,
+  "n_sents": 134,
+  "n_cand": 52,
+  "n_sample": 52,
+  "kinds": {
+   "段尾": 52,
+   "單句成段": 19,
+   "標記": 0
+  }
+ },
+ "T6267": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "C",
+  "rep": 1,
+  "src": "S2_C_1.md",
+  "narr_chars": 2256,
+  "chars": 2704,
+  "n_sents": 88,
+  "n_cand": 41,
+  "n_sample": 41,
+  "kinds": {
+   "段尾": 41,
+   "單句成段": 31,
+   "標記": 1
+  }
+ },
+ "T6339": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "A",
+  "rep": 2,
+  "src": "S1_A_2.md",
+  "narr_chars": 2345,
+  "chars": 2347,
+  "n_sents": 144,
+  "n_cand": 47,
+  "n_sample": 47,
+  "kinds": {
+   "段尾": 47,
+   "單句成段": 11,
+   "標記": 0
+  }
+ },
+ "T6342": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "QB",
+  "rep": 3,
+  "src": "S2_QB_3.md",
+  "narr_chars": 1902,
+  "chars": 2340,
+  "n_sents": 80,
+  "n_cand": 22,
+  "n_sample": 22,
+  "kinds": {
+   "段尾": 21,
+   "單句成段": 6,
+   "標記": 3
+  }
+ },
+ "T6388": {
+  "group": "human_base",
+  "book": "從紅月開始",
+  "src": "第051章_精神損傷.txt",
+  "narr_chars": 1379,
+  "chars": 1955,
+  "n_sents": 65,
+  "n_cand": 28,
+  "n_sample": 28,
+  "kinds": {
+   "段尾": 28,
+   "單句成段": 28,
+   "標記": 1
+  }
+ },
+ "T6431": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "B",
+  "rep": 3,
+  "src": "S2_B_3.md",
+  "narr_chars": 2629,
+  "chars": 3015,
+  "n_sents": 141,
+  "n_cand": 53,
+  "n_sample": 53,
+  "kinds": {
+   "段尾": 53,
+   "單句成段": 21,
+   "標記": 0
+  }
+ },
+ "T6757": {
+  "group": "old_ai",
+  "book": "oh_典籍有誤",
+  "src": "第001章_父親抄錯了一個字.md",
+  "narr_chars": 2019,
+  "chars": 2204,
+  "n_sents": 132,
+  "n_cand": 59,
+  "n_sample": 59,
+  "kinds": {
+   "段尾": 59,
+   "單句成段": 29,
+   "標記": 0
+  }
+ },
+ "T7217": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "QA",
+  "rep": 2,
+  "src": "S1_QA_2.md",
+  "narr_chars": 2031,
+  "chars": 2154,
+  "n_sents": 74,
+  "n_cand": 14,
+  "n_sample": 14,
+  "kinds": {
+   "段尾": 13,
+   "單句成段": 0,
+   "標記": 3
+  }
+ },
+ "T7366": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "B",
+  "rep": 1,
+  "src": "S2_B_1.md",
+  "narr_chars": 2754,
+  "chars": 3013,
+  "n_sents": 145,
+  "n_cand": 70,
+  "n_sample": 70,
+  "kinds": {
+   "段尾": 69,
+   "單句成段": 38,
+   "標記": 3
+  }
+ },
+ "T7678": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "QC",
+  "rep": 2,
+  "src": "S1_QC_2.md",
+  "narr_chars": 2066,
+  "chars": 2186,
+  "n_sents": 136,
+  "n_cand": 60,
+  "n_sample": 60,
+  "kinds": {
+   "段尾": 60,
+   "單句成段": 20,
+   "標記": 1
+  }
+ },
+ "T7714": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "QB",
+  "rep": 1,
+  "src": "S2_QB_1.md",
+  "narr_chars": 1993,
+  "chars": 2349,
+  "n_sents": 85,
+  "n_cand": 22,
+  "n_sample": 22,
+  "kinds": {
+   "段尾": 20,
+   "單句成段": 6,
+   "標記": 3
+  }
+ },
+ "T7832": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "QB",
+  "rep": 2,
+  "src": "S1_QB_2.md",
+  "narr_chars": 2052,
+  "chars": 2073,
+  "n_sents": 75,
+  "n_cand": 18,
+  "n_sample": 18,
+  "kinds": {
+   "段尾": 16,
+   "單句成段": 1,
+   "標記": 8
+  }
+ },
+ "T8170": {
+  "group": "human_base",
+  "book": "詭秘之主",
+  "src": "第023章_副手武器.txt",
+  "narr_chars": 2071,
+  "chars": 2780,
+  "n_sents": 99,
+  "n_cand": 32,
+  "n_sample": 32,
+  "kinds": {
+   "段尾": 32,
+   "單句成段": 28,
+   "標記": 0
+  }
+ },
+ "T8286": {
+  "group": "old_ai",
+  "book": "repo_消失的密室",
+  "src": "ch0001.md",
+  "narr_chars": 763,
+  "chars": 1139,
+  "n_sents": 52,
+  "n_cand": 36,
+  "n_sample": 36,
+  "kinds": {
+   "段尾": 36,
+   "單句成段": 34,
+   "標記": 0
+  }
+ },
+ "T8290": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "QB",
+  "rep": 2,
+  "src": "S2_QB_2.md",
+  "narr_chars": 1929,
+  "chars": 2251,
+  "n_sents": 68,
+  "n_cand": 21,
+  "n_sample": 21,
+  "kinds": {
+   "段尾": 18,
+   "單句成段": 4,
+   "標記": 3
+  }
+ },
+ "T8556": {
+  "group": "human_base",
+  "book": "我有一個修仙世界",
+  "src": "第799章_翻手為云.txt",
+  "narr_chars": 3297,
+  "chars": 3521,
+  "n_sents": 118,
+  "n_cand": 104,
+  "n_sample": 80,
+  "kinds": {
+   "段尾": 104,
+   "單句成段": 102,
+   "標記": 0
+  }
+ },
+ "T8691": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "QA",
+  "rep": 1,
+  "src": "S2_QA_1.md",
+  "narr_chars": 1500,
+  "chars": 1751,
+  "n_sents": 55,
+  "n_cand": 9,
+  "n_sample": 9,
+  "kinds": {
+   "段尾": 9,
+   "單句成段": 0,
+   "標記": 1
+  }
+ },
+ "T8694": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "D",
+  "rep": 3,
+  "src": "S2_D_3.md",
+  "narr_chars": 2364,
+  "chars": 2732,
+  "n_sents": 67,
+  "n_cand": 36,
+  "n_sample": 36,
+  "kinds": {
+   "段尾": 36,
+   "單句成段": 36,
+   "標記": 1
+  }
+ },
+ "T8802": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "C",
+  "rep": 2,
+  "src": "S1_C_2.md",
+  "narr_chars": 2650,
+  "chars": 2690,
+  "n_sents": 149,
+  "n_cand": 69,
+  "n_sample": 69,
+  "kinds": {
+   "段尾": 69,
+   "單句成段": 32,
+   "標記": 0
+  }
+ },
+ "T9145": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "H",
+  "rep": 3,
+  "src": "S1_H_3.md",
+  "narr_chars": 2379,
+  "chars": 2381,
+  "n_sents": 114,
+  "n_cand": 34,
+  "n_sample": 34,
+  "kinds": {
+   "段尾": 34,
+   "單句成段": 10,
+   "標記": 0
+  }
+ },
+ "T9202": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "D",
+  "rep": 2,
+  "src": "S1_D_2.md",
+  "narr_chars": 2401,
+  "chars": 2410,
+  "n_sents": 129,
+  "n_cand": 54,
+  "n_sample": 54,
+  "kinds": {
+   "段尾": 53,
+   "單句成段": 19,
+   "標記": 1
+  }
+ },
+ "T9255": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "QC",
+  "rep": 2,
+  "src": "S2_QC_2.md",
+  "narr_chars": 1094,
+  "chars": 1204,
+  "n_sents": 40,
+  "n_cand": 9,
+  "n_sample": 9,
+  "kinds": {
+   "段尾": 9,
+   "單句成段": 1,
+   "標記": 1
+  }
+ },
+ "T9311": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "A",
+  "rep": 3,
+  "src": "S2_A_3.md",
+  "narr_chars": 2597,
+  "chars": 3055,
+  "n_sents": 135,
+  "n_cand": 51,
+  "n_sample": 51,
+  "kinds": {
+   "段尾": 51,
+   "單句成段": 23,
+   "標記": 1
+  }
+ },
+ "T9499": {
+  "group": "trial",
+  "scene": "S1",
+  "arm": "QC",
+  "rep": 3,
+  "src": "S1_QC_3.md",
+  "narr_chars": 2069,
+  "chars": 2189,
+  "n_sents": 135,
+  "n_cand": 26,
+  "n_sample": 26,
+  "kinds": {
+   "段尾": 26,
+   "單句成段": 5,
+   "標記": 1
+  }
+ },
+ "T9678": {
+  "group": "old_ai",
+  "book": "oh_典籍有誤",
+  "src": "第006章_十七次.md",
+  "narr_chars": 2243,
+  "chars": 2244,
+  "n_sents": 149,
+  "n_cand": 74,
+  "n_sample": 74,
+  "kinds": {
+   "段尾": 73,
+   "單句成段": 28,
+   "標記": 3
+  }
+ },
+ "T9748": {
+  "group": "trial",
+  "scene": "S2",
+  "arm": "D",
+  "rep": 2,
+  "src": "S2_D_2.md",
+  "narr_chars": 2603,
+  "chars": 2952,
+  "n_sents": 89,
+  "n_cand": 43,
+  "n_sample": 43,
+  "kinds": {
+   "段尾": 43,
+   "單句成段": 35,
+   "標記": 1
+  }
+ },
+ "T9814": {
+  "group": "old_ai",
+  "book": "repo_一世之尊",
+  "src": "ch0002.md",
+  "narr_chars": 1924,
+  "chars": 2331,
+  "n_sents": 121,
+  "n_cand": 44,
+  "n_sample": 44,
+  "kinds": {
+   "段尾": 44,
+   "單句成段": 24,
+   "標記": 0
+  }
+ },
+ "T9826": {
+  "group": "human_base",
+  "book": "詭秘之主",
+  "src": "第012章_再次上門.txt",
+  "narr_chars": 1770,
+  "chars": 2378,
+  "n_sents": 97,
+  "n_cand": 44,
+  "n_sample": 44,
+  "kinds": {
+   "段尾": 44,
+   "單句成段": 39,
+   "標記": 0
+  }
+ }
+}
