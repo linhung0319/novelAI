@@ -1,0 +1,587 @@
+{
+ "P00035": {
+  "event": 3,
+  "func": "對白",
+  "speed": "快",
+  "attention": "一般",
+  "tension": "升",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P00037": {
+  "event": 3,
+  "func": "動作",
+  "speed": "快",
+  "attention": "可略",
+  "tension": "持平",
+  "involve": "被告知",
+  "load": "省力"
+ },
+ "P00039": {
+  "event": 2,
+  "func": "反應",
+  "speed": "中",
+  "attention": "一般",
+  "tension": "持平",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P00111": {
+  "event": 1,
+  "func": "背景",
+  "speed": "中",
+  "attention": "一般",
+  "tension": "持平",
+  "involve": "被告知",
+  "load": "一般"
+ },
+ "P00138": {
+  "event": 2,
+  "func": "預告",
+  "speed": "中",
+  "attention": "一般",
+  "tension": "懸著",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P00184": {
+  "event": 5,
+  "func": "反應",
+  "speed": "慢",
+  "attention": "一般",
+  "tension": "降",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P00253": {
+  "event": 4,
+  "func": "動作",
+  "speed": "中",
+  "attention": "可略",
+  "tension": "持平",
+  "involve": "被告知",
+  "load": "省力"
+ },
+ "P00285": {
+  "event": 1,
+  "func": "對白",
+  "speed": "中",
+  "attention": "一般",
+  "tension": "持平",
+  "involve": "被告知",
+  "load": "一般"
+ },
+ "P00289": {
+  "event": 5,
+  "func": "對白",
+  "speed": "中",
+  "attention": "一般",
+  "tension": "升",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P00373": {
+  "event": 1,
+  "func": "評語",
+  "speed": "慢",
+  "attention": "一般",
+  "tension": "持平",
+  "involve": "被告知",
+  "load": "一般"
+ },
+ "P00450": {
+  "event": 2,
+  "func": "內心",
+  "speed": "慢",
+  "attention": "一般",
+  "tension": "持平",
+  "involve": "被告知",
+  "load": "一般"
+ },
+ "P00461": {
+  "event": 5,
+  "func": "對白",
+  "speed": "快",
+  "attention": "盯住",
+  "tension": "升",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P00535": {
+  "event": 3,
+  "func": "內心",
+  "speed": "中",
+  "attention": "一般",
+  "tension": "升",
+  "involve": "被告知",
+  "load": "省力"
+ },
+ "P00794": {
+  "event": 4,
+  "func": "反應",
+  "speed": "中",
+  "attention": "一般",
+  "tension": "懸著",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P00806": {
+  "event": 5,
+  "func": "對白",
+  "speed": "中",
+  "attention": "盯住",
+  "tension": "升",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P00987": {
+  "event": 5,
+  "func": "對白",
+  "speed": "中",
+  "attention": "盯住",
+  "tension": "升",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P01011": {
+  "event": 5,
+  "func": "對白",
+  "speed": "快",
+  "attention": "盯住",
+  "tension": "升",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P01050": {
+  "event": 1,
+  "func": "評語",
+  "speed": "慢",
+  "attention": "可略",
+  "tension": "持平",
+  "involve": "被告知",
+  "load": "一般"
+ },
+ "P01131": {
+  "event": 1,
+  "func": "對白",
+  "speed": "中",
+  "attention": "一般",
+  "tension": "持平",
+  "involve": "被告知",
+  "load": "一般"
+ },
+ "P01136": {
+  "event": 3,
+  "func": "動作",
+  "speed": "快",
+  "attention": "一般",
+  "tension": "升",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P01170": {
+  "event": 6,
+  "func": "結果",
+  "speed": "快",
+  "attention": "盯住",
+  "tension": "升",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P01179": {
+  "event": 5,
+  "func": "評語",
+  "speed": "中",
+  "attention": "一般",
+  "tension": "升",
+  "involve": "被告知",
+  "load": "省力"
+ },
+ "P01258": {
+  "event": 3,
+  "func": "動作",
+  "speed": "快",
+  "attention": "一般",
+  "tension": "升",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P01293": {
+  "event": 6,
+  "func": "對白",
+  "speed": "快",
+  "attention": "盯住",
+  "tension": "升",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P01302": {
+  "event": 4,
+  "func": "結果",
+  "speed": "中",
+  "attention": "一般",
+  "tension": "降",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P01327": {
+  "event": 5,
+  "func": "反應",
+  "speed": "快",
+  "attention": "盯住",
+  "tension": "升",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P01339": {
+  "event": 1,
+  "func": "動作",
+  "speed": "中",
+  "attention": "可略",
+  "tension": "持平",
+  "involve": "被告知",
+  "load": "省力"
+ },
+ "P01345": {
+  "event": 5,
+  "func": "對白",
+  "speed": "快",
+  "attention": "盯住",
+  "tension": "升",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P01401": {
+  "event": 2,
+  "func": "動作",
+  "speed": "中",
+  "attention": "一般",
+  "tension": "升",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P01478": {
+  "event": 4,
+  "func": "動作",
+  "speed": "中",
+  "attention": "可略",
+  "tension": "持平",
+  "involve": "被告知",
+  "load": "省力"
+ },
+ "P01480": {
+  "event": 2,
+  "func": "反應",
+  "speed": "中",
+  "attention": "一般",
+  "tension": "持平",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P01492": {
+  "event": 1,
+  "func": "對白",
+  "speed": "中",
+  "attention": "一般",
+  "tension": "持平",
+  "involve": "被告知",
+  "load": "一般"
+ },
+ "P01493": {
+  "event": 8,
+  "func": "結果",
+  "speed": "快",
+  "attention": "盯住",
+  "tension": "升",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P01505": {
+  "event": 6,
+  "func": "結果",
+  "speed": "快",
+  "attention": "盯住",
+  "tension": "升",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P01512": {
+  "event": 3,
+  "func": "內心",
+  "speed": "中",
+  "attention": "一般",
+  "tension": "升",
+  "involve": "被告知",
+  "load": "省力"
+ },
+ "P01556": {
+  "event": 7,
+  "func": "動作",
+  "speed": "快",
+  "attention": "盯住",
+  "tension": "升",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P01609": {
+  "event": 7,
+  "func": "動作",
+  "speed": "快",
+  "attention": "盯住",
+  "tension": "升",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P01662": {
+  "event": 2,
+  "func": "內心",
+  "speed": "中",
+  "attention": "一般",
+  "tension": "持平",
+  "involve": "被告知",
+  "load": "省力"
+ },
+ "P01796": {
+  "event": 3,
+  "func": "動作",
+  "speed": "中",
+  "attention": "一般",
+  "tension": "升",
+  "involve": "被告知",
+  "load": "省力"
+ },
+ "P01799": {
+  "event": 4,
+  "func": "對白",
+  "speed": "中",
+  "attention": "一般",
+  "tension": "持平",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P01807": {
+  "event": 3,
+  "func": "動作",
+  "speed": "中",
+  "attention": "可略",
+  "tension": "持平",
+  "involve": "被告知",
+  "load": "省力"
+ },
+ "P01814": {
+  "event": 6,
+  "func": "反應",
+  "speed": "中",
+  "attention": "一般",
+  "tension": "升",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P01829": {
+  "event": 3,
+  "func": "結果",
+  "speed": "快",
+  "attention": "一般",
+  "tension": "降",
+  "involve": "被告知",
+  "load": "省力"
+ },
+ "P01850": {
+  "event": 7,
+  "func": "動作",
+  "speed": "快",
+  "attention": "盯住",
+  "tension": "升",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P01852": {
+  "event": 6,
+  "func": "結果",
+  "speed": "快",
+  "attention": "盯住",
+  "tension": "升",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P01878": {
+  "event": 3,
+  "func": "動作",
+  "speed": "中",
+  "attention": "可略",
+  "tension": "持平",
+  "involve": "被告知",
+  "load": "省力"
+ },
+ "P01884": {
+  "event": 1,
+  "func": "評語",
+  "speed": "慢",
+  "attention": "一般",
+  "tension": "持平",
+  "involve": "被告知",
+  "load": "一般"
+ },
+ "P01904": {
+  "event": 6,
+  "func": "對白",
+  "speed": "快",
+  "attention": "盯住",
+  "tension": "升",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P02122": {
+  "event": 1,
+  "func": "背景",
+  "speed": "中",
+  "attention": "一般",
+  "tension": "持平",
+  "involve": "被告知",
+  "load": "一般"
+ },
+ "P02138": {
+  "event": 5,
+  "func": "對白",
+  "speed": "中",
+  "attention": "一般",
+  "tension": "升",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P02157": {
+  "event": 2,
+  "func": "反應",
+  "speed": "中",
+  "attention": "一般",
+  "tension": "持平",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P02172": {
+  "event": 5,
+  "func": "反應",
+  "speed": "中",
+  "attention": "一般",
+  "tension": "降",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P02260": {
+  "event": 5,
+  "func": "動作",
+  "speed": "中",
+  "attention": "一般",
+  "tension": "懸著",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P02271": {
+  "event": 4,
+  "func": "動作",
+  "speed": "中",
+  "attention": "可略",
+  "tension": "持平",
+  "involve": "被告知",
+  "load": "省力"
+ },
+ "P02305": {
+  "event": 2,
+  "func": "反應",
+  "speed": "中",
+  "attention": "盯住",
+  "tension": "升",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P02341": {
+  "event": 6,
+  "func": "結果",
+  "speed": "快",
+  "attention": "盯住",
+  "tension": "升",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P02347": {
+  "event": 5,
+  "func": "對白",
+  "speed": "中",
+  "attention": "一般",
+  "tension": "升",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P02406": {
+  "event": 5,
+  "func": "反應",
+  "speed": "慢",
+  "attention": "一般",
+  "tension": "降",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P02507": {
+  "event": 1,
+  "func": "對白",
+  "speed": "中",
+  "attention": "一般",
+  "tension": "持平",
+  "involve": "被告知",
+  "load": "一般"
+ },
+ "P02554": {
+  "event": 6,
+  "func": "結果",
+  "speed": "快",
+  "attention": "盯住",
+  "tension": "懸著",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P02627": {
+  "event": 8,
+  "func": "反應",
+  "speed": "快",
+  "attention": "盯住",
+  "tension": "懸著",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P02739": {
+  "event": 6,
+  "func": "對白",
+  "speed": "中",
+  "attention": "盯住",
+  "tension": "升",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P02744": {
+  "event": 3,
+  "func": "動作",
+  "speed": "快",
+  "attention": "一般",
+  "tension": "升",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P02754": {
+  "event": 4,
+  "func": "對白",
+  "speed": "中",
+  "attention": "一般",
+  "tension": "持平",
+  "involve": "自己看到",
+  "load": "省力"
+ },
+ "P02760": {
+  "event": 6,
+  "func": "動作",
+  "speed": "中",
+  "attention": "盯住",
+  "tension": "懸著",
+  "involve": "自己看到",
+  "load": "省力"
+ }
+}

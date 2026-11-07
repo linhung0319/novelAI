@@ -1,0 +1,290 @@
+{
+ "T5901": {
+  "group": "pair",
+  "role": "orig",
+  "book": "詭秘之主",
+  "ch": "G13",
+  "arm": "O",
+  "rep": 0,
+  "src": "examples/詭秘之主/第013章_值夜者.txt"
+ },
+ "T3852": {
+  "group": "pair",
+  "role": "orig",
+  "book": "詭秘之主",
+  "ch": "G32",
+  "arm": "O",
+  "rep": 0,
+  "src": "examples/詭秘之主/第032章_靈視.txt"
+ },
+ "T8720": {
+  "group": "pair",
+  "role": "orig",
+  "book": "一世之尊",
+  "ch": "Y17",
+  "arm": "O",
+  "rep": 0,
+  "src": "examples/一世之尊/卷二/第017章_擊殺.txt"
+ },
+ "T7113": {
+  "group": "pair",
+  "role": "orig",
+  "book": "一世之尊",
+  "ch": "Y20",
+  "arm": "O",
+  "rep": 0,
+  "src": "examples/一世之尊/卷二/第020章_提醒.txt"
+ },
+ "T6228": {
+  "group": "pair",
+  "role": "orig",
+  "book": "神秀之主",
+  "ch": "S403",
+  "arm": "O",
+  "rep": 0,
+  "src": "examples/神秀之主/第403章_捏死了.txt"
+ },
+ "T3949": {
+  "group": "pair",
+  "role": "orig",
+  "book": "神秀之主",
+  "ch": "S424",
+  "arm": "O",
+  "rep": 0,
+  "src": "examples/神秀之主/第424章_翻臉.txt"
+ },
+ "T6360": {
+  "group": "pair",
+  "role": "claude",
+  "book": "詭秘之主",
+  "ch": "G13",
+  "arm": "N",
+  "rep": 1,
+  "src": "稿件/G13_N_1.txt"
+ },
+ "T4746": {
+  "group": "pair",
+  "role": "claude",
+  "book": "詭秘之主",
+  "ch": "G13",
+  "arm": "N",
+  "rep": 2,
+  "src": "稿件/G13_N_2.txt"
+ },
+ "T6372": {
+  "group": "pair",
+  "role": "claude",
+  "book": "詭秘之主",
+  "ch": "G13",
+  "arm": "W",
+  "rep": 1,
+  "src": "稿件/G13_W_1.txt"
+ },
+ "T9709": {
+  "group": "pair",
+  "role": "claude",
+  "book": "詭秘之主",
+  "ch": "G13",
+  "arm": "W",
+  "rep": 2,
+  "src": "稿件/G13_W_2.txt"
+ },
+ "T9935": {
+  "group": "pair",
+  "role": "claude",
+  "book": "詭秘之主",
+  "ch": "G32",
+  "arm": "N",
+  "rep": 1,
+  "src": "稿件/G32_N_1.txt"
+ },
+ "T7595": {
+  "group": "pair",
+  "role": "claude",
+  "book": "詭秘之主",
+  "ch": "G32",
+  "arm": "N",
+  "rep": 2,
+  "src": "稿件/G32_N_2.txt"
+ },
+ "T9736": {
+  "group": "pair",
+  "role": "claude",
+  "book": "詭秘之主",
+  "ch": "G32",
+  "arm": "W",
+  "rep": 1,
+  "src": "稿件/G32_W_1.txt"
+ },
+ "T3301": {
+  "group": "pair",
+  "role": "claude",
+  "book": "詭秘之主",
+  "ch": "G32",
+  "arm": "W",
+  "rep": 2,
+  "src": "稿件/G32_W_2.txt"
+ },
+ "T6765": {
+  "group": "pair",
+  "role": "claude",
+  "book": "一世之尊",
+  "ch": "Y17",
+  "arm": "N",
+  "rep": 1,
+  "src": "稿件/Y17_N_1.txt"
+ },
+ "T8336": {
+  "group": "pair",
+  "role": "claude",
+  "book": "一世之尊",
+  "ch": "Y17",
+  "arm": "N",
+  "rep": 2,
+  "src": "稿件/Y17_N_2.txt"
+ },
+ "T7565": {
+  "group": "pair",
+  "role": "claude",
+  "book": "一世之尊",
+  "ch": "Y17",
+  "arm": "W",
+  "rep": 1,
+  "src": "稿件/Y17_W_1.txt"
+ },
+ "T4650": {
+  "group": "pair",
+  "role": "claude",
+  "book": "一世之尊",
+  "ch": "Y17",
+  "arm": "W",
+  "rep": 2,
+  "src": "稿件/Y17_W_2.txt"
+ },
+ "T3860": {
+  "group": "pair",
+  "role": "claude",
+  "book": "一世之尊",
+  "ch": "Y20",
+  "arm": "N",
+  "rep": 1,
+  "src": "稿件/Y20_N_1.txt"
+ },
+ "T9140": {
+  "group": "pair",
+  "role": "claude",
+  "book": "一世之尊",
+  "ch": "Y20",
+  "arm": "N",
+  "rep": 2,
+  "src": "稿件/Y20_N_2.txt"
+ },
+ "T9872": {
+  "group": "pair",
+  "role": "claude",
+  "book": "一世之尊",
+  "ch": "Y20",
+  "arm": "W",
+  "rep": 1,
+  "src": "稿件/Y20_W_1.txt"
+ },
+ "T4370": {
+  "group": "pair",
+  "role": "claude",
+  "book": "一世之尊",
+  "ch": "Y20",
+  "arm": "W",
+  "rep": 2,
+  "src": "稿件/Y20_W_2.txt"
+ },
+ "T3519": {
+  "group": "pair",
+  "role": "claude",
+  "book": "神秀之主",
+  "ch": "S403",
+  "arm": "N",
+  "rep": 1,
+  "src": "稿件/S403_N_1.txt"
+ },
+ "T3659": {
+  "group": "pair",
+  "role": "claude",
+  "book": "神秀之主",
+  "ch": "S403",
+  "arm": "N",
+  "rep": 2,
+  "src": "稿件/S403_N_2.txt"
+ },
+ "T4380": {
+  "group": "pair",
+  "role": "claude",
+  "book": "神秀之主",
+  "ch": "S403",
+  "arm": "W",
+  "rep": 1,
+  "src": "稿件/S403_W_1.txt"
+ },
+ "T5334": {
+  "group": "pair",
+  "role": "claude",
+  "book": "神秀之主",
+  "ch": "S403",
+  "arm": "W",
+  "rep": 2,
+  "src": "稿件/S403_W_2.txt"
+ },
+ "T2085": {
+  "group": "pair",
+  "role": "claude",
+  "book": "神秀之主",
+  "ch": "S424",
+  "arm": "N",
+  "rep": 1,
+  "src": "稿件/S424_N_1.txt"
+ },
+ "T2184": {
+  "group": "pair",
+  "role": "claude",
+  "book": "神秀之主",
+  "ch": "S424",
+  "arm": "N",
+  "rep": 2,
+  "src": "稿件/S424_N_2.txt"
+ },
+ "T6022": {
+  "group": "pair",
+  "role": "claude",
+  "book": "神秀之主",
+  "ch": "S424",
+  "arm": "W",
+  "rep": 1,
+  "src": "稿件/S424_W_1.txt"
+ },
+ "T8898": {
+  "group": "pair",
+  "role": "claude",
+  "book": "神秀之主",
+  "ch": "S424",
+  "arm": "W",
+  "rep": 2,
+  "src": "稿件/S424_W_2.txt"
+ },
+ "T1836": {
+  "group": "human",
+  "role": "human",
+  "book": "從紅月開始",
+  "ch": "H紅47",
+  "arm": "H",
+  "rep": 0,
+  "src": "examples/從紅月開始/第047章_倒計時三十秒.txt"
+ },
+ "T2339": {
+  "group": "human",
+  "role": "human",
+  "book": "極道天魔",
+  "ch": "H極32",
+  "arm": "H",
+  "rep": 0,
+  "src": "examples/極道天魔/第032章_爆炸_二.txt"
+ }
+}
