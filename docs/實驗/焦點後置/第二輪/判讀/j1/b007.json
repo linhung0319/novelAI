@@ -1,0 +1,853 @@
+{
+ "P00034": {
+  "type": "敘述",
+  "focus": "後舊",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": true,
+  "setup": false,
+  "events": [
+   2
+  ]
+ },
+ "P00088": {
+  "type": "混合",
+  "focus": "前",
+  "foreground": [],
+  "cliche": [
+   "堆著笑"
+  ],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": []
+ },
+ "P00100": {
+  "type": "敘述",
+  "focus": "後舊",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": true,
+  "setup": false,
+  "events": []
+ },
+ "P00102": {
+  "type": "敘述",
+  "focus": "不判",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": true,
+  "setup": false,
+  "events": [
+   8
+  ]
+ },
+ "P00111": {
+  "type": "敘述",
+  "focus": "前",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": true,
+  "setup": false,
+  "events": [
+   7
+  ]
+ },
+ "P00114": {
+  "type": "敘述",
+  "focus": "後舊",
+  "foreground": [],
+  "cliche": [
+   "眉開眼笑"
+  ],
+  "inference": [],
+  "stress": false,
+  "setup": true,
+  "events": []
+ },
+ "P00120": {
+  "type": "敘述",
+  "focus": "平",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": true,
+  "setup": false,
+  "events": [
+   5
+  ]
+ },
+ "P00137": {
+  "type": "對白",
+  "focus": "不判",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": [
+   10
+  ]
+ },
+ "P00138": {
+  "type": "敘述",
+  "focus": "不判",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": []
+ },
+ "P00189": {
+  "type": "敘述",
+  "focus": "平",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": [
+   8
+  ]
+ },
+ "P00224": {
+  "type": "敘述",
+  "focus": "後舊",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": []
+ },
+ "P00242": {
+  "type": "敘述",
+  "focus": "後舊",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": [
+   6
+  ]
+ },
+ "P00243": {
+  "type": "混合",
+  "focus": "後新",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": []
+ },
+ "P00296": {
+  "type": "敘述",
+  "focus": "平",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": []
+ },
+ "P00310": {
+  "type": "敘述",
+  "focus": "不判",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": true,
+  "setup": false,
+  "events": [
+   2
+  ]
+ },
+ "P00410": {
+  "type": "混合",
+  "focus": "前",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": []
+ },
+ "P00414": {
+  "type": "敘述",
+  "focus": "前",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": []
+ },
+ "P00429": {
+  "type": "敘述",
+  "focus": "平",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": []
+ },
+ "P00437": {
+  "type": "敘述",
+  "focus": "前",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": true,
+  "setup": false,
+  "events": []
+ },
+ "P00447": {
+  "type": "對白",
+  "focus": "不判",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": [
+   3
+  ]
+ },
+ "P00482": {
+  "type": "敘述",
+  "focus": "不判",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": true,
+  "setup": false,
+  "events": []
+ },
+ "P00499": {
+  "type": "敘述",
+  "focus": "前",
+  "foreground": [],
+  "cliche": [
+   "跟捏死一隻蟲子差不多"
+  ],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": [
+   3
+  ]
+ },
+ "P00546": {
+  "type": "敘述",
+  "focus": "不判",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": true,
+  "setup": false,
+  "events": [
+   4
+  ]
+ },
+ "P00551": {
+  "type": "敘述",
+  "focus": "前",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": [
+   2
+  ]
+ },
+ "P00554": {
+  "type": "敘述",
+  "focus": "不判",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": true,
+  "setup": false,
+  "events": [
+   10
+  ]
+ },
+ "P00575": {
+  "type": "敘述",
+  "focus": "不判",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": []
+ },
+ "P00588": {
+  "type": "混合",
+  "focus": "前",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": []
+ },
+ "P00646": {
+  "type": "敘述",
+  "focus": "不判",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": true,
+  "setup": false,
+  "events": [
+   3
+  ]
+ },
+ "P00650": {
+  "type": "敘述",
+  "focus": "平",
+  "foreground": [],
+  "cliche": [
+   "閉目養神"
+  ],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": [
+   10
+  ]
+ },
+ "P00654": {
+  "type": "敘述",
+  "focus": "後舊",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": [
+   3
+  ]
+ },
+ "P00671": {
+  "type": "敘述",
+  "focus": "前",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": []
+ },
+ "P00676": {
+  "type": "敘述",
+  "focus": "平",
+  "foreground": [],
+  "cliche": [
+   "出人意表",
+   "殺意畢露"
+  ],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": []
+ },
+ "P00681": {
+  "type": "對白",
+  "focus": "不判",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": []
+ },
+ "P00714": {
+  "type": "敘述",
+  "focus": "不判",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": true,
+  "setup": false,
+  "events": [
+   6
+  ]
+ },
+ "P00759": {
+  "type": "敘述",
+  "focus": "前",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": true,
+  "setup": false,
+  "events": [
+   6
+  ]
+ },
+ "P00857": {
+  "type": "敘述",
+  "focus": "後舊",
+  "foreground": [],
+  "cliche": [
+   "開山立棍"
+  ],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": [
+   9
+  ]
+ },
+ "P00885": {
+  "type": "敘述",
+  "focus": "前",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": true,
+  "setup": false,
+  "events": [
+   3
+  ]
+ },
+ "P00910": {
+  "type": "敘述",
+  "focus": "後舊",
+  "foreground": [],
+  "cliche": [
+   "開山立棍"
+  ],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": [
+   9
+  ]
+ },
+ "P00914": {
+  "type": "敘述",
+  "focus": "不判",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": true,
+  "setup": false,
+  "events": [
+   2
+  ]
+ },
+ "P00932": {
+  "type": "敘述",
+  "focus": "不判",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": [
+   5
+  ]
+ },
+ "P00955": {
+  "type": "對白",
+  "focus": "不判",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": [
+   10
+  ]
+ },
+ "P00971": {
+  "type": "敘述",
+  "focus": "前",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": [
+   2
+  ]
+ },
+ "P01019": {
+  "type": "敘述",
+  "focus": "不判",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": true,
+  "setup": false,
+  "events": [
+   1
+  ]
+ },
+ "P01021": {
+  "type": "敘述",
+  "focus": "前",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": [
+   2
+  ]
+ },
+ "P01072": {
+  "type": "敘述",
+  "focus": "前",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": [
+   3
+  ]
+ },
+ "P01094": {
+  "type": "敘述",
+  "focus": "前",
+  "foreground": [],
+  "cliche": [
+   "千回百轉"
+  ],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": [
+   7
+  ]
+ },
+ "P01124": {
+  "type": "敘述",
+  "focus": "不判",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": [
+   2
+  ]
+ },
+ "P01132": {
+  "type": "對白",
+  "focus": "不判",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": [
+   1
+  ]
+ },
+ "P01139": {
+  "type": "敘述",
+  "focus": "不判",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": true,
+  "setup": false,
+  "events": [
+   6
+  ]
+ },
+ "P01172": {
+  "type": "混合",
+  "focus": "前",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": [
+   8
+  ]
+ },
+ "P01188": {
+  "type": "敘述",
+  "focus": "前",
+  "foreground": [
+   "兩根手指一夾，一搓"
+  ],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": [
+   3
+  ]
+ },
+ "P01202": {
+  "type": "對白",
+  "focus": "不判",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": [
+   3
+  ]
+ },
+ "P01230": {
+  "type": "敘述",
+  "focus": "後舊",
+  "foreground": [],
+  "cliche": [
+   "開山立棍"
+  ],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": [
+   9
+  ]
+ },
+ "P01281": {
+  "type": "敘述",
+  "focus": "前",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": [
+   3
+  ]
+ },
+ "P01306": {
+  "type": "敘述",
+  "focus": "前",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": [
+   1
+  ]
+ },
+ "P01354": {
+  "type": "敘述",
+  "focus": "不判",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": true,
+  "setup": false,
+  "events": [
+   8
+  ]
+ },
+ "P01451": {
+  "type": "敘述",
+  "focus": "前",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": [
+   8
+  ]
+ },
+ "P01477": {
+  "type": "敘述",
+  "focus": "不判",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": [
+   7
+  ]
+ },
+ "P01548": {
+  "type": "敘述",
+  "focus": "平",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": [
+   5
+  ]
+ },
+ "P01572": {
+  "type": "敘述",
+  "focus": "前",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": [
+   6
+  ]
+ },
+ "P01690": {
+  "type": "敘述",
+  "focus": "不判",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": [
+   5
+  ]
+ },
+ "P01727": {
+  "type": "敘述",
+  "focus": "後舊",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": [
+   2
+  ]
+ },
+ "P01731": {
+  "type": "敘述",
+  "focus": "前",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": true,
+  "setup": false,
+  "events": [
+   5
+  ]
+ },
+ "P01822": {
+  "type": "敘述",
+  "focus": "後舊",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": [
+   8
+  ]
+ },
+ "P01823": {
+  "type": "敘述",
+  "focus": "前",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": [
+   3
+  ]
+ },
+ "P01828": {
+  "type": "敘述",
+  "focus": "前",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": [
+   7
+  ]
+ },
+ "P01837": {
+  "type": "敘述",
+  "focus": "後舊",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": [
+   9
+  ]
+ },
+ "P01884": {
+  "type": "對白",
+  "focus": "不判",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": [
+   5
+  ]
+ },
+ "P02038": {
+  "type": "敘述",
+  "focus": "後新",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": [
+   3
+  ]
+ },
+ "P02054": {
+  "type": "敘述",
+  "focus": "前",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": true,
+  "setup": false,
+  "events": [
+   8
+  ]
+ },
+ "P02063": {
+  "type": "敘述",
+  "focus": "前",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": [
+   2
+  ]
+ },
+ "P02099": {
+  "type": "敘述",
+  "focus": "前",
+  "foreground": [],
+  "cliche": [],
+  "inference": [],
+  "stress": false,
+  "setup": false,
+  "events": [
+   3
+  ]
+ }
+}

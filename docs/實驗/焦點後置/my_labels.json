@@ -1,0 +1,1270 @@
+{
+ "H01": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": [
+   "小學生要與壞同學劃清界限"
+  ]
+ },
+ "H02": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H03": {
+  "type": "敘述",
+  "focus": "後舊",
+  "stress": true,
+  "advance": true,
+  "foreground": []
+ },
+ "H04": {
+  "type": "混合",
+  "focus": "後舊",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H05": {
+  "type": "敘述",
+  "focus": "平",
+  "stress": true,
+  "advance": false,
+  "foreground": []
+ },
+ "H06": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H07": {
+  "type": "敘述",
+  "focus": "後舊",
+  "stress": true,
+  "advance": false,
+  "foreground": []
+ },
+ "H08": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H09": {
+  "type": "敘述",
+  "focus": "後舊",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H10": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H11": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H12": {
+  "type": "敘述",
+  "focus": "後新",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H13": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H14": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H15": {
+  "type": "混合",
+  "focus": "後新",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H16": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H17": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H18": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H19": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H20": {
+  "type": "敘述",
+  "focus": "後新",
+  "stress": false,
+  "advance": true,
+  "foreground": [
+   "哀悼著即將與自己告別的頭發"
+  ]
+ },
+ "H21": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H22": {
+  "type": "對白",
+  "focus": null,
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H23": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H24": {
+  "type": "敘述",
+  "focus": "後舊",
+  "stress": true,
+  "advance": true,
+  "foreground": []
+ },
+ "H25": {
+  "type": "敘述",
+  "focus": "後舊",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H26": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H27": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H28": {
+  "type": "敘述",
+  "focus": "後舊",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H29": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H30": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H31": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H32": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H33": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H34": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": false,
+  "foreground": []
+ },
+ "H35": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H36": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H37": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H38": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H39": {
+  "type": "敘述",
+  "focus": null,
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H40": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H41": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H42": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H43": {
+  "type": "對白",
+  "focus": null,
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H44": {
+  "type": "敘述",
+  "focus": "後舊",
+  "stress": false,
+  "advance": false,
+  "foreground": []
+ },
+ "H45": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H46": {
+  "type": "混合",
+  "focus": "後舊",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H47": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H48": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H49": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H50": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H51": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H52": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H53": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H54": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H55": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H56": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H57": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H58": {
+  "type": "敘述",
+  "focus": "後新",
+  "stress": false,
+  "advance": true,
+  "foreground": [
+   "當初大學時經常在寢室赤膊納涼"
+  ]
+ },
+ "H59": {
+  "type": "敘述",
+  "focus": "平",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H60": {
+  "type": "敘述",
+  "focus": "平",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H61": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H62": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H63": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H64": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H65": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H66": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H67": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H68": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H69": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H70": {
+  "type": "敘述",
+  "focus": "後舊",
+  "stress": true,
+  "advance": false,
+  "foreground": []
+ },
+ "H71": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H72": {
+  "type": "敘述",
+  "focus": null,
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H73": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H74": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "H75": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": true,
+  "advance": true,
+  "foreground": [
+   "別人的是小師妹，為什麼我只有小師弟"
+  ]
+ },
+ "C01": {
+  "type": "敘述",
+  "focus": null,
+  "stress": true,
+  "advance": false,
+  "foreground": []
+ },
+ "C02": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C03": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C04": {
+  "type": "敘述",
+  "focus": null,
+  "stress": true,
+  "advance": false,
+  "foreground": [
+   "穿越小說可不是這麼寫的"
+  ]
+ },
+ "C05": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C06": {
+  "type": "敘述",
+  "focus": "後新",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C07": {
+  "type": "對白",
+  "focus": null,
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C08": {
+  "type": "敘述",
+  "focus": "後新",
+  "stress": true,
+  "advance": false,
+  "foreground": []
+ },
+ "C09": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C10": {
+  "type": "敘述",
+  "focus": "後舊",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C11": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C12": {
+  "type": "對白",
+  "focus": null,
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C13": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": [
+   "俯視著這群矮矮小小的新人"
+  ]
+ },
+ "C14": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C15": {
+  "type": "敘述",
+  "focus": "後新",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C16": {
+  "type": "對白",
+  "focus": null,
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C17": {
+  "type": "敘述",
+  "focus": "後新",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C18": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": [
+   "由黑轉黃，由黃轉枯",
+   "如秋末的草葉一般簌簌落下"
+  ]
+ },
+ "C19": {
+  "type": "敘述",
+  "focus": "後舊",
+  "stress": true,
+  "advance": true,
+  "foreground": []
+ },
+ "C20": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": true,
+  "advance": true,
+  "foreground": []
+ },
+ "C21": {
+  "type": "敘述",
+  "focus": "後新",
+  "stress": false,
+  "advance": true,
+  "foreground": [
+   "那股熱氣頓時涼了大半"
+  ]
+ },
+ "C22": {
+  "type": "對白",
+  "focus": null,
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C23": {
+  "type": "對白",
+  "focus": null,
+  "stress": false,
+  "advance": true,
+  "foreground": [
+   "煩惱落盡，紅塵遠離（連續第二次）"
+  ]
+ },
+ "C24": {
+  "type": "敘述",
+  "focus": "後新",
+  "stress": false,
+  "advance": true,
+  "foreground": [
+   "越來越近，身旁落髮的輕響也越來越近"
+  ]
+ },
+ "C25": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C26": {
+  "type": "對白",
+  "focus": null,
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C27": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C28": {
+  "type": "敘述",
+  "focus": "後舊",
+  "stress": true,
+  "advance": false,
+  "foreground": [
+   "我的煩惱是落盡了，他心想，可新的煩惱才剛來"
+  ]
+ },
+ "C29": {
+  "type": "敘述",
+  "focus": "後新",
+  "stress": false,
+  "advance": true,
+  "foreground": [
+   "布料粗得能當砂紙"
+  ]
+ },
+ "C30": {
+  "type": "敘述",
+  "focus": "後新",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C31": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C32": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C33": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": true,
+  "advance": false,
+  "foreground": [
+   "不得吃肉，不得上網，不得談戀愛",
+   "人生至此，已無甚可戀"
+  ]
+ },
+ "C34": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C35": {
+  "type": "對白",
+  "focus": null,
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C36": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C37": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C38": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": [
+   "越來越矮，越來越舊",
+   "取而代之的是劈柴聲和一股隱約的泔水味"
+  ]
+ },
+ "C39": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C40": {
+  "type": "敘述",
+  "focus": "後舊",
+  "stress": true,
+  "advance": false,
+  "foreground": [
+   "放在大學裡，大概比最偏遠的那棟老宿舍還要偏"
+  ]
+ },
+ "C41": {
+  "type": "敘述",
+  "focus": "後新",
+  "stress": false,
+  "advance": true,
+  "foreground": [
+   "臉上兀自印著兩道席子的壓痕"
+  ]
+ },
+ "C42": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C43": {
+  "type": "敘述",
+  "focus": null,
+  "stress": true,
+  "advance": true,
+  "foreground": []
+ },
+ "C44": {
+  "type": "敘述",
+  "focus": "後新",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C45": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C46": {
+  "type": "對白",
+  "focus": null,
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C47": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C48": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C49": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C50": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C51": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": [
+   "不肯替自己說話的是他，特地替自己安排住處的也是他"
+  ]
+ },
+ "C52": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C53": {
+  "type": "對白",
+  "focus": null,
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C54": {
+  "type": "敘述",
+  "focus": "後新",
+  "stress": false,
+  "advance": true,
+  "foreground": [
+   "那肚子卻比胸膛挺得更快"
+  ]
+ },
+ "C55": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": [
+   "步伐不快，幾步之間卻已走出老遠"
+  ]
+ },
+ "C56": {
+  "type": "敘述",
+  "focus": "後新",
+  "stress": false,
+  "advance": true,
+  "foreground": [
+   "彷彿整個人都鬆垮了下來"
+  ]
+ },
+ "C57": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C58": {
+  "type": "敘述",
+  "focus": "平",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C59": {
+  "type": "敘述",
+  "focus": "後舊",
+  "stress": true,
+  "advance": true,
+  "foreground": []
+ },
+ "C60": {
+  "type": "敘述",
+  "focus": "後舊",
+  "stress": true,
+  "advance": false,
+  "foreground": [
+   "上頭是鐵面鬼，直屬領導是這位"
+  ]
+ },
+ "C61": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C62": {
+  "type": "敘述",
+  "focus": "平",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C63": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C64": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C65": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": [
+   "前世參加社團迎新時的笑容"
+  ]
+ },
+ "C66": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C67": {
+  "type": "敘述",
+  "focus": "後舊",
+  "stress": true,
+  "advance": true,
+  "foreground": []
+ },
+ "C68": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C69": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C70": {
+  "type": "敘述",
+  "focus": "平",
+  "stress": true,
+  "advance": false,
+  "foreground": [
+   "一個自閉，一個高冷"
+  ]
+ },
+ "C71": {
+  "type": "敘述",
+  "focus": "後新",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C72": {
+  "type": "對白",
+  "focus": null,
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C73": {
+  "type": "敘述",
+  "focus": "後新",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C74": {
+  "type": "對白",
+  "focus": null,
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C75": {
+  "type": "敘述",
+  "focus": "後新",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C76": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C77": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C78": {
+  "type": "敘述",
+  "focus": "平",
+  "stress": true,
+  "advance": false,
+  "foreground": [
+   "毫不猶豫，毫無負擔，一點討價還價的意思都沒有"
+  ]
+ },
+ "C79": {
+  "type": "敘述",
+  "focus": "後新",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C80": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C81": {
+  "type": "敘述",
+  "focus": "平",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C82": {
+  "type": "敘述",
+  "focus": "平",
+  "stress": false,
+  "advance": false,
+  "foreground": []
+ },
+ "C83": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": [
+   "像一隻被裝進麻袋的猴子"
+  ]
+ },
+ "C84": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": true,
+  "advance": true,
+  "foreground": []
+ },
+ "C85": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C86": {
+  "type": "混合",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C87": {
+  "type": "混合",
+  "focus": "後新",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C88": {
+  "type": "敘述",
+  "focus": "後舊",
+  "stress": true,
+  "advance": true,
+  "foreground": []
+ },
+ "C89": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C90": {
+  "type": "對白",
+  "focus": null,
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C91": {
+  "type": "混合",
+  "focus": "後新",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C92": {
+  "type": "敘述",
+  "focus": "平",
+  "stress": false,
+  "advance": true,
+  "foreground": [
+   "認真地想了想，認真地點了點頭"
+  ]
+ },
+ "C93": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C94": {
+  "type": "敘述",
+  "focus": "平",
+  "stress": true,
+  "advance": true,
+  "foreground": []
+ },
+ "C95": {
+  "type": "敘述",
+  "focus": "後新",
+  "stress": false,
+  "advance": true,
+  "foreground": [
+   "肚子適時發出一聲長長的哀鳴"
+  ]
+ },
+ "C96": {
+  "type": "對白",
+  "focus": null,
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C97": {
+  "type": "敘述",
+  "focus": "前",
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ },
+ "C98": {
+  "type": "對白",
+  "focus": null,
+  "stress": false,
+  "advance": true,
+  "foreground": []
+ }
+}
