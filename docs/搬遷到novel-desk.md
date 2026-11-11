@@ -18,7 +18,7 @@
 | 工具與書的 git 分離 | 已定案，`.gitignore` 已建立 |
 | 資料夾骨架 | 已建立 `README.md`、`CLAUDE.md`、`.gitignore` |
 | 動作與 skill | 討論已寫進 `novel-desk/CLAUDE.md`；其他動作討論中 |
-| 水下的做法 | 2026-11-11 改版：真相可以寫在任何地方，`cards/hidden/` 改成清單（見「水下」一節）。novel-desk 已改，未 commit |
+| 水下的做法 | 2026-11-11 改版：真相可以寫在任何地方，`cards/hidden/` 改成清單（見「水下」一節）。novel-desk 已改（`33a5e13`） |
 | 新技巧知識庫 | 在本 repo 的 `docs/新技巧知識庫/` 製作，**先修再搬**（作者定案，2026-11-02）：要趁這次盤點砍掉太重、難用、複雜卻沒用的東西。修完的檢查由 Claude 做，方法也由 Claude 設計；作者之後在 `novel-desk` 實際使用，就等於再手動測一次，不另外逐張審。已修正並測試，現為 107 張、一份索引，已複製到 `novel-desk/knowledge/`，已併入 `main`，尚未 push。**之後改卡只改 `novel-desk` 那份**，`docs/新技巧知識庫/` 留作紀錄。修正過程見 `docs/新技巧知識庫-工作底稿.md`，測試見 `docs/實驗/招卡測試/01-結果.md` |
 | skill | `/change-angle` 已完成（作者確認，2026-11-02），已併入 `main`，尚未 push。`/draft`（落筆）已寫好，已併入 `main`，尚未 push：組 prompt 由另一個 agent 照 `SKILL.md` 試過，生成、水下比對、並排都實跑過；第 5 步拼接和作者實際觸發還沒測。測試書是 `books/雁門鏢-測試/`。落筆模板對照實驗見 `docs/實驗/落筆模板對照/01-結果.md`。`/search`（問全書）已寫好並測過，已併入 `main`，尚未 push：20 題實跑通過，作者還沒實際用過，見 `docs/實驗/問全書測試/01-結果.md`。測試書是 `books/一世之尊-測試/`。`/check`（幫我看）已寫好並測過，已併入 `main`，尚未 push：測試見 `docs/實驗/幫我看測試/01-結果.md`，測試書是 `books/幫我看-測試/`，作者還沒實際用過。`/passage`（局部操作）已寫好並測過，已併入 `main`，尚未 push：測試見 `docs/實驗/局部操作測試/01-結果.md`，測試書是 `books/局部操作-測試/`，作者還沒實際用過，互動模式也還沒測。章表不做（作者定案，2026-11-03）。2026-11-07 對照 `lieflat-less-ai-tone` 後：`/check` 用的三張招卡（是不是多說了、重音放哪、唸起來卡）補了 AI 腔問句並改索引，`/passage` 加了「沒要求動的句子逐字照抄」，已 commit（novel-desk ca97f36） |
 
@@ -240,7 +240,7 @@ POV: 林澈
 - 排章測試的破梗（S403）顯示「主 agent 只當濾網」太嚴：它看出哪裡會洩，卻沒有路寫進 prompt。
 - settle 測試的「照寫照哪一版」「揭曉要按條刪」兩個問題跟著消失：只剩一版，也不用刪。
 
-**已改 novel-desk（未 commit）：** `README.md`、`CLAUDE.md`、`settle`、`draft`、`passage`、`search`、`check` 五個 SKILL。`send.py` 沒改，字面比對照舊只回報。`/passage` 仍用 `context: fork`，看不到對話；要不要拿掉另議。
+**已改 novel-desk（`33a5e13`）：** `README.md`、`CLAUDE.md`、`settle`、`draft`、`passage`、`search`、`check` 五個 SKILL。`send.py` 沒改，字面比對照舊只回報。`/passage` 仍用 `context: fork`，看不到對話；要不要拿掉另議。
 
 **已測（2026-11-11）：** `docs/實驗/水下清單測試/01-結果.md`，測試書 `novel-desk/books/水下清單-測試/`。`/passage` 6 次 18 版，沒有一版寫出真相或原因；作者的指令靠近真相時，原有的伏筆會被寫得重一點，它會在「碰到水下」列出來。`/draft` 組 prompt 1 次，真相沒進 prompt。沒測到：揭曉在這一章的情況（排章測試破梗的那種）、`/settle` 新規則、`/search` 和 `/check` 的標示。判讀出自 Claude，待作者看輸出原文。
 
